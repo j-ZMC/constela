@@ -104,12 +104,10 @@ function View() {
   // importantFirst: only the current step stays on screen; everything else waits behind a count.
   const next = adaptations.importantFirst ? [] : upNext;
   const later = active.filter((s) => !s.done && s !== current && !next.includes(s));
-  // The constellation is this stage's round: what is waiting, this stage's stars, and stage-less steps done today.
-  // Stars from earlier stages live in "Your path", not here.
-  const today = localDate(now);
-  const doneToday = (s: PlanStep) => s.doneAt !== undefined && localDate(new Date(s.doneAt)) === today;
+  // The constellation is this stage's round only: its waiting steps and the stars earned since it opened.
+  // The person's own steps, habits and leftovers from earlier stages stay in the lists below, never in the band.
   const thisRound = (s: PlanStep) => !plan.stageOpenedAt || (s.doneAt !== undefined && s.doneAt >= plan.stageOpenedAt);
-  const stars = active.filter((s) => !s.done || (s.stage === stage ? thisRound(s) : !s.stage && doneToday(s)));
+  const stars = active.filter((s) => s.stage === stage && (!s.done || thisRound(s)));
   const done = stars.filter((s) => s.done).length;
   const goal = weekGoal(plan, now);
   // "Stop for today" is saved with the date, so a reload keeps the rest screen; the next day starts fresh.
@@ -122,14 +120,16 @@ function View() {
   const selectedStep = plan.steps.find((s) => s.id === selected);
   const finishedToday = plan.steps.filter((s) => s.done && s.doneAt && localDate(new Date(s.doneAt)) === localDate(now));
   const justDoneTitle = plan.steps.find((s) => s.id === justDone)?.title;
-  const breakdownFirst = (step: PlanStep) => adaptations.offerBreakdownFirst && step.minutes > 3;
+  // Only steps long enough to have parts get "break it down" as the main action.
+  const breakdownFirst = (step: PlanStep) => adaptations.offerBreakdownFirst && step.minutes > 8;
 
   function finish(id: string) {
     const updated = update(completeStep(plan, id, new Date()));
     setJustDone(id);
     const upcoming = visibleSteps({ ...updated, steps: activeSteps(updated) }, adaptations, energy)[0];
     if (stageOf(updated) !== stage) {
-      setAnnouncement(`You finished ${STAGE_NAMES[stage]}. Next stage: ${STAGE_NAMES[stageOf(updated)]}.`);
+      // The stage card's heading takes focus and says it; the live region stays quiet so it is not heard twice.
+      setAnnouncement("");
       return;
     }
     setAnnouncement(upcoming ? `Step done. Next: ${upcoming.title}` : "Step done. You finished every step.");
@@ -187,6 +187,7 @@ function View() {
         <p className="font-medium">
           Stage {STAGES.indexOf(stage) + 1} of {STAGES.length}: {STAGE_NAMES[stage]}
         </p>
+        {!stageDone && (
         <Constellation
           lit={stars.map((s) => s.done)}
           names={stars.map((s) => s.title)}
@@ -195,8 +196,10 @@ function View() {
           glow={stars.findIndex((s) => s.id === justDone && s.done)}
           current={current ? stars.indexOf(current) : undefined}
         />
+        )}
         {/* Progress and the week's goal share one block. One small goal a week: when it is met it says so; when the week
             ends unmet, a new week simply brings a new goal. */}
+        {!stageDone && (
         <div className="flex flex-col gap-1">
           <p className="text-muted-foreground">
             {done} of {stars.length} steps done.{" "}
@@ -208,10 +211,11 @@ function View() {
             {goal.met && <Check className="size-5 shrink-0 text-primary" aria-hidden />}
             <span>
               {goal.text}
-              {goal.met && <span className="text-muted-foreground">. Done</span>}
+              {goal.met && <span className="text-muted-foreground"> (done)</span>}
             </span>
           </p>
         </div>
+        )}
         {!profile && (
           <p className="text-sm text-muted-foreground">
             These are the standard settings.{" "}
@@ -261,17 +265,19 @@ function View() {
           prominentTime={adaptations.showDurations}
           listen={adaptations.listenButton}
           headsUp={headsUp}
+          footer={
+            energy ? (
+              <CheckInReply level={energy} focus={checkedIn} onChange={() => update(resetCheckIn(plan))} />
+            ) : checkInDue(plan, now) ? (
+              <EnergyCheckIn onChoose={checkIn} />
+            ) : undefined
+          }
           onDone={() => finish(current.id)}
           onBreakdown={() => setRequest({ id: crypto.randomUUID(), task: current.title, stepId: current.id })}
         />
       ) : (
         <AllDone focus={announcement !== ""} today={finishedToday} />
       )}
-
-      {/* Below the step, not above it: the step stays the first thing on a phone screen, and the check-in still
-          adjusts it with one tap. */}
-      {energy && <CheckInReply level={energy} focus={checkedIn} onChange={() => update(resetCheckIn(plan))} />}
-      {checkInDue(plan, now) && <EnergyCheckIn onChoose={checkIn} />}
 
       {removed && <Removed title={removed.title} onUndo={undoRemove} />}
 
@@ -288,7 +294,8 @@ function View() {
         </section>
       )}
 
-      {!resting && later.length > 0 && (
+      {/* A finished stage and the rest screen are quiet moments: no lists, no "add more". */}
+      {!resting && !stageDone && later.length > 0 && (
         <details className="group">
           <summary className="flex h-11 w-fit cursor-pointer items-center rounded-lg px-1 font-medium text-muted-foreground hover:text-foreground">
             <ChevronRight className="size-4 transition-transform group-open:rotate-90" aria-hidden />
@@ -314,6 +321,7 @@ function View() {
         </details>
       )}
 
+      {!resting && !stageDone && (
       <AddStep
         breakdownFirst={adaptations.offerBreakdownFirst}
         value={newTask}
@@ -321,6 +329,7 @@ function View() {
         onAdd={addOne}
         onBreakdown={(task) => setRequest({ id: crypto.randomUUID(), task })}
       />
+      )}
 
       {pathOpen && <PathDialog plan={plan} onBack={backTo} onClose={() => setPathOpen(false)} />}
 

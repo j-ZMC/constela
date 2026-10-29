@@ -7,7 +7,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 
 // Reads a text out loud with the browser's own voice: no service, no cost, nothing leaves the device.
 // Shown when the profile asks for it (reading: "Listen out loud"). Hidden where the browser has no voice.
-export function ListenButton({ text, label = "Listen" }: { text: string; label?: string }) {
+export function ListenButton({ text, label = "Listen", iconOnly = false }: { text: string; label?: string; iconOnly?: boolean }) {
   const ready = useHydrated() && typeof window !== "undefined" && "speechSynthesis" in window;
   const [speaking, setSpeaking] = useState(false);
 
@@ -29,9 +29,14 @@ export function ListenButton({ text, label = "Listen" }: { text: string; label?:
   }
 
   return (
-    <Button variant="ghost" className="h-11 w-fit px-3 text-base" onClick={toggle}>
+    <Button
+      variant="ghost"
+      className={iconOnly ? "size-11 shrink-0 [&_svg]:size-5" : "h-11 w-fit px-3 text-base"}
+      onClick={toggle}
+      aria-label={iconOnly ? (speaking ? "Stop reading" : label) : undefined}
+    >
       {speaking ? <Square aria-hidden /> : <Volume2 aria-hidden />}
-      {speaking ? "Stop" : label}
+      {!iconOnly && (speaking ? "Stop" : label)}
     </Button>
   );
 }

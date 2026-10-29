@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, useState } from "react";
 import { Button } from "@/components/ui/button";
 import type { Energy } from "@/lib/plan";
 
@@ -20,12 +20,20 @@ const REPLIES: Record<Energy, string> = {
 
 // Self-reported, one tap, skippable. The app never guesses feelings from what people write.
 export function EnergyCheckIn({ onChoose }: { onChoose: (level: Energy | null) => void }) {
-  // A light row in the header, not a card: it should never outweigh the step it adjusts.
-  return (
-    <section aria-labelledby="check-in" className="flex flex-col gap-2 pt-1">
-      <h2 id="check-in" className="font-medium">
+  // Lives on the step card as one quiet chip, so it adjusts the step without competing with it.
+  const [open, setOpen] = useState(false);
+  if (!open) {
+    return (
+      <Button variant="outline" className="h-11 w-fit rounded-full px-4 text-base" aria-expanded={false} onClick={() => setOpen(true)}>
         How are you feeling today?
-      </h2>
+      </Button>
+    );
+  }
+  return (
+    <section aria-labelledby="check-in" className="flex flex-col gap-2">
+      <h3 id="check-in" className="font-medium">
+        How are you feeling today?
+      </h3>
       <div className="flex flex-wrap gap-2">
         {CHOICES.map((c) => (
           <Button key={c.level} variant="outline" className="h-11 rounded-full bg-card px-4 text-base" onClick={() => onChoose(c.level)}>

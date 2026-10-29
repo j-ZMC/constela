@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useRef } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import {
   Bookmark,
@@ -48,6 +48,7 @@ export function CurrentStep({
   prominentTime,
   listen,
   headsUp,
+  footer,
   onDone,
   onBreakdown,
 }: {
@@ -58,6 +59,8 @@ export function CurrentStep({
   listen: boolean;
   // For people who asked to know about changes: what starts after this step.
   headsUp?: string;
+  // The daily check-in (or its reply), at the bottom of the card it adjusts.
+  footer?: ReactNode;
   onDone: () => void;
   onBreakdown: () => void;
 }) {
@@ -78,7 +81,7 @@ export function CurrentStep({
         <span className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary text-primary">
           <Icon className="size-6" aria-hidden />
         </span>
-        <div className="flex flex-col gap-1">
+        <div className="flex flex-1 flex-col gap-1">
           <h2 id={`step-${step.id}`} ref={heading} tabIndex={-1} className="text-2xl font-semibold text-balance outline-none">
             {step.title}
           </h2>
@@ -87,41 +90,43 @@ export function CurrentStep({
             className={prominentTime ? "w-fit rounded-md bg-secondary px-2 py-1 text-base font-medium text-foreground" : undefined}
           />
         </div>
+        {listen && <ListenButton iconOnly label="Listen to this step" text={`${step.title}. About ${step.minutes} minutes.${headsUp ? ` ${headsUp}` : ""}`} />}
       </div>
-      {listen && <ListenButton text={`${step.title}. About ${step.minutes} minutes.${headsUp ? ` ${headsUp}` : ""}`} />}
+      {/* The actions come right after the step, so they stay on the first screen of a phone. Same order every time:
+          go do it, mark it done, or make it smaller. Only one is filled: breaking down when the profile asks for it. */}
+      <div className="flex flex-wrap gap-3">
+        {step.href && (
+          <Link href={step.href} className={buttonVariants({ variant: breakdownFirst ? "outline" : "default", className: action })}>
+            {openLabel(step.href)}
+          </Link>
+        )}
+        {!selfDone && (
+          <Button variant={step.href || breakdownFirst ? "outline" : "default"} className={action} onClick={onDone}>
+            Done
+          </Button>
+        )}
+        {!selfDone && (
+          <Button variant={breakdownFirst ? "default" : "ghost"} className={action} onClick={onBreakdown}>
+            Break it down for me
+          </Button>
+        )}
+      </div>
+      {selfDone ? (
+        <p className="text-muted-foreground">This step is done by itself when you finish your profile.</p>
+      ) : (
+        breakdownFirst && (
+          <p data-detail="extra" className="text-muted-foreground">
+            This step has a few parts. You can break it down first.
+          </p>
+        )
+      )}
       {headsUp && (
         <p className="rounded-lg bg-secondary px-4 py-3">
           <span className="font-semibold">Heads-up: </span>
           {headsUp}
         </p>
       )}
-      {selfDone ? (
-        <p className="text-muted-foreground">This step is done by itself when you finish your profile.</p>
-      ) : (
-        breakdownFirst && (
-          <p data-detail="extra" className="text-muted-foreground">
-            This is a big step. You can break it down first.
-          </p>
-        )
-      )}
-      {/* Same order on every step: go do it, mark it done, or make it smaller. */}
-      <div className="flex flex-wrap gap-3">
-        {step.href && (
-          <Link href={step.href} className={buttonVariants({ className: action })}>
-            {openLabel(step.href)}
-          </Link>
-        )}
-        {!selfDone && (
-          <Button variant={step.href ? "outline" : "default"} className={action} onClick={onDone}>
-            Done
-          </Button>
-        )}
-        {!selfDone && (
-          <Button variant={breakdownFirst ? "outline" : "ghost"} className={action} onClick={onBreakdown}>
-            Break it down for me
-          </Button>
-        )}
-      </div>
+      {footer && <div className="border-t pt-4">{footer}</div>}
     </article>
   );
 }
