@@ -3,19 +3,23 @@
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Constellation } from "@/components/profile/constellation";
+import { useSummaryMode } from "@/components/summary";
 import { STAGE_NAMES, STAGE_STEPS, stageOf } from "@/lib/path";
 import { STAGES, stepKey, type Plan, type Stage } from "@/lib/plan";
 
 // The whole job search at a glance: five small constellations, and a way back to an earlier stage.
 export function PathDialog({ plan, onBack, onClose }: { plan: Plan; onBack: (stage: Stage) => void; onClose: () => void }) {
   const at = STAGES.indexOf(stageOf(plan));
+  const short = useSummaryMode();
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
       <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)] gap-5 p-5 text-base sm:max-w-lg">
         <DialogHeader>
           <DialogTitle className="text-xl leading-tight font-semibold">Your path</DialogTitle>
           <DialogDescription className="text-base">
-            Five stages from getting ready to your first reply. After Follow up, you look for the next job.
+            {short
+              ? "Five stages to your first reply."
+              : "Five stages from getting ready to your first reply. After Follow up, you look for the next job."}
           </DialogDescription>
         </DialogHeader>
         <ol className="-mx-5 flex min-h-0 flex-col gap-4 overflow-y-auto px-5 py-1">
@@ -41,7 +45,7 @@ export function PathDialog({ plan, onBack, onClose }: { plan: Plan; onBack: (sta
             );
           })}
         </ol>
-        <p className="text-sm text-muted-foreground">Going back adds that stage&apos;s steps again. Your stars stay.</p>
+        {!short && <p className="text-sm text-muted-foreground">Going back adds that stage&apos;s steps again. Your stars stay.</p>}
       </DialogContent>
     </Dialog>
   );

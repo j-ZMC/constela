@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DeleteMyData } from "@/components/delete-my-data";
+import { Summarized } from "@/components/summary";
 
 export const metadata: Metadata = { title: "Privacy · Constela" };
 
@@ -12,6 +13,7 @@ export default function PrivacyPage() {
         <p className="text-muted-foreground">Draft for the Constela prototype. Last updated 29 October 2026.</p>
       </header>
 
+      <Summarized summary="Your data stays on this device. Only a task you choose to break down reaches the AI. You can delete everything below.">
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">What we keep, and where</h2>
         <p>Your answers, your plan and your settings stay in this browser, on this device. We do not have accounts, and we do not keep your data on a server.</p>
@@ -43,6 +45,7 @@ export default function PrivacyPage() {
           <li>We do not sell or share your data.</li>
         </ul>
       </section>
+      </Summarized>
 
       <section className="flex flex-col gap-3">
         <h2 className="text-xl font-semibold">Delete your data</h2>

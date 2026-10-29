@@ -10,6 +10,7 @@ import { BreakdownDialog } from "@/components/plan/breakdown-dialog";
 import { CheckInReply, EnergyCheckIn } from "@/components/plan/energy-check-in";
 import { PathDialog } from "@/components/plan/path-dialog";
 import { Tour, tourSeen, type TourStep } from "@/components/tour";
+import { firstSentence } from "@/components/summary";
 import { AllDone, CurrentStep, Duration, ICONS, NextStep, Pause, Removed, Rest, StageDone } from "@/components/plan/step-card";
 import { StepDetails } from "@/components/plan/step-details";
 import {
@@ -126,10 +127,12 @@ function View() {
   // "Stop for today" is saved with the date, so a reload keeps the rest screen; the next day starts fresh.
   const resting = plan.restingOn === localDate(now);
   const setResting = (on: boolean) => update({ ...plan, restingOn: on ? localDate(new Date()) : undefined });
+  // summaryMode keeps stage descriptions to their first sentence.
+  const preview = (s: Stage) => (adaptations.summaryMode ? firstSentence(STAGE_PREVIEW[s]) : STAGE_PREVIEW[s]);
   // headsUpOnChanges: when finishing the current step would finish the stage, say what starts next before it starts.
   const finishesStage = current !== undefined && stageComplete(completeStep(plan, current.id, now));
   const headsUp =
-    adaptations.headsUpOnChanges && finishesStage ? `After this step, ${STAGE_NAMES[nextStage(stage)]} starts. ${STAGE_PREVIEW[nextStage(stage)]}` : undefined;
+    adaptations.headsUpOnChanges && finishesStage ? `After this step, ${STAGE_NAMES[nextStage(stage)]} starts. ${preview(nextStage(stage))}` : undefined;
   const selectedStep = plan.steps.find((s) => s.id === selected);
   const finishedToday = plan.steps.filter((s) => s.done && s.doneAt && localDate(new Date(s.doneAt)) === localDate(now));
   const justDoneTitle = plan.steps.find((s) => s.id === justDone)?.title;
@@ -256,7 +259,7 @@ function View() {
         <StageDone
           finished={STAGE_NAMES[stageDone]}
           next={STAGE_NAMES[stage]}
-          preview={STAGE_PREVIEW[stage]}
+          preview={preview(stage)}
           listen={adaptations.listenButton}
           stars={STAGE_STEPS[stageDone].length}
           onContinue={() => {
