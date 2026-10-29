@@ -16,6 +16,8 @@ const links = [
 
 export function SiteNav() {
   const pathname = usePathname();
+  // The intro asks for one decision only, so the app menu waits until the person starts. Personalize stays.
+  const intro = pathname === "/";
 
   const items = links.map(({ href, label, icon: Icon }) => {
     const active = pathname.startsWith(href);
@@ -42,19 +44,23 @@ export function SiteNav() {
           <Link href="/" className="text-lg">
             <Logo />
           </Link>
-          <nav aria-label="Main" className="hidden gap-1 lg:flex">
-            {items}
-          </nav>
+          {!intro && (
+            <nav aria-label="Main" className="hidden gap-1 lg:flex">
+              {items}
+            </nav>
+          )}
           <PersonalizationPanel />
         </div>
       </header>
       {/* On phones and tablets the nav sits at the bottom, within thumb reach; lg leaves room for large text */}
-      <nav
-        aria-label="Main"
-        className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
-      >
-        {items}
-      </nav>
+      {!intro && (
+        <nav
+          aria-label="Main"
+          className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
+        >
+          {items}
+        </nav>
+      )}
     </>
   );
 }
