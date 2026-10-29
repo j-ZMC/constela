@@ -1,0 +1,259 @@
+{
+  "schema_version": "1.0",
+  "purpose": "Optional user-controlled signals for reviewing potential job-environment barriers in vacancy text.",
+  "keyword_language": "en",
+  "display_language": "en",
+  "usage_policy": {
+    "not_diagnostic": true,
+    "do_not_infer_or_assign_neurotype": true,
+    "user_selects_relevant_barriers": true,
+    "interpretation": "Terms describe possible job demands or environments, not traits shared by everyone in a category. A match should be a review signal, not an automatic exclusion or a claim that a job is unsuitable.",
+    "individual_variability": "People differ; co-occurring conditions, context, requested accommodations, and personal preferences matter more than a category label.",
+    "term_matching": "candidate_terms_en are examples of wording commonly used in job postings and workplace descriptions. The filter compares semantic embeddings of the subtype and these phrases with the full job description; it does not require an exact keyword match. Results are signals and can include false positives or miss relevant jobs.",
+    "language_note": "All category names, subtype labels, and vacancy terms are in English to match the current USA job corpus."
+  },
+  "categories": [
+    {
+      "id": "adhd",
+      "name_en": "ADHD",
+      "evidence_note": "Potential attention, executive-function, distraction, and time-management barriers vary by person and task.",
+      "subtypes": [
+        {
+          "id": "distraction_and_interruptions",
+          "label_en": "Distractions and interruptions",
+          "candidate_terms_en": ["frequent interruptions", "fast-paced environment", "high-volume customer service", "manage multiple tasks at once", "busy call center", "multitasking required", "handle multiple incoming requests", "high-volume phone environment", "frequent customer inquiries", "respond to calls while completing administrative tasks"]
+        },
+        {
+          "id": "ambiguity_and_task_switching",
+          "label_en": "Ambiguity and frequent task changes",
+          "candidate_terms_en": ["changing priorities", "manage multiple projects simultaneously", "other duties as assigned", "wear many hats", "adapt to changing business needs", "manage competing priorities", "shifting priorities throughout the day", "handle a variety of duties", "take on additional duties as needed", "manage multiple responsibilities"]
+        },
+        {
+          "id": "time_pressure_and_rigidity",
+          "label_en": "Time pressure and rigidity",
+          "candidate_terms_en": ["meet tight deadlines", "work under pressure", "high-volume workload", "same-day turnaround", "rotating shifts", "evening and weekend availability required", "fast-paced work environment", "quick turnaround times", "overtime as needed", "availability for varied shifts"]
+        }
+      ]
+    },
+    {
+      "id": "autism_spectrum",
+      "name_en": "Autism spectrum",
+      "evidence_note": "Sensory differences, communication preferences, and response to changes vary widely; use only barriers the person selects.",
+      "subtypes": [
+        {
+          "id": "sensory_load",
+          "label_en": "Sensory load",
+          "candidate_terms_en": ["open-plan office", "busy warehouse environment", "noisy production floor", "high-volume retail environment", "commercial kitchen", "work outdoors in varying weather", "shared office space", "busy public-facing workplace", "manufacturing floor environment", "exposure to heat, cold, or changing weather"]
+        },
+        {
+          "id": "social_and_communication_demands",
+          "label_en": "Social and communication demands",
+          "candidate_terms_en": ["customer-facing role", "answer inbound calls", "make outbound calls", "deliver presentations to clients", "attend networking events", "collaborate with cross-functional teams", "interact with customers in person", "handle a high volume of phone calls", "participate in regular team meetings", "communicate verbally with clients"]
+        },
+        {
+          "id": "ambiguity_and_unpredictability",
+          "label_en": "Ambiguity and unpredictability",
+          "candidate_terms_en": ["fast-paced and dynamic environment", "rapidly changing priorities", "wear many hats", "other duties as assigned", "adapt to changing business needs", "work with minimal supervision", "manage shifting priorities", "changing job requirements", "variety of tasks and responsibilities", "respond to changing business needs"]
+        }
+      ]
+    },
+    {
+      "id": "dyslexia",
+      "name_en": "Dyslexia",
+      "evidence_note": "Reading, spelling, written-output, and planning demands affect people differently; assistive tools or extra time may change the impact.",
+      "subtypes": [
+        {
+          "id": "high_reading_load",
+          "label_en": "High reading volume",
+          "candidate_terms_en": ["review technical documentation", "read and interpret policies and procedures", "review lengthy reports", "read contracts and proposals", "proofread documents", "process high volumes of written information", "read detailed work instructions", "review written materials", "read technical manuals and specifications", "maintain and review extensive documentation"]
+        },
+        {
+          "id": "written_accuracy_and_output",
+          "label_en": "Writing and spelling accuracy",
+          "candidate_terms_en": ["strong written communication skills", "prepare written reports", "draft client correspondence", "proofread and edit documents", "maintain accurate written records", "high-volume written communication", "excellent spelling and grammar", "write detailed reports", "document all customer interactions", "prepare and edit business correspondence"]
+        },
+        {
+          "id": "time_pressure_for_text",
+          "label_en": "Text processing under time pressure",
+          "candidate_terms_en": ["document customer interactions in real time", "complete data entry within deadlines", "process a high volume of paperwork", "meet daily productivity targets", "respond to emails promptly", "take notes during live meetings", "real-time documentation required", "high-volume email response", "meet strict turnaround deadlines", "fast and accurate data entry"]
+        }
+      ]
+    },
+    {
+      "id": "dyscalculia",
+      "name_en": "Dyscalculia",
+      "evidence_note": "Potential barriers concern number-based information and calculations; math ability and support needs vary by person.",
+      "subtypes": [
+        {
+          "id": "mental_arithmetic",
+          "label_en": "Rapid mental arithmetic",
+          "candidate_terms_en": ["cash handling", "calculate change for customers", "operate a point-of-sale (POS) system", "process customer payments", "balance a cash drawer", "calculate totals at checkout", "make change accurately", "count cash and coins", "calculate sales tax and discounts", "complete cash register transactions"]
+        },
+        {
+          "id": "numerical_data_and_finance",
+          "label_en": "Numerical data and finance",
+          "candidate_terms_en": ["reconcile invoices and accounts", "accounts payable and receivable", "prepare financial reports", "enter numerical data", "track budgets and expenses", "review account balances", "reconcile bank statements", "process payroll and invoices", "maintain financial records", "analyze financial data"]
+        },
+        {
+          "id": "measurement_and_estimation",
+          "label_en": "Measurements and estimation",
+          "candidate_terms_en": ["take precise measurements", "read blueprints and measurements", "measure and cut materials", "weigh products accurately", "calculate material quantities", "use a tape measure", "use measuring equipment", "calculate dimensions and tolerances", "estimate quantities of materials", "read technical drawings"]
+        }
+      ]
+    },
+    {
+      "id": "dysgraphia",
+      "name_en": "Dysgraphia",
+      "evidence_note": "Handwriting speed, legibility, fine-motor writing, and planning can be affected; keyboarding and assistive technology may help.",
+      "subtypes": [
+        {
+          "id": "handwriting_volume",
+          "label_en": "Extensive handwriting",
+          "candidate_terms_en": ["complete paper forms by hand", "maintain handwritten logs", "write information on labels", "record readings in a paper logbook", "complete handwritten inspection forms", "document work on clipboards", "complete handwritten paperwork", "record information manually", "maintain paper-based records", "fill out forms manually"]
+        },
+        {
+          "id": "writing_speed_and_legibility",
+          "label_en": "Writing speed and legibility",
+          "candidate_terms_en": ["legible handwriting required", "take handwritten notes during meetings", "complete forms accurately and quickly", "write incident reports during a shift", "record information in real time", "handwrite labels and documentation", "write legibly and at speed", "fast-paced note-taking", "complete written forms quickly", "handwritten documentation required"]
+        },
+        {
+          "id": "fine_motor_writing",
+          "label_en": "Fine-motor writing demands",
+          "candidate_terms_en": ["fill out paper-based records", "write on small product labels", "complete inspection checklists by hand", "use paper work orders", "enter information in handwritten logbooks", "write small labels by hand", "manually complete checklists", "perform paper-based record keeping", "handwritten forms required"]
+        }
+      ]
+    },
+    {
+      "id": "developmental_coordination_disorder",
+      "name_en": "Dyspraxia / Developmental Coordination Disorder (DCD)",
+      "evidence_note": "Motor coordination, balance, fine-motor tasks, planning, and learning new procedures may be relevant; assess the actual task, not the label.",
+      "subtypes": [
+        {
+          "id": "fine_motor_precision",
+          "label_en": "Precision and manual dexterity",
+          "candidate_terms_en": ["assemble small components", "fine motor skills and manual dexterity", "operate precision instruments", "use hand tools for detailed work", "perform repetitive assembly tasks", "handle small parts accurately", "assemble products on a production line", "perform repetitive manual tasks", "use precision hand tools", "manual assembly work"]
+        },
+        {
+          "id": "physical_coordination_and_balance",
+          "label_en": "Physical coordination and balance",
+          "candidate_terms_en": ["stand for extended periods", "walk throughout the shift", "lift and carry up to 50 pounds", "climb ladders and work at heights", "maintain balance on uneven surfaces", "physical coordination required", "standing and walking for the full shift", "frequent bending, reaching, and lifting", "carry materials across the facility", "repeatedly climb stairs or ladders"]
+        },
+        {
+          "id": "sequencing_and_learning_tasks",
+          "label_en": "Task sequencing and learning",
+          "candidate_terms_en": ["follow standard operating procedures", "follow detailed multi-step instructions", "learn new systems and procedures quickly", "switch between tasks throughout the shift", "coordinate multiple tasks at once", "follow assembly or service workflows", "follow written and verbal instructions", "complete tasks in a specific sequence", "learn new workflows quickly", "prioritize multiple assignments"]
+        }
+      ]
+    },
+    {
+      "id": "sensory_processing_differences",
+      "name_en": "Sensory processing differences",
+      "classification_note": "Sensory processing differences can occur with several conditions; sensory processing disorder is not uniformly treated as a standalone diagnosis. Keep this as a self-selected sensory preference profile.",
+      "subtypes": [
+        {
+          "id": "sound",
+          "label_en": "Noise and sound",
+          "candidate_terms_en": ["work on a noisy production floor", "work near loud machinery", "busy call center environment", "high-volume customer service area", "warehouse floor operations", "work in a commercial kitchen", "high-noise work environment", "continuous background noise", "operate machinery in a factory", "busy restaurant environment"]
+        },
+        {
+          "id": "visual_and_light",
+          "label_en": "Light and visual stimuli",
+          "candidate_terms_en": ["work under bright fluorescent lighting", "monitor multiple computer screens", "perform visual inspections", "monitor security cameras", "work outdoors in direct sunlight", "inspect small parts for visual defects", "brightly lit workplace", "screen-based work throughout the day", "visual attention to detail required", "monitor displays for extended periods"]
+        },
+        {
+          "id": "smell_touch_temperature_and_crowding",
+          "label_en": "Smells, textures, temperature, and crowding",
+          "candidate_terms_en": ["work around cleaning chemicals", "wear personal protective equipment (PPE)", "work in hot or cold environments", "work in a crowded retail area", "work outdoors in changing weather", "handle materials with varied textures", "exposure to chemicals and strong odors", "work in a refrigerated environment", "wear gloves and protective gear", "work in a high-traffic area"]
+        }
+      ]
+    },
+    {
+      "id": "tourette_and_tic_disorders",
+      "name_en": "Tourette syndrome / tic disorders",
+      "evidence_note": "Tics vary over time and between people. Do not assume vocal tics, coprolalia, or that a person needs an accommodation.",
+      "subtypes": [
+        {
+          "id": "rigid_silence_or_stillness_rules",
+          "label_en": "Limited movement or quiet-work requirements",
+          "candidate_terms_en": ["remain seated for extended periods", "remain standing at a workstation", "quiet environment required", "limited movement during scheduled tasks", "follow a strict workplace code of conduct", "work in a quiet testing environment", "sit at a desk for most of the workday", "stand in one position for long periods", "maintain a quiet work area", "restricted movement while on duty"]
+        },
+        {
+          "id": "high_pressure_and_no_breaks",
+          "label_en": "High pressure and inflexible breaks",
+          "candidate_terms_en": ["high-pressure customer service environment", "continuous phone coverage required", "meet strict production targets", "work extended shifts", "limited flexibility in scheduled breaks", "perform live presentations on a regular basis", "back-to-back customer calls", "maintain continuous service coverage", "high-volume phone support", "meet hourly performance targets"]
+        },
+        {
+          "id": "social_visibility_demands",
+          "label_en": "Continuous social exposure",
+          "candidate_terms_en": ["front desk or reception duties", "serve customers throughout the shift", "frequent client-facing presentations", "lead public meetings", "represent the company at events", "regular in-person client meetings", "provide in-person customer service", "conduct interviews or presentations", "speak to groups of people", "greet and assist visitors"]
+        }
+      ]
+    },
+    {
+      "id": "high_abilities_giftedness",
+      "name_en": "High abilities / giftedness",
+      "classification_note": "Not a disorder or a uniform workplace-needs profile. These are optional challenge/autonomy preferences, not presumed barriers associated with giftedness.",
+      "subtypes": [
+        {
+          "id": "low_challenge_or_repetition",
+          "label_en": "Low challenge or highly repetitive tasks",
+          "candidate_terms_en": ["repetitive duties with limited variation", "routine data-entry tasks", "highly structured workflow", "follow the same process throughout the shift", "limited problem-solving responsibilities", "scripted customer interactions", "repetitive production work", "routine clerical duties", "limited variety in daily tasks", "standardized repetitive workflow"]
+        },
+        {
+          "id": "limited_autonomy",
+          "label_en": "Limited autonomy",
+          "candidate_terms_en": ["work under close supervision", "follow detailed instructions for each task", "manager approval required for routine decisions", "strict adherence to scripts", "follow standardized procedures", "limited decision-making authority", "closely supervised work", "approval required for routine actions", "work according to strict procedures", "limited independent decision-making"]
+        },
+        {
+          "id": "limited_growth",
+          "label_en": "Limited learning or growth opportunities",
+          "candidate_terms_en": ["repetitive duties with little variation", "limited scope of responsibilities", "routine tasks with no added duties", "limited career advancement opportunities", "few opportunities to learn new skills", "no opportunity for promotion", "limited opportunities for career progression", "little opportunity to expand responsibilities", "limited training and development", "few opportunities for advancement"]
+        }
+      ]
+    },
+    {
+      "id": "ocd",
+      "name_en": "Obsessive-compulsive disorder (OCD)",
+      "evidence_note": "Triggers and functional effects are highly individual. Do not infer contamination, checking, ordering, or other themes from the diagnosis.",
+      "subtypes": [
+        {
+          "id": "uncertainty_and_last_minute_changes",
+          "label_en": "Uncertainty and last-minute changes",
+          "candidate_terms_en": ["frequent changes to daily priorities", "manage shifting deadlines", "fast-paced and unpredictable workflow", "respond to last-minute requests", "work with changing procedures", "manage competing deadlines", "priorities may change without notice", "short-notice schedule changes", "unpredictable work schedule", "respond to ad hoc requests"]
+        },
+        {
+          "id": "tight_time_pressure",
+          "label_en": "Time pressure without review time",
+          "candidate_terms_en": ["meet strict daily production quotas", "complete work to tight turnaround times", "process a high volume of orders", "work to strict deadlines", "high-volume data processing", "meet hourly productivity targets", "meet daily quotas", "work in a high-pressure environment", "complete orders within tight deadlines", "strict productivity requirements"]
+        },
+        {
+          "id": "user_selected_environmental_triggers",
+          "label_en": "Exposure to user-selected environmental triggers",
+          "candidate_terms_en": ["frequent exposure to bodily fluids", "perform cleaning and sanitation duties", "work with hazardous cleaning chemicals", "provide personal care to patients", "handle biohazardous materials", "follow infection-control procedures", "exposure to bloodborne pathogens", "clean and disinfect work areas", "handle contaminated equipment", "work with hazardous materials"]
+        }
+      ]
+    },
+    {
+      "id": "trauma_related_cptsd",
+      "name_en": "Trauma-related condition / complex PTSD (C-PTSD)",
+      "classification_note": "PTSD and complex PTSD are trauma-related mental health conditions; their placement under neurodivergence varies. Use only triggers or conditions the person chooses to disclose.",
+      "subtypes": [
+        {
+          "id": "traumatic_content_exposure",
+          "label_en": "Exposure to traumatic or graphic content",
+          "candidate_terms_en": ["respond to behavioral health crises", "provide crisis intervention services", "review graphic images or evidence", "work with survivors of violence", "respond to emergency calls", "support clients experiencing traumatic events", "work on a crisis hotline", "provide case management for survivors", "dispatch emergency services", "investigate violent incidents"]
+        },
+        {
+          "id": "conflict_and_threat",
+          "label_en": "Conflict, threats, and hostile interactions",
+          "candidate_terms_en": ["de-escalate aggressive behavior", "handle difficult customer interactions", "work in a correctional facility", "respond to crisis situations", "manage conflict between clients", "maintain safety in a high-conflict setting", "manage disruptive behavior", "work with individuals in crisis", "perform security duties", "respond to safety incidents"]
+        },
+        {
+          "id": "unpredictability_and_safety",
+          "label_en": "Unpredictability and safety",
+          "candidate_terms_en": ["on-call rotation required", "respond to emergencies as needed", "rotating shifts and changing schedules", "mandatory overtime may be required", "work in a high-risk environment", "travel to client sites on short notice", "on-call availability required", "work nights, weekends, and holidays", "unpredictable work schedule", "respond to urgent safety situations"]
+        }
+      ]
+    }
+  ]
+}

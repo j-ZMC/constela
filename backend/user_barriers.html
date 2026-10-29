@@ -1,0 +1,340 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#f5f7f4">
+  <title>Job Preferences | Astralis</title>
+  <style>
+    :root {
+      color-scheme: light;
+      --ink: #202d2b;
+      --muted: #667572;
+      --line: #dfe6e1;
+      --paper: #fff;
+      --wash: #f5f7f4;
+      --green: #216b58;
+      --green-dark: #174f42;
+      --green-soft: #e8f3ee;
+      --coral: #c66b50;
+      --shadow: 0 18px 48px rgba(31, 58, 50, .08);
+      font-family: Inter, ui-sans-serif, system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+    }
+    * { box-sizing: border-box; }
+    body { margin: 0; background: var(--wash); color: var(--ink); }
+    button, input { font: inherit; }
+    button { cursor: pointer; }
+    .topbar { border-bottom: 1px solid var(--line); background: rgba(255,255,255,.86); }
+    .topbar-inner { max-width: 1180px; min-height: 68px; margin: auto; padding: 0 28px; display: flex; align-items: center; justify-content: space-between; }
+    .brand { display: flex; align-items: center; gap: 10px; font-weight: 750; letter-spacing: -.03em; }
+    .brand-mark { width: 30px; height: 30px; display: grid; place-items: center; border-radius: 10px; color: white; background: var(--green); font-size: 17px; }
+    .top-note { color: var(--muted); font-size: 13px; }
+    main { max-width: 1180px; margin: 0 auto; padding: 44px 28px 72px; }
+    .intro { max-width: 760px; margin-bottom: 28px; }
+    .eyebrow { color: var(--green); font-size: 12px; font-weight: 750; letter-spacing: .12em; text-transform: uppercase; }
+    h1 { margin: 10px 0 12px; font-family: Georgia, "Times New Roman", serif; font-size: clamp(34px, 5vw, 51px); font-weight: 500; letter-spacing: -.045em; line-height: 1.07; }
+    .intro-copy { max-width: 680px; color: var(--muted); font-size: 16px; line-height: 1.65; }
+    .notice { margin-top: 20px; padding: 14px 16px; display: flex; gap: 12px; border: 1px solid #d7e7de; border-radius: 13px; background: var(--green-soft); color: #33584d; font-size: 13px; line-height: 1.55; }
+    .notice-icon { flex: 0 0 22px; width: 22px; height: 22px; display: grid; place-items: center; border-radius: 50%; background: #d5e9df; color: var(--green-dark); font-weight: 800; }
+    .notice strong { color: #244c40; }
+    .layout { display: grid; grid-template-columns: minmax(0, 1fr) 300px; align-items: start; gap: 24px; }
+    .catalog-panel, .summary { border: 1px solid var(--line); border-radius: 18px; background: var(--paper); box-shadow: var(--shadow); }
+    .catalog-panel { overflow: hidden; }
+    .panel-head { padding: 21px 22px 18px; border-bottom: 1px solid var(--line); }
+    .panel-title-row { display: flex; align-items: baseline; justify-content: space-between; gap: 12px; }
+    h2 { margin: 0; font-size: 17px; letter-spacing: -.02em; }
+    .subtype-total { color: var(--muted); font-size: 12px; }
+    .search-wrap { position: relative; margin-top: 16px; }
+    .search-icon { position: absolute; left: 13px; top: 50%; transform: translateY(-50%); color: #71807b; font-size: 17px; pointer-events: none; }
+    .search { width: 100%; min-height: 44px; padding: 10px 13px 10px 39px; border: 1px solid #d5dfd9; border-radius: 10px; outline: none; background: #fbfcfb; color: var(--ink); }
+    .search:focus { border-color: var(--green); box-shadow: 0 0 0 3px rgba(33,107,88,.12); }
+    .catalog-hint { margin: 11px 0 0; color: var(--muted); font-size: 12px; }
+    .category-list { padding: 13px; display: grid; gap: 10px; }
+    .category { border: 1px solid var(--line); border-radius: 13px; overflow: hidden; }
+    .category[hidden] { display: none; }
+    .category summary { min-height: 58px; padding: 14px 15px; display: flex; align-items: center; justify-content: space-between; gap: 12px; list-style: none; cursor: pointer; }
+    .category summary::-webkit-details-marker { display: none; }
+    .category summary::after { content: "+"; width: 24px; height: 24px; display: grid; place-items: center; border-radius: 50%; background: #f0f4f1; color: var(--green); font-size: 17px; font-weight: 600; }
+    .category[open] summary::after { content: "−"; }
+    .category-name { font-size: 14px; font-weight: 720; }
+    .category-count { margin-left: auto; color: var(--muted); font-size: 11px; white-space: nowrap; }
+    .choices { padding: 0 12px 12px; display: grid; gap: 8px; }
+    .choice { position: relative; min-height: 64px; padding: 12px 13px; display: grid; grid-template-columns: 19px minmax(0,1fr); align-items: start; gap: 11px; border: 1px solid #e5ebe7; border-radius: 10px; background: #fff; cursor: pointer; transition: border-color .15s, background .15s; }
+    .choice:hover { border-color: #9ec5b4; background: #fbfdfb; }
+    .choice:has(input:checked) { border-color: #75ac95; background: #f0f7f3; }
+    .choice input { width: 17px; height: 17px; margin: 2px 0 0; accent-color: var(--green); }
+    .choice-copy { min-width: 0; }
+    .choice-title { display: block; font-size: 13px; font-weight: 650; line-height: 1.4; }
+    .choice-original { display: block; margin-top: 3px; color: var(--muted); font-size: 11px; line-height: 1.4; }
+    .terms { margin: 7px 0 0; padding: 0; display: flex; flex-wrap: wrap; gap: 5px; list-style: none; }
+    .terms li { padding: 3px 7px; border-radius: 5px; background: #f0f3f1; color: #586762; font-size: 10px; }
+    .terms-toggle { display: inline-block; margin-top: 7px; padding: 0; border: 0; background: transparent; color: var(--green); font-size: 11px; font-weight: 650; text-align: left; }
+    .no-results { padding: 28px 16px; color: var(--muted); font-size: 14px; text-align: center; }
+    .no-results[hidden] { display: none; }
+    .summary { position: sticky; top: 18px; padding: 21px; }
+    .summary-kicker { margin: 0 0 7px; color: var(--green); font-size: 11px; font-weight: 750; letter-spacing: .1em; text-transform: uppercase; }
+    .summary h2 { font-size: 18px; }
+    .summary-copy { margin: 8px 0 16px; color: var(--muted); font-size: 12px; line-height: 1.55; }
+    .selection-count { padding: 13px 14px; display: flex; align-items: baseline; justify-content: space-between; border-radius: 11px; background: #f2f6f3; }
+    .selection-count strong { color: var(--green-dark); font-size: 24px; letter-spacing: -.04em; }
+    .selection-count span { color: var(--muted); font-size: 11px; }
+    .selected-list { max-height: 200px; margin: 13px 0 17px; padding: 0; overflow: auto; list-style: none; }
+    .selected-list li { padding: 8px 0; display: flex; align-items: start; justify-content: space-between; gap: 8px; border-bottom: 1px solid #edf0ee; font-size: 12px; line-height: 1.4; }
+    .selected-list .empty { color: var(--muted); border: 0; }
+    .remove { flex: 0 0 auto; width: 22px; height: 22px; padding: 0; border: 0; border-radius: 6px; background: transparent; color: #71807b; font-size: 16px; }
+    .remove:hover { background: #f1e9e6; color: #8e4936; }
+    .primary, .secondary { width: 100%; min-height: 43px; border-radius: 9px; font-size: 13px; font-weight: 700; }
+    .primary { border: 1px solid var(--green); background: var(--green); color: white; }
+    .primary:hover { background: var(--green-dark); }
+    .secondary { margin-top: 8px; border: 1px solid #d9e2dc; background: white; color: var(--green-dark); }
+    .secondary:hover { background: #f6f9f7; }
+    .payload { margin: 12px 0 0; padding: 12px; overflow: auto; border-radius: 9px; background: #172b26; color: #d5f1e3; font: 11px/1.55 ui-monospace, SFMono-Regular, Consolas, monospace; white-space: pre-wrap; overflow-wrap: anywhere; }
+    .payload[hidden] { display: none; }
+    .status { min-height: 18px; margin: 8px 0 0; color: var(--green-dark); font-size: 11px; line-height: 1.4; }
+    .privacy-note { margin: 14px 0 0; padding-top: 12px; border-top: 1px solid var(--line); color: var(--muted); font-size: 11px; line-height: 1.55; }
+    .classification { max-width: 760px; margin: 20px 0 0; color: var(--muted); font-size: 11px; line-height: 1.6; }
+    .loading, .load-error { padding: 30px; color: var(--muted); font-size: 14px; line-height: 1.6; }
+    .load-error { color: #8e4936; }
+    .visually-hidden { position: absolute; width: 1px; height: 1px; padding: 0; margin: -1px; overflow: hidden; clip: rect(0,0,0,0); white-space: nowrap; border: 0; }
+    @media (max-width: 820px) {
+      main { padding: 32px 18px 52px; }
+      .topbar-inner { padding: 0 18px; }
+      .layout { grid-template-columns: 1fr; }
+      .summary { position: static; grid-row: 1; }
+      .selected-list { max-height: 135px; }
+    }
+    @media (max-width: 500px) {
+      .top-note { display: none; }
+      .panel-head { padding: 17px 16px 15px; }
+      .category-list { padding: 9px; }
+      .category-count { display: none; }
+      .summary { padding: 17px; }
+      .intro-copy { font-size: 14px; }
+    }
+    @media (prefers-reduced-motion: reduce) { *, *::before, *::after { scroll-behavior: auto !important; transition: none !important; } }
+  </style>
+</head>
+<body>
+  <header class="topbar">
+    <div class="topbar-inner">
+      <div class="brand"><span class="brand-mark" aria-hidden="true">a</span><span>Astralis</span></div>
+      <span class="top-note">Preferences for finding a workplace that fits you</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="page-title">
+      <div class="eyebrow">Your profile · Step 1 of 1</div>
+      <h1 id="page-title">Which workplace conditions would you like us to flag?</h1>
+      <p class="intro-copy">Choose the job conditions you would like the search to review. Select multiple subtypes across categories, or skip them all. These preferences are personal to you.</p>
+      <aside class="notice" aria-label="About this form">
+        <span class="notice-icon" aria-hidden="true">i</span>
+        <span><strong>This is not a diagnostic questionnaire.</strong> You do not need a diagnosis or to select an entire category. Choose only the workplace situations you want the filter to review. A match is a signal to review a job, not an automatic decision about whether it is right for you.</span>
+      </aside>
+    </section>
+
+    <div class="layout">
+      <section class="catalog-panel" aria-labelledby="catalog-heading">
+        <div class="panel-head">
+          <div class="panel-title-row">
+            <h2 id="catalog-heading">Select one or more job conditions</h2>
+            <span class="subtype-total" id="catalog-total"></span>
+          </div>
+          <label class="search-wrap">
+            <span class="search-icon" aria-hidden="true">⌕</span>
+            <span class="visually-hidden">Search job conditions</span>
+            <input class="search" id="barrier-search" type="search" placeholder="Search categories or job conditions…" autocomplete="off">
+          </label>
+          <p class="catalog-hint">Open a category to view its subtypes and examples of wording from job postings. The filter compares meaning; those exact words do not have to appear.</p>
+        </div>
+        <div id="catalog-content" class="loading" role="status" aria-live="polite">Loading options…</div>
+      </section>
+
+      <aside class="summary" aria-labelledby="summary-heading">
+        <p class="summary-kicker">Your selection</p>
+        <h2 id="summary-heading">Profile preferences</h2>
+        <p class="summary-copy">Selected options become this user's blockers. You can change them at any time.</p>
+        <div class="selection-count"><strong id="selected-count">0</strong><span>subtypes selected</span></div>
+        <ul class="selected-list" id="selected-list" aria-live="polite"><li class="empty">You have not selected any conditions yet.</li></ul>
+        <button class="primary" id="apply-selection" type="button">Prepare selection</button>
+        <button class="secondary" id="clear-selection" type="button">Clear selection</button>
+        <pre class="payload" id="payload" aria-label="Data to connect to the backend" hidden></pre>
+        <p class="status" id="status" role="status" aria-live="polite"></p>
+        <p class="privacy-note">This demo does not save or send your choices. Preparing the selection displays the array the backend can associate with the user's account.</p>
+      </aside>
+    </div>
+
+    <p class="classification">The catalog groups categories that are described differently under the term “neurodivergence.” Some sources include neurodevelopmental and learning differences, while sensory preferences, giftedness, and trauma-related conditions have a different status. They are presented here as personal workplace preferences, not as equivalent diagnoses.</p>
+  </main>
+
+  <script>
+    (() => {
+      const selected = new Map();
+      const content = document.getElementById("catalog-content");
+      const search = document.getElementById("barrier-search");
+      const selectedList = document.getElementById("selected-list");
+      const payload = document.getElementById("payload");
+      const status = document.getElementById("status");
+      let catalog = [];
+
+      const text = (tag, value, className) => {
+        const node = document.createElement(tag);
+        node.textContent = value;
+        if (className) node.className = className;
+        return node;
+      };
+      const keyFor = (category, subtype) => `${category.id}:${subtype.id}`;
+      const categoryName = category => category.name_en || category.id;
+      const subtypeName = subtype => subtype.label_en || subtype.id;
+
+      function renderCatalog() {
+        content.className = "category-list";
+        content.replaceChildren();
+        let total = 0;
+        for (const category of catalog) {
+          const details = document.createElement("details");
+          details.className = "category";
+          details.dataset.category = categoryName(category).toLocaleLowerCase("en");
+          const summary = document.createElement("summary");
+          summary.append(text("span", categoryName(category), "category-name"));
+          const count = category.subtypes?.length || 0;
+          total += count;
+          summary.append(text("span", `${count} ${count === 1 ? "option" : "options"}`, "category-count"));
+          details.append(summary);
+          const choices = document.createElement("div");
+          choices.className = "choices";
+
+          for (const subtype of category.subtypes || []) {
+            const id = keyFor(category, subtype);
+            const label = document.createElement("label");
+            label.className = "choice";
+            label.dataset.search = `${categoryName(category)} ${subtypeName(subtype)} ${(subtype.candidate_terms_en || []).join(" ")}`.toLocaleLowerCase("en");
+            const checkbox = document.createElement("input");
+            checkbox.type = "checkbox";
+            checkbox.value = id;
+            checkbox.checked = selected.has(id);
+            checkbox.setAttribute("aria-label", `${categoryName(category)}: ${subtypeName(subtype)}`);
+            checkbox.addEventListener("change", () => {
+              if (checkbox.checked) selected.set(id, { id, category: categoryName(category), label: subtypeName(subtype) });
+              else selected.delete(id);
+              payload.hidden = true;
+              status.textContent = "";
+              renderSelection();
+            });
+            const copy = document.createElement("span");
+            copy.className = "choice-copy";
+            copy.append(text("span", subtypeName(subtype), "choice-title"));
+            const termsToggle = document.createElement("button");
+            termsToggle.type = "button";
+            termsToggle.className = "terms-toggle";
+            termsToggle.textContent = "Show job-posting examples";
+            termsToggle.setAttribute("aria-expanded", "false");
+            const terms = document.createElement("ul");
+            terms.className = "terms";
+            terms.hidden = true;
+            for (const term of (subtype.candidate_terms_en || [])) terms.append(text("li", term));
+            termsToggle.addEventListener("click", event => {
+              event.preventDefault();
+              event.stopPropagation();
+              terms.hidden = !terms.hidden;
+              termsToggle.setAttribute("aria-expanded", String(!terms.hidden));
+              termsToggle.textContent = terms.hidden ? "Show job-posting examples" : "Hide examples";
+            });
+            copy.append(termsToggle, terms);
+            label.append(checkbox, copy);
+            choices.append(label);
+          }
+          details.append(choices);
+          content.append(details);
+        }
+        document.getElementById("catalog-total").textContent = `${total} subtypes · ${catalog.length} categories`;
+        content.append(text("p", "No matching options. Try another search term.", "no-results"));
+        applySearch();
+      }
+
+      function renderSelection() {
+        document.getElementById("selected-count").textContent = String(selected.size);
+        selectedList.replaceChildren();
+        if (!selected.size) {
+          selectedList.append(text("li", "You have not selected any conditions yet.", "empty"));
+          return;
+        }
+        for (const item of selected.values()) {
+          const li = document.createElement("li");
+          const name = text("span", `${item.category}: ${item.label}`);
+          const remove = text("button", "×", "remove");
+          remove.type = "button";
+          remove.setAttribute("aria-label", `Remove ${item.label}`);
+          remove.addEventListener("click", () => {
+            selected.delete(item.id);
+            const checkbox = [...document.querySelectorAll(".choice input")].find(input => input.value === item.id);
+            if (checkbox) checkbox.checked = false;
+            payload.hidden = true;
+            status.textContent = "";
+            renderSelection();
+          });
+          li.append(name, remove);
+          selectedList.append(li);
+        }
+      }
+
+      function applySearch() {
+        const query = search.value.trim().toLocaleLowerCase("en");
+        let matches = 0;
+        for (const category of content.querySelectorAll(".category")) {
+          let categoryMatches = 0;
+          for (const choice of category.querySelectorAll(".choice")) {
+            const show = !query || choice.dataset.search.includes(query);
+            choice.hidden = !show;
+            if (show) categoryMatches++;
+          }
+          const categoryMatch = !query || category.dataset.category.includes(query);
+          category.hidden = categoryMatches === 0 && !categoryMatch;
+          if (query && categoryMatch) {
+            for (const choice of category.querySelectorAll(".choice")) choice.hidden = false;
+            categoryMatches = category.querySelectorAll(".choice").length;
+          }
+          if (categoryMatches) matches += categoryMatches;
+          if (query && !category.hidden && categoryMatches) category.open = true;
+        }
+        const noResults = content.querySelector(".no-results");
+        if (noResults) noResults.hidden = !query || matches > 0;
+      }
+
+      async function loadCatalog() {
+        try {
+          const response = await fetch("./config/neurodivergence_job_barriers.json", { headers: { Accept: "application/json" } });
+          if (!response.ok) throw new Error(`HTTP ${response.status}`);
+          const data = await response.json();
+          if (!Array.isArray(data.categories)) throw new Error("The file does not contain a categories array.");
+          catalog = data.categories;
+          renderCatalog();
+          renderSelection();
+        } catch (error) {
+          content.className = "load-error";
+          content.textContent = location.protocol === "file:"
+            ? "To load the options, serve the project folder with a local web server and open user_barriers.html. The browser blocks JSON requests when this page is opened directly as a file."
+            : `Could not load config/neurodivergence_job_barriers.json (${error.message}). Open this page from the project root and check that the file exists.`;
+        }
+      }
+
+      search.addEventListener("input", applySearch);
+      document.getElementById("clear-selection").addEventListener("click", () => {
+        selected.clear();
+        for (const input of document.querySelectorAll(".choice input")) input.checked = false;
+        payload.hidden = true;
+        status.textContent = "Selection cleared.";
+        renderSelection();
+      });
+      document.getElementById("apply-selection").addEventListener("click", () => {
+        const result = { user_blockers: [...selected.keys()] };
+        payload.textContent = JSON.stringify(result, null, 2);
+        payload.hidden = false;
+        status.textContent = "Selection ready to connect to the user's profile.";
+        window.dispatchEvent(new CustomEvent("barriers-selected", { detail: result }));
+      });
+      loadCatalog();
+    })();
+  </script>
+</body>
+</html>

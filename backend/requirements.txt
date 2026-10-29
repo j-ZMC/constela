@@ -1,0 +1,9 @@
+faiss-gpu
+huggingface-hub
+ipykernel
+jupyter
+numpy
+openai>=1.0.0
+pandas
+sentence-transformers
+torch
