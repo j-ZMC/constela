@@ -71,8 +71,12 @@ export function stageOf(plan: Plan): Stage {
 function checker(plan: Plan, since?: string): Check {
   const after = (at?: string) => !since || (at !== undefined && at >= since);
   return {
-    // A step marked done without a date (the profile step syncs that way) only counts for plans that predate the path.
-    done: (key) => plan.steps.some((s) => s.done && stepKey(s.id) === key && (since ? after(s.doneAt) : true)),
+    // A kind counts once it was done since the stage opened and no copy of it is still waiting. That way a step
+    // broken down into smaller ones (which share its kind) only counts when the last small step is done.
+    done: (key) => {
+      const same = plan.steps.filter((s) => stepKey(s.id) === key);
+      return same.some((s) => s.done && (since ? after(s.doneAt) : true)) && !same.some((s) => !s.done);
+    },
     happened: (e) => (plan.events ?? []).some((x) => x.type === e && after(x.at)),
   };
 }

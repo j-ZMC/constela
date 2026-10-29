@@ -68,12 +68,12 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-path.md](../../SPEC-path.md)
 **Description:** Show "Stage N of 5: Name" above the constellation, the weekly goal line under it, and only the current stage's steps in the constellation. When a stage completes, its constellation lights fully (Reduce motion respected), then "Next: <stage>" with one button. "Your path" opens a dialog with the five stages as small constellations and lets the person go back a stage.
 
 **Acceptance criteria:**
-- [ ] The header always names the stage and next step; no empty screen while a stage is open
-- [ ] Stage complete and going back work by keyboard and screen reader (focus and announcements)
-- [ ] 44 px targets; no red, streaks or guilt copy
+- [x] The header always names the stage and next step; no empty screen while a stage is open
+- [x] Stage complete and going back work by keyboard and screen reader (focus and announcements)
+- [x] 44 px targets; no red, streaks or guilt copy
 
 **Verification:**
-- [ ] Manual check at 375 px and desktop, keyboard only, with Reduce motion on
+- [x] Manual check at 375 px and desktop, keyboard only, with Reduce motion on
 
 **Dependencies:** Tasks 1 to 3
 

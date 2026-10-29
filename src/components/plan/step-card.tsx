@@ -15,6 +15,7 @@ import {
   type LucideIcon,
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
+import { Constellation } from "@/components/profile/constellation";
 import { completesItself, type PlanStep, type StepIcon } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
@@ -184,6 +185,24 @@ export function Pause({
           Stop for today
         </Button>
       </div>
+    </section>
+  );
+}
+
+// The end of a stage: its constellation fully lit, then the next stage in one tap.
+export function StageDone({ finished, next, stars, onContinue }: { finished: string; next: string; stars: number; onContinue: () => void }) {
+  const heading = useRef<HTMLHeadingElement>(null);
+  useEffect(() => heading.current?.focus(), []);
+  return (
+    <section className="flex flex-col gap-4 rounded-2xl border border-primary/15 bg-card p-5 shadow-[0_10px_30px_-14px_rgb(36_59_83/0.35)] sm:p-7">
+      <h2 ref={heading} tabIndex={-1} className="text-2xl font-semibold outline-none">
+        You finished {finished}
+      </h2>
+      <Constellation lit={Array(stars).fill(true)} label={`${finished}: every star is lit`} glow={stars - 1} />
+      <p className="text-pretty text-muted-foreground">Next stage: {next}. Its first step is ready when you are.</p>
+      <Button className={`${action} w-fit`} onClick={onContinue}>
+        See my next step
+      </Button>
     </section>
   );
 }
