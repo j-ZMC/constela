@@ -13,6 +13,16 @@ export function gentleTone(energy?: Energy): boolean {
   return energy === "low" || energy === "stressed";
 }
 
+// The job search path (SPEC-path.md). Follow up loops back to Look for jobs.
+export const STAGES = ["ready", "search", "apply", "interview", "follow-up"] as const;
+export type Stage = (typeof STAGES)[number];
+
+// Things other modules report, which can complete a stage ("Save one job" also counts when Jobs says so).
+export const PLAN_EVENTS = ["job-saved", "application-sent", "practice-done"] as const;
+export type PlanEvent = (typeof PLAN_EVENTS)[number];
+
+const SOURCES = ["starter", "path", "module", "habit", "user", "ai"] as const;
+
 export type PlanStep = {
   id: string;
   title: string;
@@ -21,22 +31,40 @@ export type PlanStep = {
   href?: string;
   done: boolean;
   doneAt?: string;
-  source: "starter" | "user" | "ai";
+  source: (typeof SOURCES)[number];
+  // Missing on steps that belong to no stage (the person's own, AI, habits).
+  stage?: Stage;
 };
 
 // checkInSkipped: the local date the person skipped the check-in, so it stays hidden that day.
-export type Plan = { version: 1; steps: PlanStep[]; energy?: { level: Energy; date: string }; checkInSkipped?: string };
+// The path fields are optional, so plans saved before the path existed load unchanged (src/lib/path.ts fills them in).
+export type Plan = {
+  version: 1;
+  steps: PlanStep[];
+  energy?: { level: Energy; date: string };
+  checkInSkipped?: string;
+  stage?: Stage;
+  stageOpenedAt?: string; // ISO time; missing means "count everything", for plans that predate the path
+  events?: { type: PlanEvent; at: string }[];
+  weekGoal?: { stage: Stage; week: string }; // week as YYYY-Www
+  lastHabit?: string; // local date a habit step was last added
+};
 
-export type NewStep = { title: string; minutes: number; icon?: StepIcon; href?: string };
+export type NewStep = { title: string; minutes: number; icon?: StepIcon; href?: string; stage?: Stage };
 
 export const STARTER_STEPS: readonly Omit<PlanStep, "done" | "source">[] = [
-  { id: "starter-profile", title: "Finish your profile", minutes: 3, icon: "user", href: "/profile" },
-  { id: "starter-jobs", title: "Look at 3 jobs picked for you", minutes: 10, icon: "briefcase", href: "/jobs" },
-  { id: "starter-save", title: "Save one job you like", minutes: 2, icon: "bookmark", href: "/jobs" },
-  { id: "starter-company", title: "Read “Get to know the company” for that job", minutes: 5, icon: "building", href: "/jobs" },
-  { id: "starter-practice", title: "Practice one interview question", minutes: 5, icon: "message", href: "/interview" },
-  { id: "starter-expect", title: "Read “What to expect” for an interview", minutes: 5, icon: "calendar", href: "/interview" },
+  { id: "starter-profile", title: "Finish your profile", minutes: 3, icon: "user", href: "/profile", stage: "ready" },
+  { id: "starter-jobs", title: "Look at 3 jobs picked for you", minutes: 10, icon: "briefcase", href: "/jobs", stage: "search" },
+  { id: "starter-save", title: "Save one job you like", minutes: 2, icon: "bookmark", href: "/jobs", stage: "search" },
+  { id: "starter-company", title: "Read “Get to know the company” for that job", minutes: 5, icon: "building", href: "/jobs", stage: "apply" },
+  { id: "starter-practice", title: "Practice one interview question", minutes: 5, icon: "message", href: "/interview", stage: "interview" },
+  { id: "starter-expect", title: "Read “What to expect” for an interview", minutes: 5, icon: "calendar", href: "/interview", stage: "interview" },
 ];
+
+// A step's kind without its per-cycle suffix: "starter-jobs:ab12" is another round of "starter-jobs".
+export function stepKey(id: string): string {
+  return id.split(":")[0];
+}
 
 const PROFILE_STEP = "starter-profile";
 // Starter steps that only make sense after another one ("that job" needs a saved job).
@@ -52,7 +80,7 @@ export function starterPlan(): Plan {
 
 // Steps the app marks done by itself, so the person gets no Done button for them.
 export function completesItself(id: string): boolean {
-  return id === PROFILE_STEP;
+  return stepKey(id) === PROFILE_STEP;
 }
 
 // The profile step reflects reality: done once a profile exists.
@@ -60,14 +88,14 @@ export function syncWithProfile(plan: Plan, hasProfile: boolean): Plan {
   if (!hasProfile) return plan;
   return {
     ...plan,
-    steps: plan.steps.map((s) => (s.id === PROFILE_STEP && !s.done ? { ...s, done: true } : s)),
+    steps: plan.steps.map((s) => (completesItself(s.id) && !s.done ? { ...s, done: true, doneAt: new Date().toISOString() } : s)),
   };
 }
 
 export function visibleSteps(plan: Plan, a: Adaptations, energy?: Energy): PlanStep[] {
   const todo = plan.steps.filter((s) => !s.done);
   // Low energy and stress pick a smaller step, but never one whose prerequisite is still waiting.
-  const ready = todo.filter((s) => !todo.some((t) => t.id === NEEDS[s.id]));
+  const ready = todo.filter((s) => !todo.some((t) => stepKey(t.id) === NEEDS[stepKey(s.id)]));
   if (energy === "low") {
     const short = ready.find((s) => s.minutes <= SHORT_STEP) ?? todo[0];
     return short ? [short] : [];
@@ -103,7 +131,7 @@ export function setEnergy(plan: Plan, level: Energy | null, now: Date): Plan {
 
 // "Change": forget today's answer so the check-in shows again.
 export function resetCheckIn(plan: Plan): Plan {
-  return { version: plan.version, steps: plan.steps };
+  return { ...plan, energy: undefined, checkInSkipped: undefined };
 }
 
 export function completeStep(plan: Plan, id: string, now: Date): Plan {
@@ -128,6 +156,7 @@ export function addSteps(plan: Plan, steps: NewStep[], source: PlanStep["source"
     minutes: Math.min(MAX_MINUTES, Math.max(1, Math.round(s.minutes))),
     icon: s.icon ?? "list",
     ...(s.href ? { href: s.href } : {}),
+    ...(s.stage ? { stage: s.stage } : {}),
     done: false,
     source,
   }));
@@ -158,7 +187,8 @@ function validStep(raw: unknown): raw is PlanStep {
     (s.href === undefined || (typeof s.href === "string" && s.href.startsWith("/") && !s.href.startsWith("//"))) &&
     typeof s.done === "boolean" &&
     (s.doneAt === undefined || typeof s.doneAt === "string") &&
-    (s.source === "starter" || s.source === "user" || s.source === "ai")
+    (SOURCES as readonly unknown[]).includes(s.source) &&
+    (s.stage === undefined || (STAGES as readonly unknown[]).includes(s.stage))
   );
 }
 
@@ -179,6 +209,18 @@ export function loadPlan(): Plan {
     const plan: Plan = { version: 1, steps: data.steps.filter(validStep) };
     if (validEnergy(data.energy)) plan.energy = data.energy;
     if (typeof data.checkInSkipped === "string" && DATE.test(data.checkInSkipped)) plan.checkInSkipped = data.checkInSkipped;
+    if ((STAGES as readonly unknown[]).includes(data.stage)) plan.stage = data.stage;
+    if (typeof data.stageOpenedAt === "string" && !Number.isNaN(Date.parse(data.stageOpenedAt))) plan.stageOpenedAt = data.stageOpenedAt;
+    if (Array.isArray(data.events)) {
+      plan.events = data.events.filter(
+        (e: unknown) =>
+          typeof e === "object" && e !== null && (PLAN_EVENTS as readonly unknown[]).includes((e as { type: unknown }).type) &&
+          typeof (e as { at: unknown }).at === "string",
+      );
+    }
+    const g = data.weekGoal;
+    if (g && (STAGES as readonly unknown[]).includes(g.stage) && typeof g.week === "string" && /^\d{4}-W\d{2}$/.test(g.week)) plan.weekGoal = { stage: g.stage, week: g.week };
+    if (typeof data.lastHabit === "string" && DATE.test(data.lastHabit)) plan.lastHabit = data.lastHabit;
     return plan;
   } catch {
     return starterPlan();

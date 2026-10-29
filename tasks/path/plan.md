@@ -26,12 +26,12 @@ My plan stops ending after 6 fixed steps. The plan gets a current stage (Get rea
 ## Task List
 
 ### Phase 1: Model and rules
-- [ ] Task 1: Stages, stage steps, migration of old plans and stage progression (with tests)
-- [ ] Task 2: Today's steps: fill from the stage, module steps first, habits, carry-over (with tests)
-- [ ] Task 3: Weekly goal (with tests)
+- [x] Task 1: Stages, stage steps, migration of old plans and stage progression (with tests)
+- [x] Task 2: Today's steps: fill from the stage, module steps first, habits, carry-over (with tests)
+- [x] Task 3: Weekly goal (with tests)
 
 ### Checkpoint A
-- [ ] Tests, lint, types and build pass; an old saved plan loads with no lost steps
+- [x] Tests, lint, types and build pass; an old saved plan loads with no lost steps
 
 ### Phase 2: Screen and modules
 - [ ] Task 4: My plan header: stage name, weekly goal, current stage constellation, stage-complete moment, "Your path" and going back

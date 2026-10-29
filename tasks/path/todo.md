@@ -9,12 +9,12 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-path.md](../../SPEC-path.md)
 **Description:** Create `src/lib/path.ts` with the five stages, each stage's step list and "done when" rule, and `stageOf(plan)`, `advance(plan, now)`, `goBack(plan, stage)`. Add optional `stage` and `events` to `Plan`, optional `stage` to `PlanStep`, and validate them in `loadPlan()`. Old plans load as "Get ready" with starter steps mapped to their stage by id.
 
 **Acceptance criteria:**
-- [ ] A plan saved by today's app loads unchanged, with every starter step given a stage
-- [ ] When a stage's rule is met, `advance` opens the next stage and adds its steps once
-- [ ] Follow up loops to Look for jobs; going back never removes done steps
+- [x] A plan saved by today's app loads unchanged, with every starter step given a stage
+- [x] When a stage's rule is met, `advance` opens the next stage and adds its steps once
+- [x] Follow up loops to Look for jobs; going back never removes done steps
 
 **Verification:**
-- [ ] Tests pass: `npm test`; types pass: `npx tsc --noEmit`
+- [x] Tests pass: `npm test`; types pass: `npx tsc --noEmit`
 
 **Dependencies:** None
 
@@ -27,12 +27,12 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-path.md](../../SPEC-path.md)
 **Description:** `fillToday(plan, now)` makes sure the current stage has a next step ready, puts module-event steps first, and adds a due habit ("Look at new jobs", twice a week in stages 2 to 5) at most once, replacing an undone one. Undone steps carry over silently. `visibleSteps` keeps its rules (stepsAtOnce, energy, prerequisites).
 
 **Acceptance criteria:**
-- [ ] On any day while a stage is open, at least one step is shown
-- [ ] Habits never stack and never appear on non-due days
-- [ ] Module-event steps come before stage steps
+- [x] On any day while a stage is open, at least one step is shown
+- [x] Habits never stack and never appear on non-due days
+- [x] Module-event steps come before stage steps
 
 **Verification:**
-- [ ] Tests with fixed dates across a week
+- [x] Tests with fixed dates across a week
 
 **Dependencies:** Task 1
 
@@ -45,11 +45,11 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-path.md](../../SPEC-path.md)
 **Description:** `weekGoal(plan, now)` picks one small goal from the current stage for the ISO week (YYYY-Www), stores it in the plan, and reports progress from the plan's steps and events. A new week gets a new goal with no "missed" state.
 
 **Acceptance criteria:**
-- [ ] One goal per week, from the current stage
-- [ ] Progress counts only that week
+- [x] One goal per week, from the current stage
+- [x] Progress counts only that week
 
 **Verification:**
-- [ ] Tests across a week boundary
+- [x] Tests across a week boundary
 
 **Dependencies:** Task 1
 
@@ -58,8 +58,8 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-path.md](../../SPEC-path.md)
 **Estimated scope:** S
 
 ## Checkpoint A
-- [ ] `npm test`, `npm run lint`, `npx tsc --noEmit` and `npm run build` pass
-- [ ] An old saved plan loads with no lost steps
+- [x] `npm test`, `npm run lint`, `npx tsc --noEmit` and `npm run build` pass
+- [x] An old saved plan loads with no lost steps
 
 ## Phase 2: Screen and modules
 
