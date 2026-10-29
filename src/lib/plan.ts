@@ -235,7 +235,17 @@ export function savePlan(plan: Plan): void {
   }
 }
 
-// For teammates: add a step from another module, e.g. Jobs adding "Read the job at Acme".
+// For teammates: add a step from another module, e.g. Jobs adding "Read the job at Acme" to the Apply stage.
+// Module steps show first in My plan. A stage that is not one of STAGES is ignored, so the step still lands.
 export function addStepToPlan(step: NewStep): void {
-  savePlan(addSteps(loadPlan(), [step], "user"));
+  const stage = (STAGES as readonly unknown[]).includes(step.stage) ? step.stage : undefined;
+  savePlan(addSteps(loadPlan(), [{ ...step, stage }], "module"));
+}
+
+// For teammates: tell My plan that something happened, e.g. markEvent("job-saved") when a job is saved.
+// My plan moves the person to the next stage the next time it opens. Unknown events are ignored.
+export function markEvent(type: PlanEvent): void {
+  if (!(PLAN_EVENTS as readonly unknown[]).includes(type)) return;
+  const plan = loadPlan();
+  savePlan({ ...plan, events: [...(plan.events ?? []), { type, at: new Date().toISOString() }].slice(-50) });
 }

@@ -28,6 +28,9 @@ export function IntroActions() {
       <p role="status" className="text-sm text-muted-foreground">
         {note && "Accounts are coming soon. You can start now: your progress stays on this device."}
       </p>
+      <Link href="/privacy" className="w-fit text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+        How we keep your data private
+      </Link>
     </div>
   );
 }

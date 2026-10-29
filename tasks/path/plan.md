@@ -35,7 +35,7 @@ My plan stops ending after 6 fixed steps. The plan gets a current stage (Get rea
 
 ### Phase 2: Screen and modules
 - [x] Task 4: My plan header: stage name, weekly goal, current stage constellation, stage-complete moment, "Your path" and going back
-- [ ] Task 5: Module hook: `addStepToPlan` with `stage`, `markEvent`, short guide for Zahid and Evy
+- [x] Task 5: Module hook: `addStepToPlan` with `stage`, `markEvent`, short guide for Zahid and Evy
 
 ### Checkpoint: Complete
 - [ ] Every success criterion in SPEC-path.md is met

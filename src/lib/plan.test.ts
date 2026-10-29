@@ -6,6 +6,7 @@ import {
   gentleTone,
   addStepToPlan,
   addSteps,
+  markEvent,
   checkInDue,
   completeStep,
   localDate,
@@ -184,9 +185,17 @@ describe("loadPlan / savePlan", () => {
     expect(loadPlan().checkInSkipped).toBeUndefined();
   });
 
-  it("addStepToPlan saves a new step at the end", () => {
-    addStepToPlan({ title: "Read the job at Acme", minutes: 5, icon: "briefcase", href: "/jobs" });
-    expect(loadPlan().steps.at(-1)).toMatchObject({ title: "Read the job at Acme", href: "/jobs", source: "user" });
+  it("addStepToPlan saves a module step at the end, with its stage when the stage is valid", () => {
+    addStepToPlan({ title: "Read the job at Acme", minutes: 5, icon: "briefcase", href: "/jobs", stage: "apply" });
+    expect(loadPlan().steps.at(-1)).toMatchObject({ title: "Read the job at Acme", href: "/jobs", source: "module", stage: "apply" });
+    addStepToPlan({ title: "Call Acme", minutes: 5, stage: "nope" as never });
+    expect(loadPlan().steps.at(-1)?.stage).toBeUndefined();
+  });
+
+  it("markEvent records known events and ignores unknown ones", () => {
+    markEvent("job-saved");
+    markEvent("hacked" as never);
+    expect(loadPlan().events?.map((e) => e.type)).toEqual(["job-saved"]);
   });
 
   it("does not throw when storage is unavailable", () => {

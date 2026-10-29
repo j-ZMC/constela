@@ -3,6 +3,7 @@ import {
   DEFAULT_ADAPTATIONS,
   QUESTIONS,
   describeAdaptations,
+  toJobPreferences,
   loadProfile,
   loadStep,
   saveProfile,
@@ -186,5 +187,28 @@ describe("loadProfile / saveProfile", () => {
     });
     expect(loadProfile()).toBeNull();
     expect(() => saveProfile({ reading: "full" })).not.toThrow();
+  });
+});
+
+describe("toJobPreferences", () => {
+  it("turns answers into barrier subtypes and workplace choices, never categories", () => {
+    const prefs = toJobPreferences({ sensory: ["noise", "crowds"], longText: "hard", workplace: ["remote", "not-sure"] });
+    expect(prefs.barriers).toEqual(["sound", "sensory_load", "smell_touch_temperature_and_crowding", "high_reading_load", "time_pressure_for_text"]);
+    expect(prefs.workplace).toEqual(["remote"]);
+    expect(toJobPreferences({})).toEqual({ barriers: [], workplace: [] });
+  });
+
+  it("only uses subtype ids that exist in the job filter's barrier list", async () => {
+    const { readFileSync } = await import("node:fs");
+    const config = JSON.parse(readFileSync("backend/config/neurodivergence_job_barriers.json", "utf-8"));
+    const known = new Set(config.categories.flatMap((c: { subtypes: { id: string }[] }) => c.subtypes.map((s) => s.id)));
+    const all = toJobPreferences({
+      sensory: ["noise", "lights", "crowds", "textures", "smells"],
+      longText: "hard",
+      unclear: "stuck",
+      changes: "stressful",
+      startBlockers: ["distracted", "time"],
+    }).barriers;
+    expect(all.filter((id) => !known.has(id))).toEqual([]);
   });
 });

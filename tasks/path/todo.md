@@ -86,11 +86,11 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-path.md](../../SPEC-path.md)
 **Description:** `addStepToPlan(step)` accepts an optional `stage`; add `markEvent(type)` for "job-saved", "application-sent" and "practice-done". Add a short section to the README for Zahid and Evy with examples.
 
 **Acceptance criteria:**
-- [ ] A step added with a stage shows in that stage; an event can complete a stage
-- [ ] Invalid stages or events are ignored safely
+- [x] A step added with a stage shows in that stage; an event can complete a stage
+- [x] Invalid stages or events are ignored safely
 
 **Verification:**
-- [ ] Tests for both functions
+- [x] Tests for both functions
 
 **Dependencies:** Task 1
 

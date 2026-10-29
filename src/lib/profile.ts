@@ -149,6 +149,34 @@ export function toAdaptations(a: Answers): Adaptations {
 
 // Plain-language lines for the summary screen, most useful first. The summary shows the first few
 // up front and the rest on request, so no chosen adaptation is ever hidden.
+// For the job filter (backend/config/neurodivergence_job_barriers.json): the barrier subtypes this person's answers
+// point to. Only subtype ids, never the category they sit under: the profile asks about needs, not diagnoses.
+// A match is a signal to review a job, not a reason to hide it.
+export type JobPreferences = { barriers: string[]; workplace: string[] };
+
+const BARRIERS: Partial<Record<string, string[]>> = {
+  "sensory:noise": ["sound", "sensory_load"],
+  "sensory:lights": ["visual_and_light"],
+  "sensory:crowds": ["smell_touch_temperature_and_crowding"],
+  "sensory:textures": ["smell_touch_temperature_and_crowding"],
+  "sensory:smells": ["smell_touch_temperature_and_crowding"],
+  "longText:tiring": ["high_reading_load"],
+  "longText:hard": ["high_reading_load", "time_pressure_for_text"],
+  "unclear:guess": ["ambiguity_and_task_switching"],
+  "unclear:stuck": ["ambiguity_and_task_switching", "ambiguity_and_unpredictability"],
+  "changes:heads-up": ["uncertainty_and_last_minute_changes"],
+  "changes:stressful": ["uncertainty_and_last_minute_changes", "ambiguity_and_unpredictability"],
+  "startBlockers:distracted": ["distraction_and_interruptions"],
+  "startBlockers:time": ["time_pressure_and_rigidity"],
+};
+
+export function toJobPreferences(a: Answers): JobPreferences {
+  const picked = Object.entries(a).flatMap(([q, v]) => (Array.isArray(v) ? v : [v]).map((x) => `${q}:${x}`));
+  const barriers = [...new Set(picked.flatMap((k) => BARRIERS[k] ?? []))];
+  const workplace = (a.workplace ?? []).filter((w) => w !== "not-sure");
+  return { barriers, workplace };
+}
+
 export function describeAdaptations(a: Adaptations): string[] {
   const lines = [
     a.stepsAtOnce === 1 && "We'll show you one step at a time.",
