@@ -122,11 +122,22 @@ Known bugs already fixed (do NOT reintroduce):
   python filter_jobs_openai.py --query "remote data analyst"
   ```
 
-- `pretokenize_openai.py` creates job vectors and vectors for every selectable
-  barrier subtype in `config/neurodivergence_job_barriers.json`.
-  Job caches use `usa_full_backup_cleaned_openai_*` names so they do not mix
-  with embeddings for other job files. `--rebuild` recomputes the caches and
-  makes API requests.
+- `pretokenize_openai.py` creates job vectors, vectors for every selectable
+  barrier subtype in `config/neurodivergence_job_barriers.json`, and three
+  small work-modality prototypes (remote, on-site, hybrid). Job caches use
+  `usa_full_backup_cleaned_openai_*` names so they do not mix with embeddings
+  for other job files. Running it with the default settings reuses existing
+  job/barrier vectors and only creates missing or stale modality vectors;
+  `--rebuild` recomputes all caches and makes more API requests.
+- `filter_jobs_openai.py` embeds the submitted search phrase once, then compares
+  it with the cached modality prototypes. Clear remote/on-site/hybrid intent
+  filters results by the JSON modality field; hybrid also includes remote.
+  Unlabelled descriptions with remote similarity >= 0.50 are classified as
+  remote; on-site searches also retain unlabelled jobs below that threshold,
+  visibly marked as unspecified. If no modality intent is detected, search is
+  not modality-filtered. The current dataset has only 348 explicit remote
+  labels; the rest are unlabelled, so on-site results are not guaranteed to be
+  confirmed on-site jobs.
 - `filter_jobs_openai.py` treats the search-bar text as the similarity query
   and embeds it with one OpenAI API request per search. Quiz answers are passed
   as selected barrier IDs such as `autism_spectrum:sensory_load`; only those
@@ -141,6 +152,14 @@ Known bugs already fixed (do NOT reintroduce):
   `company_verification_status` (`qualified`, `not_qualified`, or `unknown`).
   By default, known non-qualified companies are excluded before results are
   returned; unmatched companies remain eligible as `unknown`.
+- The local Next.js app exposes this filter at `POST /api/jobs`. Keep
+  `OPENAI_API_KEY` in the repository-root `.env.local`; set `PYTHON_EXECUTABLE`
+  there to the Python interpreter with the backend requirements installed when
+  `python` does not select that environment.
+- The app reuses the precomputed job and barrier vectors on every search. Run
+  `pretokenize_openai.py` offline only after updating the job dataset or barrier
+  catalog; each submitted search embeds only its query once. The query is sent
+  to OpenAI, while selected `user_blockers` are passed only to the local filter.
 - `SIMILARITY_THRESHOLD` is a standard-deviation multiplier above the mean
   similarity (`2.0` by default): the cutoff is `mean + 2 * standard_deviation`.
   `BLOCKED_THRESHOLD` is currently `0.385`.

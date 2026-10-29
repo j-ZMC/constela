@@ -24,7 +24,7 @@ env/
 *.sqlite
 *.sqlite3
 *.db
-data/processed/
+
 *.ipynb_checkpoints/
 
 # Keep the OpenAI filter; ignore the legacy local-model filter.
