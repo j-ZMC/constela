@@ -27,7 +27,7 @@ export function AddStep({
   const [open, setOpen] = useState(value !== "");
   if (!open) {
     return (
-      <Button variant="ghost" className={`${action} w-fit text-muted-foreground`} onClick={() => setOpen(true)}>
+      <Button data-tour="add" variant="ghost" className={`${action} w-fit text-muted-foreground`} onClick={() => setOpen(true)}>
         <Plus aria-hidden />
         Add a step
       </Button>

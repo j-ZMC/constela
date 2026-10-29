@@ -2,13 +2,14 @@
 
 import { useState } from "react";
 import Link from "next/link";
-import { Check, ChevronRight } from "lucide-react";
+import { Check, ChevronRight, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
 import { AddStep } from "@/components/plan/add-step";
 import { BreakdownDialog } from "@/components/plan/breakdown-dialog";
 import { CheckInReply, EnergyCheckIn } from "@/components/plan/energy-check-in";
 import { PathDialog } from "@/components/plan/path-dialog";
+import { Tour, tourSeen, type TourStep } from "@/components/tour";
 import { AllDone, CurrentStep, Duration, ICONS, NextStep, Pause, Removed, Rest, StageDone } from "@/components/plan/step-card";
 import { StepDetails } from "@/components/plan/step-details";
 import {
@@ -38,6 +39,16 @@ import { STAGE_NAMES, STAGE_PREVIEW, STAGE_STEPS, activeSteps, fillToday, goBack
 import { loadProfile, toAdaptations } from "@/lib/profile";
 import { useHydrated } from "@/lib/use-hydrated";
 
+// The first-visit tour of My plan, one part at a time. Parts not on screen right now are skipped.
+const PLAN_TOUR: TourStep[] = [
+  { target: "step", title: "Your step for now", text: "Do one thing at a time. When you finish, press Done. If it feels big, press Break it down for me." },
+  { target: "stars", title: "Your stars", text: "Each star is a step of this stage. Done steps light up. Tap a star to see that step." },
+  { target: "path", title: "Your path", text: "The job search has 5 stages, from getting ready to your first reply. See them here, or go back to one." },
+  { target: "checkin", title: "How you feel today", text: "Tell us how you feel. On a low day you get smaller steps. It stays on this device." },
+  { target: "add", title: "Your own steps", text: "Add any task you have. We can break it into small steps with you." },
+  { target: "personalize", title: "Make it yours", text: "Change colors, text size, the font and motion whenever you want." },
+];
+
 // Every change goes through the path: move on if a stage is done, keep a step ready, add a due habit, set the week's goal.
 function throughPath(plan: Plan): Plan {
   const now = new Date();
@@ -59,6 +70,8 @@ function View() {
   // The stage just finished, shown as its own moment before the next stage's first step.
   const [stageDone, setStageDone] = useState<Stage | null>(null);
   const [pathOpen, setPathOpen] = useState(false);
+  // Shown once on the first visit; "How this works" brings it back anytime.
+  const [touring, setTouring] = useState(() => !tourSeen("plan"));
   const [announcement, setAnnouncement] = useState("");
   const [paused, setPaused] = useState(false);
   const [newTask, setNewTask] = useState("");
@@ -180,14 +193,21 @@ function View() {
       <header className="flex flex-col gap-2 sm:gap-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3">
           <h1 className="text-2xl font-bold sm:text-3xl">Today</h1>
-          <Button variant="ghost" className="h-11 px-3 text-base underline underline-offset-4" onClick={() => setPathOpen(true)}>
-            Your path
-          </Button>
+          <div className="flex items-center">
+            <Button variant="ghost" className="h-11 px-3 text-base" onClick={() => setTouring(true)} aria-label="How this works">
+              <CircleHelp aria-hidden className="size-5" />
+              <span className="max-sm:hidden">How this works</span>
+            </Button>
+            <Button data-tour="path" variant="ghost" className="h-11 px-3 text-base underline underline-offset-4" onClick={() => setPathOpen(true)}>
+              Your path
+            </Button>
+          </div>
         </div>
         <p className="font-medium">
           Stage {STAGES.indexOf(stage) + 1} of {STAGES.length}: {STAGE_NAMES[stage]}
         </p>
         {!stageDone && (
+        <div data-tour="stars">
         <Constellation
           lit={stars.map((s) => s.done)}
           names={stars.map((s) => s.title)}
@@ -196,6 +216,7 @@ function View() {
           glow={stars.findIndex((s) => s.id === justDone && s.done)}
           current={current ? stars.indexOf(current) : undefined}
         />
+        </div>
         )}
         {/* Progress and the week's goal share one block. One small goal a week: when it is met it says so; when the week
             ends unmet, a new week simply brings a new goal. */}
@@ -330,6 +351,10 @@ function View() {
         onBreakdown={(task) => setRequest({ id: crypto.randomUUID(), task })}
       />
       )}
+
+      {touring && <Tour name="plan" steps={PLAN_TOUR} onClose={() => setTouring(false)} />}
+      {/* Room under the last parts, so the tour can bring them above its panel. */}
+      {touring && <div aria-hidden className="h-[50vh]" />}
 
       {pathOpen && <PathDialog plan={plan} onBack={backTo} onClose={() => setPathOpen(false)} />}
 

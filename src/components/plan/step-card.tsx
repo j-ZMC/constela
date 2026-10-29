@@ -74,6 +74,7 @@ export function CurrentStep({
   return (
     // The one weighted surface on the page: everything else stays flat so this reads as "do this now".
     <article
+      data-tour="step"
       aria-labelledby={`step-${step.id}`}
       className="flex flex-col gap-5 rounded-2xl border border-primary/15 bg-card p-5 shadow-[0_10px_30px_-14px_rgb(36_59_83/0.35)] sm:p-7"
     >

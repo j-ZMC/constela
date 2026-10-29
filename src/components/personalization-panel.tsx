@@ -85,7 +85,7 @@ export function PersonalizationPanel() {
       const dys = document.documentElement.classList.contains("dyslexic");
       setP({ ...l, font: dys ? "dyslexic" : l.font === "dyslexic" ? "default" : l.font });
     }}>
-      <DialogTrigger render={<Button variant="outline" size="sm" />}>
+      <DialogTrigger render={<Button data-tour="personalize" variant="outline" size="sm" />}>
         <Palette aria-hidden data-pz-icon />
         <span data-pz-label>Personalize</span>
       </DialogTrigger>

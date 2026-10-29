@@ -24,7 +24,7 @@ export function EnergyCheckIn({ onChoose }: { onChoose: (level: Energy | null) =
   const [open, setOpen] = useState(false);
   if (!open) {
     return (
-      <Button variant="outline" className="h-11 w-fit rounded-full px-4 text-base" aria-expanded={false} onClick={() => setOpen(true)}>
+      <Button data-tour="checkin" variant="outline" className="h-11 w-fit rounded-full px-4 text-base" aria-expanded={false} onClick={() => setOpen(true)}>
         How are you feeling today?
       </Button>
     );
