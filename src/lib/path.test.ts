@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { activeSteps, advance, fillToday, goBack, isoWeek, markEventIn, stageComplete, stageOf, weekGoal } from "@/lib/path";
+import { STAGE_PREVIEW, activeSteps, advance, fillToday, goBack, isoWeek, markEventIn, stageComplete, stageOf, weekGoal } from "@/lib/path";
 import { completeStep, loadPlan, removeStep, starterPlan, stepKey, type Plan } from "@/lib/plan";
 
 // Thursday 29 October 2026, 10:00 local time
@@ -131,5 +131,15 @@ describe("weekly goal", () => {
     const nextWeek = weekGoal(same.plan, new Date(2026, 10, 3, 10));
     expect(nextWeek.text).toBe("This week: save 1 job");
     expect(nextWeek.met).toBe(false);
+  });
+});
+
+describe("stage previews", () => {
+  it("describe every stage in short, calm Easy Read", () => {
+    for (const text of Object.values(STAGE_PREVIEW)) {
+      expect(text.split(". ").length).toBeLessThanOrEqual(2);
+      expect(text).not.toMatch(/!/);
+    }
+    expect(Object.keys(STAGE_PREVIEW)).toHaveLength(5);
   });
 });

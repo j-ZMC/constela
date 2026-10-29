@@ -20,6 +20,16 @@ export const STAGE_NAMES: Record<Stage, string> = {
   "follow-up": "Follow up",
 };
 
+// What each stage asks for, in 1 or 2 Easy Read sentences: shown when a stage opens, and before it for people
+// who asked for a heads-up on changes.
+export const STAGE_PREVIEW: Record<Stage, string> = {
+  ready: "First you finish your profile, choose what you want in a job, and update your resume.",
+  search: "You look at a few jobs picked for you and save one you like. Nothing is sent to anyone yet.",
+  apply: "You read about the company, write 2 questions to ask, and send one application. You choose when to send it.",
+  interview: "You practice one question, read what an interview is like, and plan how to get there.",
+  "follow-up": "You send a short thank-you message and check your email for a reply. Waiting a few days is normal.",
+};
+
 type StepDef = Omit<PlanStep, "done" | "source" | "doneAt">;
 
 const starter = (id: string) => STARTER_STEPS.find((s) => s.id === id)!;

@@ -5,6 +5,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Textarea } from "@/components/ui/textarea";
 import { Duration } from "@/components/plan/step-card";
+import { ListenButton } from "@/components/listen-button";
 import type { NewStep, PlanStep } from "@/lib/plan";
 
 // starter: which starter step is being broken down, so the server can tell the AI what that step means in Constela.
@@ -34,7 +35,9 @@ export function BreakdownDialog({
   flags,
   onAdd,
   onClose,
+  listen = false,
 }: {
+  listen?: boolean;
   task: string;
   flags: BreakdownFlags;
   onAdd: (steps: NewStep[], source: PlanStep["source"]) => void;
@@ -106,6 +109,9 @@ export function BreakdownDialog({
             <p className="text-muted-foreground">
               {manual ? "Write one small step in each box." : "Check the steps. Change or remove any before you add them."}
             </p>
+            {listen && !manual && ready.length > 0 && (
+              <ListenButton text={ready.map((s, i) => `Step ${i + 1}: ${s.title}.`).join(" ")} label="Listen to the steps" />
+            )}
             <ol className="flex flex-col gap-2">
               {steps.map((s, i) => (
                 <li key={s.key} className="grid grid-cols-[1.5rem_1fr] items-start gap-x-1">

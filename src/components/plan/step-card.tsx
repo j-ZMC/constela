@@ -16,6 +16,7 @@ import {
 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
+import { ListenButton } from "@/components/listen-button";
 import { completesItself, type PlanStep, type StepIcon } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
@@ -45,6 +46,8 @@ export function CurrentStep({
   focus,
   breakdownFirst,
   prominentTime,
+  listen,
+  headsUp,
   onDone,
   onBreakdown,
 }: {
@@ -52,6 +55,9 @@ export function CurrentStep({
   focus: boolean;
   breakdownFirst: boolean;
   prominentTime: boolean;
+  listen: boolean;
+  // For people who asked to know about changes: what starts after this step.
+  headsUp?: string;
   onDone: () => void;
   onBreakdown: () => void;
 }) {
@@ -82,6 +88,13 @@ export function CurrentStep({
           />
         </div>
       </div>
+      {listen && <ListenButton text={`${step.title}. About ${step.minutes} minutes.${headsUp ? ` ${headsUp}` : ""}`} />}
+      {headsUp && (
+        <p className="rounded-lg bg-secondary px-4 py-3">
+          <span className="font-semibold">Heads-up: </span>
+          {headsUp}
+        </p>
+      )}
       {selfDone ? (
         <p className="text-muted-foreground">This step is done by itself when you finish your profile.</p>
       ) : (
@@ -155,11 +168,13 @@ export function AllDone({ focus, today }: { focus: boolean; today: PlanStep[] })
 export function Pause({
   finished,
   next,
+  listen,
   onContinue,
   onStop,
 }: {
   finished?: string;
   next: PlanStep;
+  listen: boolean;
   onContinue: () => void;
   onStop: () => void;
 }) {
@@ -176,6 +191,9 @@ export function Pause({
           Next is {next.title} ({next.minutes} min). Take a break if you need one.
         </p>
       </div>
+      {listen && (
+        <ListenButton text={`Nice work.${finished ? ` You finished: ${finished}.` : ""} Next is ${next.title}. Take a break if you need one.`} />
+      )}
       <div className="flex flex-wrap gap-3">
         <Button className={action} onClick={onContinue}>
           Keep going
@@ -190,7 +208,21 @@ export function Pause({
 }
 
 // The end of a stage: its constellation fully lit, then the next stage in one tap.
-export function StageDone({ finished, next, stars, onContinue }: { finished: string; next: string; stars: number; onContinue: () => void }) {
+export function StageDone({
+  finished,
+  next,
+  preview,
+  stars,
+  listen,
+  onContinue,
+}: {
+  finished: string;
+  next: string;
+  preview: string;
+  stars: number;
+  listen: boolean;
+  onContinue: () => void;
+}) {
   const heading = useRef<HTMLHeadingElement>(null);
   useEffect(() => heading.current?.focus(), []);
   return (
@@ -199,7 +231,11 @@ export function StageDone({ finished, next, stars, onContinue }: { finished: str
         You finished {finished}
       </h2>
       <Constellation lit={Array(stars).fill(true)} label={`${finished}: every star is lit`} glow={stars - 1} />
-      <p className="text-pretty text-muted-foreground">Next stage: {next}. Its first step is ready when you are.</p>
+      <div className="flex flex-col gap-1">
+        <p className="font-medium">Next stage: {next}</p>
+        <p className="text-pretty text-muted-foreground">{preview} Its first step is ready when you are.</p>
+      </div>
+      {listen && <ListenButton text={`You finished ${finished}. Next stage: ${next}. ${preview}`} />}
       <Button className={`${action} w-fit`} onClick={onContinue}>
         See my next step
       </Button>

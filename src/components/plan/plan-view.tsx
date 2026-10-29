@@ -34,7 +34,7 @@ import {
   type PlanStep,
   type Stage,
 } from "@/lib/plan";
-import { STAGE_NAMES, STAGE_STEPS, activeSteps, fillToday, goBack, stageComplete, stageOf, weekGoal } from "@/lib/path";
+import { STAGE_NAMES, STAGE_PREVIEW, STAGE_STEPS, activeSteps, fillToday, goBack, nextStage, stageComplete, stageOf, weekGoal } from "@/lib/path";
 import { loadProfile, toAdaptations } from "@/lib/profile";
 import { useHydrated } from "@/lib/use-hydrated";
 
@@ -114,6 +114,10 @@ function View() {
   const stars = active.filter((s) => !s.done || (s.stage === stage ? thisRound(s) : !s.stage && doneToday(s)));
   const done = stars.filter((s) => s.done).length;
   const goal = weekGoal(plan, now);
+  // headsUpOnChanges: when finishing the current step would finish the stage, say what starts next before it starts.
+  const finishesStage = current !== undefined && stageComplete(completeStep(plan, current.id, now));
+  const headsUp =
+    adaptations.headsUpOnChanges && finishesStage ? `After this step, ${STAGE_NAMES[nextStage(stage)]} starts. ${STAGE_PREVIEW[nextStage(stage)]}` : undefined;
   const selectedStep = plan.steps.find((s) => s.id === selected);
   const finishedToday = plan.steps.filter((s) => s.done && s.doneAt && localDate(new Date(s.doneAt)) === localDate(now));
   const justDoneTitle = plan.steps.find((s) => s.id === justDone)?.title;
@@ -224,6 +228,8 @@ function View() {
         <StageDone
           finished={STAGE_NAMES[stageDone]}
           next={STAGE_NAMES[stage]}
+          preview={STAGE_PREVIEW[stage]}
+          listen={adaptations.listenButton}
           stars={STAGE_STEPS[stageDone].length}
           onContinue={() => {
             setStageDone(null);
@@ -236,6 +242,7 @@ function View() {
         <Pause
           finished={justDoneTitle}
           next={current}
+          listen={adaptations.listenButton}
           onContinue={() => setPaused(false)}
           onStop={() => {
             setPaused(false);
@@ -249,6 +256,8 @@ function View() {
           focus={announcement !== ""}
           breakdownFirst={breakdownFirst(current)}
           prominentTime={adaptations.showDurations}
+          listen={adaptations.listenButton}
+          headsUp={headsUp}
           onDone={() => finish(current.id)}
           onBreakdown={() => setRequest({ id: crypto.randomUUID(), task: current.title, stepId: current.id })}
         />
@@ -333,6 +342,7 @@ function View() {
           task={request.task}
           // Starter steps tell the server which fixed app description to give the AI.
           flags={{ ...flags, starter: request.stepId?.startsWith("starter-") ? request.stepId : undefined }}
+          listen={adaptations.listenButton}
           onAdd={addFromDialog}
           onClose={() => setRequest(null)}
         />

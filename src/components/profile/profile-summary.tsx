@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
+import { ListenButton } from "@/components/listen-button";
 import { QUESTIONS, type Answers, describeAdaptations, toAdaptations } from "@/lib/profile";
 import { applyPrefs, loadPrefs, savePrefs } from "@/lib/personalization";
 import { setReadingOption } from "@/lib/reading";
@@ -46,6 +47,7 @@ export function ProfileSummary({ answers, onEdit }: { answers: Answers; onEdit: 
 
       <div className="flex flex-col gap-3">
         <h2 className="font-semibold">Here&apos;s how Constela will adapt</h2>
+        {adaptations.listenButton && <ListenButton text={`Here's how Constela will adapt. ${lines.join(" ")}`} />}
         <ul className="flex flex-col gap-2">{lines.slice(0, UP_FRONT).map(line)}</ul>
         {lines.length > UP_FRONT && (
           <details className="group">
