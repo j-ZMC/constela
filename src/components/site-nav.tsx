@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, ListChecks, MessagesSquare, Star, UserRound } from "lucide-react";
+import { BriefcaseBusiness, ListChecks, MessagesSquare, UserRound } from "lucide-react";
+import { Logo } from "@/components/logo";
 import { PersonalizationPanel } from "@/components/personalization-panel";
 import { cn } from "@/lib/utils";
 
@@ -38,9 +39,8 @@ export function SiteNav() {
     <>
       <header className="sticky top-0 z-10 border-b bg-background">
         <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="flex items-center gap-2 text-lg font-bold">
-            <Star className="size-5 fill-star text-star" aria-hidden />
-            Constela
+          <Link href="/" className="text-lg">
+            <Logo />
           </Link>
           <nav aria-label="Main" className="hidden gap-1 lg:flex">
             {items}
