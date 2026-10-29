@@ -1,0 +1,38 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+*.egg-info/
+
+# Secrets / local environment configuration
+.env
+.env.*
+!.env.example
+
+# Data (regenerable / pesado, no subir)
+*.json
+!jobs_test.json
+!config/neurodivergence_job_barriers.json
+!data/raw/jobs/jobs_usa_full_backup_cleaned.json
+*.jsonl
+*.npy
+*.npz
+*.csv
+*.parquet
+*.sqlite
+*.sqlite3
+*.db
+data/processed/
+*.ipynb_checkpoints/
+
+# Keep the OpenAI filter; ignore the legacy local-model filter.
+/filter_jobs.py
+
+# OS / editor
+.vscode/
+.DS_Store
+Thumbs.db
+
+01_test.ipynb
