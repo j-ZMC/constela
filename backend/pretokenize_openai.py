@@ -18,6 +18,7 @@ import numpy as np
 import pandas as pd
 
 from collect_bulk import clean_html
+from work_modality import MODALITY_IDS, MODALITY_PROTOTYPES
 
 MODEL_NAME = "text-embedding-3-small"
 EMBEDDING_DIMENSIONS = 1536
@@ -32,6 +33,7 @@ IDS_PATH = "data/processed/embeddings/usa_full_backup_cleaned_openai_ids.json"
 BARRIER_EMBEDDINGS_PATH = (
     "data/processed/embeddings/neurodivergence_barriers_openai.npz"
 )
+MODALITY_EMBEDDINGS_PATH = "data/processed/embeddings/workplace_modalities_openai.npz"
 BATCH_SIZE = 100
 REBUILD_CACHE = False
 
@@ -233,6 +235,44 @@ def ensure_barrier_embeddings(
     return embeddings
 
 
+def ensure_modality_embeddings(
+    client: Any,
+    modality_embeddings_path: str = MODALITY_EMBEDDINGS_PATH,
+    *,
+    rebuild: bool = False,
+    batch_size: int = BATCH_SIZE,
+) -> np.ndarray:
+    modality_ids = list(MODALITY_IDS)
+    modality_texts = [MODALITY_PROTOTYPES[key] for key in modality_ids]
+    if not rebuild and os.path.exists(modality_embeddings_path):
+        try:
+            with np.load(modality_embeddings_path, allow_pickle=False) as cache:
+                saved_ids = cache["ids"].astype(str).tolist()
+                saved_texts = cache["texts"].astype(str).tolist()
+                embeddings = cache["embeddings"]
+        except (KeyError, OSError, ValueError):
+            saved_ids, saved_texts, embeddings = [], [], np.empty((0, 0))
+        if (
+            saved_ids == modality_ids
+            and saved_texts == modality_texts
+            and embeddings.shape == (len(modality_ids), EMBEDDING_DIMENSIONS)
+        ):
+            print("Work-modality embeddings up to date.")
+            return embeddings
+
+    print(f"Encoding {len(modality_ids)} work-modality prototypes...")
+    embeddings = encode_texts(client, modality_texts, batch_size)
+    Path(modality_embeddings_path).parent.mkdir(parents=True, exist_ok=True)
+    np.savez(
+        modality_embeddings_path,
+        ids=np.asarray(modality_ids, dtype=str),
+        texts=np.asarray(modality_texts, dtype=str),
+        embeddings=embeddings,
+    )
+    print("Work-modality embeddings saved.")
+    return embeddings
+
+
 def main() -> int:
     from openai import OpenAI
 
@@ -244,6 +284,7 @@ def main() -> int:
     parser.add_argument("--emb", default=EMBEDDINGS_PATH)
     parser.add_argument("--ids", default=IDS_PATH)
     parser.add_argument("--barrier-emb", default=BARRIER_EMBEDDINGS_PATH)
+    parser.add_argument("--modality-emb", default=MODALITY_EMBEDDINGS_PATH)
     parser.add_argument("--batch-size", type=int, default=BATCH_SIZE)
     parser.add_argument("--rebuild", action="store_true", default=REBUILD_CACHE)
     args = parser.parse_args()
@@ -266,6 +307,12 @@ def main() -> int:
         client,
         args.barrier_emb,
         barriers_path=args.barriers,
+        rebuild=args.rebuild,
+        batch_size=args.batch_size,
+    )
+    ensure_modality_embeddings(
+        client,
+        args.modality_emb,
         rebuild=args.rebuild,
         batch_size=args.batch_size,
     )

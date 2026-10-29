@@ -28,6 +28,7 @@ import pandas as pd
 from pretokenize_openai import (
     BARRIERS_PATH as DEFAULT_BARRIERS_PATH,
     BARRIER_EMBEDDINGS_PATH as DEFAULT_BARRIER_EMBEDDINGS_PATH,
+    MODALITY_EMBEDDINGS_PATH as DEFAULT_MODALITY_EMBEDDINGS_PATH,
     EMBEDDING_DIMENSIONS,
     EMBEDDINGS_PATH as DEFAULT_EMBEDDINGS_PATH,
     IDS_PATH as DEFAULT_IDS_PATH,
@@ -37,6 +38,14 @@ from pretokenize_openai import (
     load_barrier_catalog,
 )
 from company_inclusion import normalize_company
+from work_modality import (
+    MODALITY_IDS,
+    MODALITY_PROTOTYPES,
+    classify_job_modality,
+    cosine_scores,
+    infer_query_modalities,
+    modality_matches,
+)
 
 # Controls: edit these defaults, or override them with command-line options.
 JOBS_PATH = "data/raw/jobs/jobs_usa_full_backup_cleaned.json"
@@ -44,6 +53,7 @@ BARRIERS_PATH = DEFAULT_BARRIERS_PATH
 EMBEDDINGS_PATH = DEFAULT_EMBEDDINGS_PATH
 IDS_PATH = DEFAULT_IDS_PATH
 BARRIER_EMBEDDINGS_PATH = DEFAULT_BARRIER_EMBEDDINGS_PATH
+MODALITY_EMBEDDINGS_PATH = DEFAULT_MODALITY_EMBEDDINGS_PATH
 COMPANY_INCLUSION_DB = "data/processed/company_inclusion.sqlite"
 QUALIFIED_COMPANIES_DB = "data/processed/qualified_company_jobs.sqlite"
 # Exclude matched companies absent from the qualifying-company database; unmatched stay eligible.
@@ -123,6 +133,30 @@ def load_embeddings(
     return job_vectors_by_url, barrier_vectors_by_id, barrier_metadata_by_id
 
 
+def load_modality_embeddings(path: str = MODALITY_EMBEDDINGS_PATH) -> dict[str, np.ndarray]:
+    if not os.path.exists(path):
+        raise FileNotFoundError(
+            f"Work-modality embedding cache not found: {path}. "
+            "Run pretokenize_openai.py to create it."
+        )
+    with np.load(path, allow_pickle=False) as cache:
+        modality_ids = cache["ids"].astype(str).tolist()
+        modality_texts = cache["texts"].astype(str).tolist()
+        embeddings = cache["embeddings"]
+    expected_ids = list(MODALITY_IDS)
+    expected_texts = [MODALITY_PROTOTYPES[modality] for modality in expected_ids]
+    if (
+        modality_ids != expected_ids
+        or modality_texts != expected_texts
+        or embeddings.shape != (len(expected_ids), EMBEDDING_DIMENSIONS)
+    ):
+        raise ValueError("Work-modality embeddings are outdated. Run pretokenize_openai.py again.")
+    return {
+        modality: vector
+        for modality, vector in zip(modality_ids, normalize_rows(embeddings))
+    }
+
+
 def embed_query(query: str) -> np.ndarray:
     """Embed one search-bar query with OpenAI's configured embedding model."""
     from openai import OpenAI
@@ -179,6 +213,7 @@ def filter_jobs(
     ids_path: str = IDS_PATH,
     barriers_path: str = BARRIERS_PATH,
     barrier_emb_path: str = BARRIER_EMBEDDINGS_PATH,
+    modality_emb_path: str = MODALITY_EMBEDDINGS_PATH,
     company_db_path: str = COMPANY_INCLUSION_DB,
     qualified_db_path: str = QUALIFIED_COMPANIES_DB,
     similarity_std_multiplier: float = SIMILARITY_THRESHOLD,
@@ -190,6 +225,8 @@ def filter_jobs(
     `user_blockers` contains selected catalog IDs such as
     `autism_spectrum:sensory_load`. `jobs` contains unblocked results, while
     `blocked_jobs` contains matching jobs flagged by the selected barriers.
+    Work-modality intent is inferred from the query and only filters results
+    when the query clearly requests remote, on-site, or hybrid work.
     """
     if not isinstance(query, str) or not query.strip():
         raise ValueError("A non-empty search query is required.")
@@ -226,7 +263,9 @@ def filter_jobs(
         raise ValueError(
             "Unknown user blocker ID(s): " + ", ".join(sorted(unknown_blockers))
         )
+    modality_vectors = load_modality_embeddings(modality_emb_path)
     query_vector = embed_query(query)
+    requested_modalities = infer_query_modalities(cosine_scores(query_vector, modality_vectors))
     selected_barriers = [
         (barrier_id, barrier_vectors[barrier_id], barrier_metadata[barrier_id])
         for barrier_id in selected_blocker_ids
@@ -255,9 +294,17 @@ def filter_jobs(
     blocked_jobs: list[dict[str, Any]] = []
     scored_jobs.sort(key=lambda item: item[2], reverse=True)
     similarity_match_count = 0
+    modality_excluded_matches = 0
 
     for row, document_vector, score in scored_jobs:
         if similarity_cutoff is None or score <= similarity_cutoff:
+            continue
+        classification = classify_job_modality(
+            str(row.get("modality", "") or ""),
+            cosine_scores(document_vector, modality_vectors),
+        )
+        if not modality_matches(requested_modalities, classification):
+            modality_excluded_matches += 1
             continue
         similarity_match_count += 1
         block_reasons = []
@@ -280,6 +327,7 @@ def filter_jobs(
         job_data["similarity_rank"] = similarity_match_count
         job_data["blocked"] = bool(block_reasons)
         job_data["block_reasons"] = block_reasons
+        job_data["modality_classification"] = classification
         company_key = normalize_company(job_data.get("company", ""))
         job_data["company_verified"] = company_key in verified_company_keys
         if job_data["company_verified"]:
@@ -301,6 +349,9 @@ def filter_jobs(
         "companies_excluded": excluded_companies,
         "jobs_scored": len(scores),
         "similarity_matches": similarity_match_count,
+        "requested_modalities": sorted(requested_modalities),
+        "modality_filter_applied": bool(requested_modalities),
+        "modality_excluded_matches": modality_excluded_matches,
         "blocked_similarity_matches": len(blocked_jobs),
         "visible_matches": len(visible_jobs),
         "verified_company_matches": sum(
@@ -331,6 +382,7 @@ def main() -> int:
     parser.add_argument("--emb", default=EMBEDDINGS_PATH)
     parser.add_argument("--ids", default=IDS_PATH)
     parser.add_argument("--barrier-emb", default=BARRIER_EMBEDDINGS_PATH)
+    parser.add_argument("--modality-emb", default=MODALITY_EMBEDDINGS_PATH)
     parser.add_argument("--company-db", default=COMPANY_INCLUSION_DB)
     parser.add_argument("--qualified-db", default=QUALIFIED_COMPANIES_DB)
     parser.add_argument(
@@ -354,6 +406,7 @@ def main() -> int:
         emb_path=args.emb,
         ids_path=args.ids,
         barrier_emb_path=args.barrier_emb,
+        modality_emb_path=args.modality_emb,
         company_db_path=args.company_db,
         qualified_db_path=args.qualified_db,
         similarity_std_multiplier=args.threshold,
