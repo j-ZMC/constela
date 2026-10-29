@@ -196,6 +196,54 @@
   }
 }
 
+/* Intro sky (night-sky.tsx). Slow and soft on purpose: nothing flashes, and the still state is the default. */
+.sky-twinkle {
+  opacity: 0.75;
+  animation: sky-twinkle 5s ease-in-out infinite alternate;
+}
+@keyframes sky-twinkle {
+  from {
+    opacity: 0.25;
+  }
+}
+.sky-draw {
+  animation: sky-draw 2.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes sky-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+/* A short bright dash travels along the line, then rests; hidden when animations are off. */
+.sky-trail {
+  opacity: 0;
+  stroke-dasharray: 0.12 0.88;
+  animation: sky-trail 9s ease-in-out infinite;
+}
+@keyframes sky-trail {
+  0% {
+    stroke-dashoffset: 1.12;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  45% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+  }
+  55%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
 .reduce-motion *,
 .reduce-motion *::before,
 .reduce-motion *::after {

@@ -1,20 +1,25 @@
 import { Star } from "lucide-react";
-import { GetStartedLink } from "@/components/get-started-link";
+import { IntroActions } from "@/components/intro-actions";
+import { NightSky } from "@/components/night-sky";
 
+// The intro: a night sky of constellations around one card that says what Constela is and how to start.
 export default function Home() {
   return (
-    <main className="mx-auto flex w-full max-w-2xl flex-1 flex-col justify-center gap-6 px-4 py-16">
-      <p className="text-sm font-semibold tracking-wide text-muted-foreground">Constela · by Astralis</p>
-      <h1 className="text-4xl font-bold text-balance">Find a job, one step at a time</h1>
-      <p className="text-lg text-muted-foreground">
-        Every step is a star. Together they map your path to a job, at your own pace.
-      </p>
-      <div aria-hidden className="flex gap-3">
-        <Star className="size-5 fill-star text-star" />
-        <Star className="size-5 fill-star text-star" />
-        <Star className="size-5 text-border" />
-      </div>
-      <GetStartedLink />
+    // On phones the sky runs under the layout's bottom-nav padding, so no mint strip shows between them.
+    <main className="relative isolate -mb-24 flex flex-1 items-center justify-center overflow-hidden bg-sky px-4 pt-12 pb-36 lg:mb-0 lg:pb-12">
+      <NightSky className="absolute inset-0 -z-10 h-full w-full" />
+      <section className="flex w-full max-w-md flex-col gap-5 rounded-2xl bg-card p-6 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.6)] sm:p-8">
+        <p className="flex items-center gap-2 text-lg font-bold">
+          <Star className="size-6 fill-star text-star" aria-hidden />
+          Constela
+        </p>
+        <h1 className="text-3xl font-bold text-balance sm:text-4xl">Find a job, one step at a time</h1>
+        <p className="text-pretty text-muted-foreground">
+          Constela turns the job search into small, clear steps that fit how you work. Every step you finish lights a
+          star.
+        </p>
+        <IntroActions />
+      </section>
     </main>
   );
 }
