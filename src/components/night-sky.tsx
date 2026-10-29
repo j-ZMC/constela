@@ -64,20 +64,23 @@ export function NightSky({ className }: { className?: string }) {
 }
 
 // Faint, still constellations for the empty sides of wide screens. No motion: people are working there.
-// Tall and narrow, one constellation per row, to fit the side margins.
-const LEFT = makeSky(21, 3, 0, 300, 900, 1, 3);
-const RIGHT = makeSky(42, 3, 0, 300, 900, 1, 3);
+// Tall and narrow, one constellation per row plus a little star dust, to fill the side margins top to bottom.
+const LEFT = makeSky(21, 5, 30, 300, 1000, 1, 5);
+const RIGHT = makeSky(42, 5, 30, 300, 1000, 1, 5);
 
 function Side({ sky, side }: { sky: ReturnType<typeof makeSky>; side: "left" | "right" }) {
   return (
     <svg
       aria-hidden
       viewBox={`0 0 ${sky.w} ${sky.h}`}
-      preserveAspectRatio="xMidYMid meet"
-      className={`absolute top-16 bottom-0 w-[16vw] ${side === "left" ? "left-[2vw]" : "right-[2vw]"}`}
+      preserveAspectRatio="xMidYMid slice"
+      className={`absolute top-16 bottom-0 w-[15vw] ${side === "left" ? "left-[2vw]" : "right-[2vw]"}`}
     >
+      {sky.dust.map((s, i) => (
+        <circle key={i} cx={s.x} cy={s.y} r={s.r * 1.6} fill="var(--foreground)" opacity="0.12" />
+      ))}
       {sky.shapes.map((f, n) => (
-        <g key={n} opacity="0.13">
+        <g key={n} opacity="0.15">
           <path d={f.stars.map((s, i) => `${i ? "L" : "M"}${s.x.toFixed(1)} ${s.y.toFixed(1)}`).join(" ")} fill="none" stroke="var(--foreground)" strokeWidth="1.5" strokeLinejoin="round" />
           {f.stars.map((s, i) => (
             <circle key={i} cx={s.x} cy={s.y} r={s.r * 1.2} fill="var(--foreground)" />
@@ -91,7 +94,7 @@ function Side({ sky, side }: { sky: ReturnType<typeof makeSky>; side: "left" | "
 export function MarginSky() {
   // Only on wide screens, where the content column leaves real empty space on both sides.
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 hidden xl:block">
+    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 hidden lg:block">
       <Side sky={LEFT} side="left" />
       <Side sky={RIGHT} side="right" />
     </div>
