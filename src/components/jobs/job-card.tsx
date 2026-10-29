@@ -1,4 +1,4 @@
-import { ExternalLink } from "lucide-react";
+import { BadgeCheck, ExternalLink } from "lucide-react";
 import { buttonVariants } from "@/components/ui/button";
 import type { Job } from "@/lib/jobs";
 
@@ -36,7 +36,18 @@ export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean 
     <article className="flex flex-col gap-4 rounded-xl border bg-card p-5">
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
-          <p className="text-sm font-medium text-muted-foreground">{job.company}</p>
+          <div className="flex flex-wrap items-center gap-2">
+            <p className="text-sm font-medium text-muted-foreground">{job.company}</p>
+            {job.company_verified && (
+              <span
+                title="Meets current company-inclusion criteria; this does not verify job accessibility."
+                className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-inset ring-primary/20"
+              >
+                <BadgeCheck aria-hidden className="size-3.5" />
+                Verified
+              </span>
+            )}
+          </div>
           <h3 className="mt-1 text-lg font-semibold leading-snug">
             {job.url ? (
               <a href={job.url} target="_blank" rel="noreferrer" className="underline decoration-transparent underline-offset-4 hover:decoration-current focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring">
@@ -80,9 +91,9 @@ export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean 
       <div className="mt-auto flex flex-wrap items-center justify-between gap-3 border-t pt-3">
         <p
           className="text-xs text-muted-foreground"
-          title="This signal comes from available company-inclusion data and does not verify accessibility."
+          title="Company-inclusion status is based on available data and does not confirm job accessibility."
         >
-          {companySignal(job)} · {job.source}
+          {job.company_verified ? job.source : `${companySignal(job)} · ${job.source}`}
         </p>
         {job.url && (
           <a href={job.url} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", className: "h-10 gap-2" })}>
