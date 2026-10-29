@@ -143,3 +143,26 @@ describe("stage previews", () => {
     expect(Object.keys(STAGE_PREVIEW)).toHaveLength(5);
   });
 });
+
+describe("a simulated week", () => {
+  it("always has a step ready, adds habits only on Monday and Thursday, and keeps one goal", () => {
+    // Monday 2 November 2026 to Sunday 8 November, finishing the first waiting step each morning.
+    let p = advance(starterPlan(), new Date(2026, 10, 2, 8));
+    p = done(p, 0, "starter-profile");
+    const goals = new Set<string>();
+    for (let day = 2; day <= 8; day++) {
+      const morning = new Date(2026, 10, day, 9);
+      p = fillToday(p, morning);
+      const waiting = activeSteps(p).filter((s) => !s.done);
+      expect(waiting.length).toBeGreaterThan(0);
+      const goal = weekGoal(p, morning); // My plan stores the week's goal in the plan, as throughPath() does
+      p = goal.plan;
+      goals.add(goal.text);
+      p = advance(completeStep(p, waiting[0].id, new Date(2026, 10, day, 10)), new Date(2026, 10, day, 10));
+    }
+    const habitDays = p.steps.filter((s) => s.source === "habit").map((s) => s.id.slice(-2));
+    expect(habitDays.every((d) => d === "02" || d === "05")).toBe(true);
+    expect(goals.size).toBe(1);
+    expect(stageOf(p)).not.toBe("ready");
+  });
+});

@@ -67,8 +67,6 @@ function View() {
   const [checkedIn, setCheckedIn] = useState(false);
   const [selected, setSelected] = useState<string | null>(null);
   const [justDone, setJustDone] = useState<string | null>(null);
-  // shortcut: "Stop for today" lasts for this visit only; store it per day in the plan if people ask for it to stick.
-  const [resting, setResting] = useState(false);
   // The plan as it was before the last Remove, so one tap can bring the step back.
   const [removed, setRemoved] = useState<{ before: Plan; title: string } | null>(null);
   const adaptations = toAdaptations(profile ?? {});
@@ -114,6 +112,9 @@ function View() {
   const stars = active.filter((s) => !s.done || (s.stage === stage ? thisRound(s) : !s.stage && doneToday(s)));
   const done = stars.filter((s) => s.done).length;
   const goal = weekGoal(plan, now);
+  // "Stop for today" is saved with the date, so a reload keeps the rest screen; the next day starts fresh.
+  const resting = plan.restingOn === localDate(now);
+  const setResting = (on: boolean) => update({ ...plan, restingOn: on ? localDate(new Date()) : undefined });
   // headsUpOnChanges: when finishing the current step would finish the stage, say what starts next before it starts.
   const finishesStage = current !== undefined && stageComplete(completeStep(plan, current.id, now));
   const headsUp =
@@ -175,16 +176,17 @@ function View() {
 
   return (
     <div className="flex flex-col gap-8">
-      <header className="flex flex-col gap-3">
-        <h1 className="text-3xl font-bold">Today</h1>
+      {/* Kept compact so the current step is on the first screen of a phone. */}
+      <header className="flex flex-col gap-2 sm:gap-3">
         <div className="flex flex-wrap items-center justify-between gap-x-3">
-          <p className="font-medium">
-            Stage {STAGES.indexOf(stage) + 1} of {STAGES.length}: {STAGE_NAMES[stage]}
-          </p>
+          <h1 className="text-2xl font-bold sm:text-3xl">Today</h1>
           <Button variant="ghost" className="h-11 px-3 text-base underline underline-offset-4" onClick={() => setPathOpen(true)}>
             Your path
           </Button>
         </div>
+        <p className="font-medium">
+          Stage {STAGES.indexOf(stage) + 1} of {STAGES.length}: {STAGE_NAMES[stage]}
+        </p>
         <Constellation
           lit={stars.map((s) => s.done)}
           names={stars.map((s) => s.title)}
@@ -193,20 +195,23 @@ function View() {
           glow={stars.findIndex((s) => s.id === justDone && s.done)}
           current={current ? stars.indexOf(current) : undefined}
         />
-        <p className="text-muted-foreground">
-          {done} of {stars.length} steps done.{" "}
-          <span data-detail="extra" className="text-sm">
-            Tap a star to see a step.
-          </span>
-        </p>
-        {/* One small goal a week. When it is met it says so; when the week ends unmet, a new week simply brings a new goal. */}
-        <p className="flex items-center gap-2">
-          {goal.met && <Check className="size-5 shrink-0 text-primary" aria-hidden />}
-          <span>
-            {goal.text}
-            {goal.met && <span className="text-muted-foreground">. Done</span>}
-          </span>
-        </p>
+        {/* Progress and the week's goal share one block. One small goal a week: when it is met it says so; when the week
+            ends unmet, a new week simply brings a new goal. */}
+        <div className="flex flex-col gap-1">
+          <p className="text-muted-foreground">
+            {done} of {stars.length} steps done.{" "}
+            <span data-detail="extra" className="text-sm max-sm:hidden">
+              Tap a star to see a step.
+            </span>
+          </p>
+          <p className="flex items-center gap-2">
+            {goal.met && <Check className="size-5 shrink-0 text-primary" aria-hidden />}
+            <span>
+              {goal.text}
+              {goal.met && <span className="text-muted-foreground">. Done</span>}
+            </span>
+          </p>
+        </div>
         {!profile && (
           <p className="text-sm text-muted-foreground">
             These are the standard settings.{" "}
@@ -216,8 +221,6 @@ function View() {
             to fit the plan to you.
           </p>
         )}
-        {energy && <CheckInReply level={energy} focus={checkedIn} onChange={() => update(resetCheckIn(plan))} />}
-        {checkInDue(plan, now) && <EnergyCheckIn onChoose={checkIn} />}
       </header>
 
       <p aria-live="polite" className="sr-only">
@@ -264,6 +267,11 @@ function View() {
       ) : (
         <AllDone focus={announcement !== ""} today={finishedToday} />
       )}
+
+      {/* Below the step, not above it: the step stays the first thing on a phone screen, and the check-in still
+          adjusts it with one tap. */}
+      {energy && <CheckInReply level={energy} focus={checkedIn} onChange={() => update(resetCheckIn(plan))} />}
+      {checkInDue(plan, now) && <EnergyCheckIn onChoose={checkIn} />}
 
       {removed && <Removed title={removed.title} onUndo={undoRemove} />}
 

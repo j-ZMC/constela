@@ -48,6 +48,7 @@ export type Plan = {
   events?: { type: PlanEvent; at: string }[];
   weekGoal?: { stage: Stage; week: string }; // week as YYYY-Www
   lastHabit?: string; // local date a habit step was last added
+  restingOn?: string; // local date the person chose "Stop for today"; the rest screen stays until the next day
 };
 
 export type NewStep = { title: string; minutes: number; icon?: StepIcon; href?: string; stage?: Stage };
@@ -221,6 +222,7 @@ export function loadPlan(): Plan {
     const g = data.weekGoal;
     if (g && (STAGES as readonly unknown[]).includes(g.stage) && typeof g.week === "string" && /^\d{4}-W\d{2}$/.test(g.week)) plan.weekGoal = { stage: g.stage, week: g.week };
     if (typeof data.lastHabit === "string" && DATE.test(data.lastHabit)) plan.lastHabit = data.lastHabit;
+    if (typeof data.restingOn === "string" && DATE.test(data.restingOn)) plan.restingOn = data.restingOn;
     return plan;
   } catch {
     return starterPlan();
