@@ -3,20 +3,20 @@
 import { useState } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { loadProfile } from "@/lib/profile";
+import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const action = "h-11 px-5 text-base";
 
 const HOW = [
-  { title: "Tell us what helps you", text: "8 short questions about how you work best. Never about a diagnosis." },
+  { title: "Choose what matters at work", text: "Select workplace conditions for the job filter to review. No diagnosis required." },
   { title: "Get one small step at a time", text: "Your plan shows what to do now, and breaks big tasks into small ones." },
   { title: "Watch your stars light up", text: "Every step you finish lights a star, from getting ready to your first interview." },
 ];
 
 // One clear way in. Accounts come later (Supabase); until then the account line says so plainly.
 export function IntroActions() {
-  const hasProfile = useHydrated() && loadProfile() !== null;
+  const hasProfile = useHydrated() && loadBarrierPreferences() !== null;
   const [how, setHow] = useState(false);
   const [note, setNote] = useState(false);
   return (
