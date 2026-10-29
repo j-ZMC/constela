@@ -1,11 +1,16 @@
-// One star per item (profile question or plan step), joined into a constellation. Lit stars use star gold,
-// the color reserved for achievements; the rest stay as quiet outlines.
+// One star per item (profile question or plan step), joined into a constellation on a small night sky.
+// Lit stars use star gold, the color reserved for achievements; waiting stars are dim, never hollow.
 const HEIGHTS = [58, 30, 46, 18, 38, 22, 50, 30];
 const LEFT = 16;
 const SPAN = 296;
 
 const WIDTH = 328;
 const HEIGHT = 76;
+
+// Fixed background specks, so the sky looks the same on every render.
+const SPECKS = [
+  [8, 12], [44, 66], [70, 8], [98, 52], [126, 70], [150, 10], [178, 60], [204, 34], [232, 6], [258, 68], [286, 44], [318, 14],
+] as const;
 
 // names + onSelect turn each star into a button (My plan); without them it is a picture (Profile).
 export function Constellation({
@@ -14,6 +19,7 @@ export function Constellation({
   names,
   onSelect,
   glow,
+  current,
 }: {
   lit: boolean[];
   label: string;
@@ -21,10 +27,11 @@ export function Constellation({
   onSelect?: (index: number) => void;
   // The star that was just lit: it grows in with a soft ring, once.
   glow?: number;
+  // The step to do now: a still ring marks "you are here".
+  current?: number;
 }) {
   const gap = lit.length > 1 ? SPAN / (lit.length - 1) : 0;
   const points = lit.map((_, i) => [LEFT + i * gap, HEIGHTS[i % HEIGHTS.length]] as const);
-  const path = points.map(([x, y], i) => `${i ? "L" : "M"}${x} ${y}`).join(" ");
   // Keep stars from touching when a long plan packs them close together.
   const r = Math.min(6, Math.max(3, gap / 3));
 
@@ -34,9 +41,30 @@ export function Constellation({
       role={onSelect ? undefined : "img"}
       aria-label={onSelect ? undefined : label}
       aria-hidden={onSelect ? true : undefined}
-      className="h-auto w-full max-w-xs"
+      className="h-auto w-full overflow-visible"
     >
-      <path d={path} fill="none" stroke="var(--border)" strokeWidth="1.5" strokeLinejoin="round" />
+      {SPECKS.map(([x, y]) => (
+        <circle key={`${x}-${y}`} cx={x} cy={y} r="0.9" fill="white" opacity="0.3" />
+      ))}
+      {/* The path walked so far glows; the rest of the way is a faint dotted line. */}
+      {points.slice(1).map(([x, y], i) => {
+        const [px, py] = points[i];
+        const walked = lit[i] && lit[i + 1];
+        return (
+          <line
+            key={i}
+            x1={px}
+            y1={py}
+            x2={x}
+            y2={y}
+            stroke={walked ? "var(--star)" : "white"}
+            strokeOpacity={walked ? 0.85 : 0.25}
+            strokeWidth={walked ? 2 : 1.5}
+            strokeDasharray={walked ? undefined : "2 4"}
+            strokeLinecap="round"
+          />
+        );
+      })}
       {points.map(([x, y], i) =>
         lit[i] ? (
           <g key={i} className={i === glow ? "star-lit" : undefined}>
@@ -44,27 +72,35 @@ export function Constellation({
             <circle cx={x} cy={y} r={r} fill="var(--star)" className="star-core" />
           </g>
         ) : (
-          <circle key={i} cx={x} cy={y} r={r * 0.66} fill="var(--background)" stroke="var(--muted-foreground)" strokeWidth="1.5" />
+          <g key={i}>
+            {i === current && <circle cx={x} cy={y} r={r * 1.9} fill="none" stroke="white" strokeOpacity="0.8" strokeWidth="1.5" />}
+            <circle cx={x} cy={y} r={r * 0.6} fill="white" opacity={i === current ? 0.9 : 0.45} />
+          </g>
         ),
       )}
     </svg>
   );
-  if (!onSelect) return picture;
+
+  // The sky band: the navy reads as night, and star gold on it is far stronger than on the mint page.
+  const sky = "w-full max-w-sm rounded-2xl bg-sky px-4 py-3";
+  if (!onSelect) return <div className={sky}>{picture}</div>;
 
   return (
-    <div role="group" aria-label={label} className="relative w-full max-w-xs">
-      {picture}
-      {points.map(([x, y], i) => (
-        <button
-          key={i}
-          type="button"
-          onClick={() => onSelect(i)}
-          aria-label={`${names?.[i] ?? `Step ${i + 1}`}, step ${i + 1} of ${lit.length}, ${lit[i] ? "done" : "not done"}`}
-          // shortcut: targets are 44 px while stars are at least 44 px apart (up to about 8 steps); longer plans get smaller targets, but every step stays reachable from the lists below.
-          style={{ left: `${(x / WIDTH) * 100}%`, top: `${(y / HEIGHT) * 100}%`, width: gap ? `min(44px, ${(gap / WIDTH) * 100}%)` : "44px" }}
-          className="absolute aspect-square min-w-6 -translate-x-1/2 -translate-y-1/2 rounded-full outline-none hover:bg-primary/10 hover:ring-2 hover:ring-primary/30 focus-visible:ring-3 focus-visible:ring-ring/50"
-        />
-      ))}
+    <div className={sky}>
+      <div role="group" aria-label={label} className="relative">
+        {picture}
+        {points.map(([x, y], i) => (
+          <button
+            key={i}
+            type="button"
+            onClick={() => onSelect(i)}
+            aria-label={`${names?.[i] ?? `Step ${i + 1}`}, step ${i + 1} of ${lit.length}, ${lit[i] ? "done" : "not done"}`}
+            // shortcut: targets are 44 px while stars are at least 44 px apart (up to about 8 steps); longer plans get smaller targets, but every step stays reachable from the lists below.
+            style={{ left: `${(x / WIDTH) * 100}%`, top: `${(y / HEIGHT) * 100}%`, width: gap ? `min(44px, ${(gap / WIDTH) * 100}%)` : "44px" }}
+            className="absolute aspect-square min-w-6 -translate-x-1/2 -translate-y-1/2 rounded-full outline-none hover:bg-white/10 hover:ring-2 hover:ring-white/40 focus-visible:ring-3 focus-visible:ring-star"
+          />
+        ))}
+      </div>
     </div>
   );
 }

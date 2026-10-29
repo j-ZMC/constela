@@ -133,6 +133,7 @@ function View() {
           label={`${done} of ${plan.steps.length} steps done`}
           onSelect={(i) => setSelected(plan.steps[i].id)}
           glow={plan.steps.findIndex((s) => s.id === justDone && s.done)}
+          current={current ? plan.steps.indexOf(current) : undefined}
         />
         <p className="text-muted-foreground">
           {done} of {plan.steps.length} steps done.{" "}

@@ -7,6 +7,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-star: var(--star);
+  --color-sky: var(--sky);
   --color-foreground: var(--foreground);
   --font-sans: var(--font-sans);
   --font-mono: var(--font-geist-mono);
@@ -73,6 +74,8 @@
   --input: #7f8f9c;
   --ring: #4a6a8a;
   --star: #f2b880;
+  /* The constellation's night sky: Regina's navy, kept fixed so stars stay readable in every palette */
+  --sky: #243b53;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
   --chart-3: oklch(0.439 0 0);
