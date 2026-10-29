@@ -1,6 +1,6 @@
 # Spec: Job search path (daily plans by stage)
 
-Status: draft, waiting for team review · Owner: Luis · Builds on [SPEC-plan.md](SPEC-plan.md)
+Status: approved by Luis; defaults for the open questions in [tasks/path/plan.md](tasks/path/plan.md) · Owner: Luis · Builds on [SPEC-plan.md](SPEC-plan.md)
 
 ## Objective
 
