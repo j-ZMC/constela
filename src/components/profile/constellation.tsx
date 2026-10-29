@@ -1,15 +1,16 @@
 // One star per item (profile question or plan step), joined into a constellation on a small night sky.
 // Lit stars use star gold, the color reserved for achievements; waiting stars are dim, never hollow.
 const HEIGHTS = [58, 30, 46, 18, 38, 22, 50, 30];
-const LEFT = 16;
-const SPAN = 296;
-
-const WIDTH = 328;
+// Wide and short, so the sky fills the content column without the stars growing chunky.
+const WIDTH = 520;
 const HEIGHT = 76;
+const LEFT = 20;
+const SPAN = WIDTH - 2 * LEFT;
 
 // Fixed background specks, so the sky looks the same on every render.
 const SPECKS = [
   [8, 12], [44, 66], [70, 8], [98, 52], [126, 70], [150, 10], [178, 60], [204, 34], [232, 6], [258, 68], [286, 44], [318, 14],
+  [346, 58], [372, 20], [398, 70], [424, 40], [452, 8], [478, 62], [506, 30],
 ] as const;
 
 // names + onSelect turn each star into a button (My plan); without them it is a picture (Profile).
@@ -82,7 +83,7 @@ export function Constellation({
   );
 
   // The sky band: the navy reads as night, and star gold on it is far stronger than on the mint page.
-  const sky = "w-full max-w-sm rounded-2xl bg-sky px-4 py-3";
+  const sky = "w-full rounded-2xl bg-sky px-4 py-3 sm:px-6 sm:py-4";
   if (!onSelect) return <div className={sky}>{picture}</div>;
 
   return (
