@@ -25,6 +25,12 @@ env/
 *.sqlite3
 *.db
 
+# Keep the precomputed embedding caches used by the jobs search.
+!data/processed/embeddings/
+!data/processed/embeddings/*.npy
+!data/processed/embeddings/*.npz
+!data/processed/embeddings/*_ids.json
+
 *.ipynb_checkpoints/
 
 # Keep the OpenAI filter; ignore the legacy local-model filter.
