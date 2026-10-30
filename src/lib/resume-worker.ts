@@ -19,7 +19,7 @@ export function runResumeParser(
   return new Promise((resolveResult, rejectResult) => {
     let child;
     try {
-      child = spawn(
+      child = spawn(/*turbopackIgnore: true*/
         process.env.PYTHON_EXECUTABLE || (process.platform === "win32" ? "python" : "python3"),
         ["resume_api.py", filePath],
         {
