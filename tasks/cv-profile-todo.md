@@ -57,7 +57,7 @@ Plan: [cv-profile-plan.md](cv-profile-plan.md) · Specs: [SPEC-resume-parsing.md
   - Files: `src/components/site-nav.tsx`, tests if needed.
   - Dependencies: Task 6.
 
-- [ ] Task 8: Complete end-to-end verification and documentation
+- [x] Task 8: Complete end-to-end verification and documentation
   - Acceptance: all automated checks pass and setup/limitations are documented.
   - Verify: `npm test`, `npm run lint`, `npx tsc --noEmit`, `npm run build`, Python tests.
   - Files: README/spec updates as needed.
