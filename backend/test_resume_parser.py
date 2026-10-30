@@ -4,7 +4,7 @@ import unittest
 from pathlib import Path
 
 
-PARSER_PATH = Path(__file__).parent / "resume_parser.py" / "resume_parser.py"
+PARSER_PATH = Path(__file__).parent / "resume_parser" / "resume_parser.py"
 
 
 def load_parser():
