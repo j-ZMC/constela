@@ -59,7 +59,7 @@ QUALIFIED_COMPANIES_DB = "data/processed/qualified_company_jobs.sqlite"
 # Exclude matched companies absent from the qualifying-company database; unmatched stay eligible.
 EXCLUDE_KNOWN_NON_INCLUSIVE = True
 SIMILARITY_THRESHOLD = 2.0  # Number of standard deviations above the mean.
-BLOCKED_THRESHOLD = 0.385
+BLOCKED_THRESHOLD = 0.30
 
 
 def normalize_rows(vectors: np.ndarray) -> np.ndarray:
