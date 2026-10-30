@@ -1,0 +1,245 @@
+# Tasks: Constela for Employers
+
+Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
+
+## Phase 1: Shared objects and rules
+
+## Task 1: Vacancy, vocabularies, clarity score and phrase detector
+
+**Description:** Create `src/lib/vacancy.ts` with the `Vacancy` schema, the environment and skill vocabularies with equivalent tools, `clarityScore()` v1, `findExclusionaryPhrases()`, `offersAlternativeFormat()` and a clear demo vacancy.
+
+**Acceptance criteria:**
+- [x] The demo vacancy scores 100; every rule in the SPEC table deducts its points with a fix
+- [x] Phrases cost 5 each up to 20 and are all still listed; the worst vacancy scores 0, never less
+- [x] Concrete tasks that share words with a vague phrase ("outgoing calls", "dynamic pricing") are not flagged
+
+**Verification:**
+- [x] Tests pass: `npm test`
+- [x] Types and lint pass
+
+**Dependencies:** None
+
+**Files:** `src/lib/vacancy.ts`, `src/lib/vacancy.test.ts`
+
+**Estimated scope:** M
+
+## Task 2: WorkProfile, Permission, needs mapping, fit, ranking and the CV-pair test
+
+**Description:** Create `src/lib/work-profile.ts` with the `.strict()` `WorkProfile` schema, `Permission`, `anonymize()`, `identityFor()`, `needsFromBarriers()`, `compatibility()`, `rankCandidates()` and 15 demo profiles from many kinds of work.
+
+**Acceptance criteria:**
+- [x] A diagnosis, age or photo field is rejected; the anonymous view never contains the name
+- [x] Identity shows only after acceptance, for that vacancy only, and hides again after a later "no"
+- [x] Every barrier in the survey maps to at least one environment factor and no category comes out
+- [x] Ranking weights match the SPEC; untagged requirements are ignored; ties are stable
+- [x] CV-pair test: B ranks above A in 10 of 10, and text or needs alone never change a score
+
+**Verification:**
+- [x] Tests pass: `npm test`
+- [x] Types and lint pass
+
+**Dependencies:** Task 1
+
+**Files:** `src/lib/work-profile.ts`, `src/lib/work-profile.test.ts`
+
+**Estimated scope:** M
+
+## Task 3: Seal levels
+
+**Description:** Create `src/lib/seal.ts` with `computeSeal(input, now)`: bronze, silver and gold checks from the SPEC, each with a plain-language detail.
+
+**Acceptance criteria:**
+- [x] No seal before anything is published; drafts never count
+- [x] Each level needs all of its checks and the levels below; the level drops as soon as a metric does
+- [x] An unanswered response counts against the seal only once it is overdue
+
+**Verification:**
+- [x] Tests pass: `npm test`
+
+**Dependencies:** Task 1
+
+**Files:** `src/lib/seal.ts`, `src/lib/seal.test.ts`
+
+**Estimated scope:** S
+
+## Checkpoint 1
+- [x] `npm test`, `npm run lint` and `npx tsc --noEmit` pass
+- [ ] Shared objects reviewed with the team
+
+## Phase 2: AI route
+
+## Task 4: Employer AI tasks and `POST /api/employer-ai`
+
+**Description:** Copy the `breakdown.ts` pattern. `extract` turns pasted text into a draft `Vacancy` with skills from the vocabulary; `rewrite` returns a concrete version of a flagged phrase; `interview` drafts the same questions for everyone, each with a rubric tied to an essential task. Read `node_modules/next/dist/docs/` for route handlers first.
+
+**Acceptance criteria:**
+- [x] The request schema is `.strict()` and accepts only vacancy text and the task name
+- [x] Output passes `vacancySchema` after `normalize()`; unknown skills are dropped, not guessed
+- [x] Missing key, invalid input, timeout and provider errors return the same typed codes as breakdown
+
+**Verification:**
+- [x] Tests pass with `MockLanguageModelV4`, including "only vacancy text reaches the provider"
+- [x] The schema sent to Groq meets its strict-mode rules, guarded by a test
+- [ ] With a real Groq key, all three tasks return good results and extracting the demo vacancy text takes under 15 s
+
+**Dependencies:** Task 1
+
+**Files:** `src/lib/employer-ai.ts`, `src/lib/employer-ai.test.ts`, `src/app/api/employer-ai/route.ts`, `src/app/api/employer-ai/route.test.ts`
+
+**Estimated scope:** M
+
+## Phase 3: Employers shell
+
+## Task 5: Layout, menu, hidden candidate menu, intro link and store
+
+**Description:** `/employers` layout with "Constela for Employers" and its own menu (Overview, Vacancies, Talent, Guide), keeping the Personalize panel. Hide `SiteNav` there (agree with Luis). A quiet "Hiring? Constela for Employers" link on the intro. `employer-store.ts` saves vacancies, permissions, responses and "guide read", versioned and validated.
+
+**Acceptance criteria:**
+- [ ] The candidate menu never shows on `/employers`, and the employer menu never shows elsewhere
+- [ ] Broken or old data in storage loads as empty, without crashing
+- [ ] Targets are 44 px; the menu works with the keyboard and a screen reader
+
+**Verification:**
+- [ ] Store tests pass; manual check at 375 px and desktop
+
+**Dependencies:** Phase 1
+
+**Files:** `src/app/employers/layout.tsx`, `src/app/employers/page.tsx`, `src/components/site-nav.tsx`, `src/app/page.tsx`, `src/lib/employer-store.ts`, `src/lib/employer-store.test.ts`
+
+**Estimated scope:** M
+
+## Phase 4: Clear vacancy
+
+## Task 6: Vacancy editor with live clarity score
+
+**Description:** Paste text → extract → review the card → see the score and each fix → accept or edit rewrites (the score updates live) → fill the process template → publish. Vague phrases are highlighted in the pasted text.
+
+**Acceptance criteria:**
+- [ ] Nothing from the AI is saved until the employer accepts it
+- [ ] A rewrite with a [bracket] can't be saved until the employer fills it in
+- [ ] Without AI, the employer can fill the card by hand and still get the score and phrase hints
+- [ ] Publishing needs a title, company and at least one hiring step
+
+**Verification:**
+- [ ] Manual: demo script steps 1 and 2
+
+**Dependencies:** Tasks 4 and 5
+
+**Files:** `src/app/employers/vacancies/…`, `src/components/employers/…`
+
+**Estimated scope:** L
+
+## Task 7: Published vacancies on `/jobs`
+
+**Description:** `<PublishedVacancies />` shows published cards on `/jobs` with the seal level and, when the candidate has a barrier survey, the environment fit from `needsFromBarriers()`.
+
+**Acceptance criteria:**
+- [ ] One line added to `src/app/jobs/page.tsx`; Zahid and Juan agree
+- [ ] Fit wording is calm: "This job offers 3 of the 4 things you asked for"
+
+**Verification:**
+- [ ] Manual: demo script step 3
+
+**Dependencies:** Task 6
+
+**Files:** `src/components/employers/published-vacancies.tsx`, `src/app/jobs/page.tsx`
+
+**Estimated scope:** S
+
+## Phase 5: Talent search
+
+## Task 8: Anonymous ranked profiles, fit and invitations
+
+**Description:** Pick a vacancy and see the demo pool ranked by `rankCandidates()`, each with its reasons ("SQL: verified", "Excel: via Google Sheets, counts half") and fit shown as adjustments to offer. "Invite" creates an `invited` permission.
+
+**Acceptance criteria:**
+- [ ] The page states that needs never change the order
+- [ ] Names appear only after the candidate accepts
+- [ ] A vacancy without skill-tagged requirements asks the employer to tag them
+
+**Verification:**
+- [ ] Manual: demo script step 4
+
+**Dependencies:** Task 5
+
+**Files:** `src/app/employers/talent/…`, `src/components/employers/…`
+
+**Estimated scope:** M
+
+## Phase 6: Process and interview
+
+## Task 9: Structured interview, question checker and interviewer guide
+
+**Description:** Draft questions from the essential requirements (AI `interview`, or a fixed template without AI), flag hypothetical or vague questions with a concrete version, and a one-page guide with "I read it".
+
+**Acceptance criteria:**
+- [ ] Every candidate for a vacancy gets the same questions and rubric
+- [ ] "I read it" feeds the seal's training check
+
+**Verification:**
+- [ ] Tests for the question checker; manual check of the guide
+
+**Dependencies:** Task 4
+
+**Files:** `src/lib/interview-questions.ts`, `src/app/employers/guide/…`
+
+**Estimated scope:** M
+
+## Task 10: The candidate's invitation view
+
+**Description:** The candidate accepts or declines an invitation, sees the process as a tracker (steps, format, duration, who, response date), reads the questions when 48 hours or less remain, and picks the alternative format. Accepting adds "Read your interview questions" to My plan with `addStepToPlan()`.
+
+**Acceptance criteria:**
+- [ ] No red and no "overdue"; every step says how long it takes
+- [ ] Declining is as easy as accepting and hides the identity again
+
+**Verification:**
+- [ ] Manual: demo script step 5
+
+**Dependencies:** Tasks 8 and 9
+
+**Files:** `src/app/invitations/…`, `src/components/employers/…`
+
+**Estimated scope:** M
+
+## Phase 7: Seal
+
+## Task 11: Overview with the seal
+
+**Description:** `/employers` overview shows the level, every check with its detail and what is needed for the next level.
+
+**Acceptance criteria:**
+- [ ] The level is never stored; it is computed on every visit
+- [ ] Unmet checks say what to do, not what went wrong
+
+**Verification:**
+- [ ] Manual: demo script step 6
+
+**Dependencies:** Tasks 5 and 9
+
+**Files:** `src/app/employers/page.tsx`, `src/components/employers/seal-panel.tsx`
+
+**Estimated scope:** S
+
+## Phase 8: Polish and demo
+
+## Task 12: Privacy, accessibility, critique, demo data and rehearsal
+
+**Description:** Update `/privacy` (vacancy text goes to Groq) and `DeleteMyData` keys. Check every screen at 375 px, keyboard only, with a screen reader and the Reading settings on. Run `/impeccable critique`. Add demo data and an "Employers" row to the README. Rehearse the 5-minute script.
+
+**Acceptance criteria:**
+- [ ] Every SPEC success criterion is checked
+
+**Dependencies:** Tasks 6 to 11
+
+**Estimated scope:** M
+
+## Phase 9 (optional): Extension API
+
+## Task 13: Public seal and vacancy endpoints
+
+**Description:** `GET /api/public/seal` and `GET /api/public/vacancies/[id]` with CORS for Regina's extension, returning published data only.
+
+**Dependencies:** Tasks 6 and 11
+
+**Estimated scope:** S

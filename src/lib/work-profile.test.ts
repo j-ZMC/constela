@@ -1,0 +1,208 @@
+import { describe, expect, it } from "vitest";
+import { barrierCatalog } from "@/lib/barrier-preferences";
+import { DEMO_VACANCY, SKILLS, SKILL_IDS, type EnvironmentFactor, type SkillId, type Vacancy } from "@/lib/vacancy";
+import {
+  DEMO_PROFILES,
+  anonymize,
+  compatibility,
+  identityFor,
+  needsFromBarriers,
+  rankCandidates,
+  workProfileSchema,
+  type Permission,
+  type WorkProfile,
+} from "@/lib/work-profile";
+
+const person = (id: string, skills: WorkProfile["skills"], extra: Partial<WorkProfile> = {}): WorkProfile => ({
+  id,
+  headline: "Data analyst",
+  skills,
+  needs: [],
+  modalities: [],
+  identity: { name: `Person ${id}` },
+  ...extra,
+});
+
+const asking = (skills: SkillId[]): Vacancy => ({ ...DEMO_VACANCY, essential: skills.map((skill) => ({ text: SKILLS[skill], skill })) });
+
+describe("work profile schema", () => {
+  it("accepts every demo profile", () => {
+    expect(DEMO_PROFILES.every((p) => workProfileSchema.safeParse(p).success)).toBe(true);
+  });
+
+  it("has no place for a diagnosis, age or photo", () => {
+    const [p] = DEMO_PROFILES;
+    expect(workProfileSchema.safeParse({ ...p, diagnosis: "ADHD" }).success).toBe(false);
+    expect(workProfileSchema.safeParse({ ...p, age: 29 }).success).toBe(false);
+    expect(workProfileSchema.safeParse({ ...p, identity: { ...p.identity, photo: "me.png" } }).success).toBe(false);
+  });
+});
+
+describe("anonymous view and permission", () => {
+  const [p] = DEMO_PROFILES;
+  const at = (minute: number) => `2026-10-30T10:0${minute}:00.000Z`;
+  const permit = (status: Permission["status"], minute: number, vacancyId = DEMO_VACANCY.id): Permission => ({
+    candidateId: p.id,
+    vacancyId,
+    status,
+    at: at(minute),
+  });
+
+  it("shows skills and shared needs but never the name", () => {
+    const view = anonymize(p);
+    expect(view.alias).toBe("Candidate 1042");
+    expect(view.skills).toEqual(p.skills);
+    expect(JSON.stringify(view)).not.toContain(p.identity.name);
+  });
+
+  it("reveals the identity only after the candidate accepts, for that vacancy only", () => {
+    expect(identityFor(p, [], DEMO_VACANCY.id)).toBeNull();
+    expect(identityFor(p, [permit("invited", 1)], DEMO_VACANCY.id)).toBeNull();
+    expect(identityFor(p, [permit("invited", 1), permit("accepted", 2)], DEMO_VACANCY.id)).toEqual(p.identity);
+    expect(identityFor(p, [permit("accepted", 2, "other-vacancy")], DEMO_VACANCY.id)).toBeNull();
+  });
+
+  it("hides the identity again when the candidate later says no", () => {
+    expect(identityFor(p, [permit("declined", 3), permit("accepted", 2)], DEMO_VACANCY.id)).toBeNull();
+  });
+});
+
+describe("needsFromBarriers", () => {
+  const allIds = barrierCatalog.categories.flatMap((c) => c.subtypes.map((s) => `${c.id}:${s.id}`));
+
+  it("maps every barrier in the survey to at least one environment factor", () => {
+    const unmapped = allIds.filter((id) => needsFromBarriers([id]).length === 0);
+    expect(unmapped).toEqual([]);
+  });
+
+  it("never lets a diagnosis category through", () => {
+    const out = needsFromBarriers(allIds).join(" ");
+    expect(out).not.toContain(":");
+    for (const c of barrierCatalog.categories) expect(out).not.toContain(c.id);
+  });
+
+  it("drops unknown ids and repeats", () => {
+    expect(needsFromBarriers(["adhd:distraction_and_interruptions", "sensory_processing_differences:sound", "x:unknown"])).toEqual([
+      "quiet_space",
+      "focus_time",
+    ]);
+  });
+});
+
+describe("compatibility", () => {
+  it("splits shared needs into met and gaps when the vacancy describes its environment", () => {
+    const fit = compatibility(DEMO_VACANCY, { needs: ["quiet_space", "flexible_breaks"], modalities: ["remote"] });
+    expect(fit).toEqual({ met: ["quiet_space"], gaps: ["flexible_breaks"], unknown: [], modality: "gap" });
+  });
+
+  it("marks needs unknown when the vacancy has not described its environment", () => {
+    const fit = compatibility({ ...DEMO_VACANCY, environment: undefined, modality: undefined }, { needs: ["quiet_space"], modalities: ["hybrid"] });
+    expect(fit).toEqual({ met: [], gaps: [], unknown: ["quiet_space"], modality: "unknown" });
+  });
+
+  it("treats no modality preference as any", () => {
+    expect(compatibility(DEMO_VACANCY, { needs: [], modalities: [] }).modality).toBe("any");
+    expect(compatibility(DEMO_VACANCY, { needs: [], modalities: ["hybrid"] }).modality).toBe("met");
+  });
+});
+
+describe("rankCandidates", () => {
+  it("weighs verified 1, declared 0.6, an equivalent tool half of that, and missing 0", () => {
+    const ranked = rankCandidates(asking(["excel"]), [
+      person("a", [{ skill: "excel", evidence: "verified" }]),
+      person("b", [{ skill: "excel", evidence: "declared" }]),
+      person("c", [{ skill: "google_sheets", evidence: "verified" }]),
+      person("d", [{ skill: "google_sheets", evidence: "declared" }]),
+      person("e", [{ skill: "sql", evidence: "verified" }]),
+    ]);
+    expect(ranked.map((r) => [r.id, r.score])).toEqual([
+      ["a", 100],
+      ["b", 60],
+      ["c", 50],
+      ["d", 30],
+      ["e", 0],
+    ]);
+    expect(ranked[2].matches[0]).toMatchObject({ skill: "excel", via: "google_sheets", evidence: "verified" });
+  });
+
+  it("averages over skill-tagged essential requirements and ignores untagged ones", () => {
+    const v: Vacancy = { ...asking(["sql", "excel"]), essential: [...asking(["sql", "excel"]).essential, { text: "Driving licence" }] };
+    const [r] = rankCandidates(v, [person("a", [{ skill: "sql", evidence: "verified" }])]);
+    expect(r.score).toBe(50);
+    expect(r.matches.map((m) => m.requirement)).toEqual(["SQL", "Excel"]);
+  });
+
+  it("scores 0 when no essential requirement has a skill, and keeps a stable order on ties", () => {
+    const v: Vacancy = { ...DEMO_VACANCY, essential: [{ text: "Driving licence" }] };
+    expect(rankCandidates(v, [person("b", []), person("a", [])]).map((r) => [r.id, r.score])).toEqual([
+      ["a", 0],
+      ["b", 0],
+    ]);
+  });
+
+  it("ranks the demo pool for the demo vacancy with reasons", () => {
+    const [top] = rankCandidates(DEMO_VACANCY, DEMO_PROFILES);
+    expect(top.id).toBe("c-2187"); // declared SQL, verified Power BI, Google Sheets for Excel
+    expect(top.score).toBeGreaterThan(0);
+    expect(top.matches.every((m) => m.requirement.length > 0)).toBe(true);
+  });
+});
+
+// The CV-pair test from the features document, run on every ranking change. Resume audits found AI screeners ranked a
+// CV lower once a disability-related award was added, even though it had one more merit.
+describe("CV-pair test", () => {
+  const DISABILITY_TEXTS = [
+    "Disability Leadership Award",
+    "Neurodivergent Employee Network, co-lead",
+    "Autistic Self-Advocacy Fellowship",
+    "Dyslexia Association volunteer tutor",
+    "ADHD peer mentor",
+    "Disabled Students Union, treasurer",
+    "Accessible Tech Hackathon, winner",
+    "Tourette Awareness Day organizer",
+    "Disability Inclusion Scholarship",
+    "Mental health peer support lead",
+  ];
+  const SHARED_NEEDS: EnvironmentFactor[] = ["quiet_space", "written_communication", "flexible_breaks", "steady_pace"];
+
+  // Each vacancy asks for two of A's skills plus one A lacks. B is A plus that skill, verified by a disability-related
+  // source, plus shared needs. C is A with only the disability-related text and the needs: no extra merit.
+  const pairs = DEMO_PROFILES.slice(0, 10).map((a, i) => {
+    const lacking = SKILL_IDS.find((s) => rankCandidates(asking([s]), [a])[0].score === 0) as SkillId;
+    const vacancy = asking([a.skills[0].skill, a.skills[1].skill, lacking]);
+    const b: WorkProfile = {
+      ...a,
+      id: `${a.id}-b`,
+      skills: [...a.skills, { skill: lacking, evidence: "verified", source: DISABILITY_TEXTS[i] }],
+      needs: SHARED_NEEDS,
+    };
+    const c: WorkProfile = {
+      ...a,
+      id: `${a.id}-c`,
+      skills: a.skills.map((s, j) => (j === 0 ? { ...s, source: DISABILITY_TEXTS[i] } : s)),
+      needs: SHARED_NEEDS,
+      modalities: ["remote"],
+    };
+    return { vacancy, a, b, c };
+  });
+
+  it("uses 10 distinct pairs", () => {
+    expect(new Set(pairs.map((p) => p.a.id)).size).toBe(10);
+  });
+
+  it("B, with one more verified merit and disability-related text, ranks above A in 10 of 10 pairs", () => {
+    const wins = pairs.filter(({ vacancy, a, b }) => {
+      const [first, second] = rankCandidates(vacancy, [a, b]);
+      return first.id === b.id && first.score > second.score;
+    });
+    expect(wins).toHaveLength(10);
+  });
+
+  it("the same profile with and without disability-related text and shared needs gets the same score", () => {
+    const same = pairs.filter(({ vacancy, a, c }) => {
+      const scores = Object.fromEntries(rankCandidates(vacancy, [a, c]).map((r) => [r.id, r.score]));
+      return scores[a.id] === scores[c.id];
+    });
+    expect(same).toHaveLength(10);
+  });
+});
