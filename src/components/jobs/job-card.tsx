@@ -28,12 +28,12 @@ function workMode(job: Job): string {
   return labels[job.modality_classification];
 }
 
-export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean }) {
+export function JobCard({ job, flagged = false, compact = false }: { job: Job; flagged?: boolean; compact?: boolean }) {
   const description = job.description.trim();
   const excerpt = description.length > 280 ? `${description.slice(0, 280).trimEnd()}…` : description;
 
   return (
-    <article className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+    <article className={`flex flex-col gap-4 rounded-xl border bg-card p-5 ${compact ? "aspect-square overflow-hidden" : ""}`}>
       <div className="flex flex-wrap items-start justify-between gap-3">
         <div className="min-w-0">
           <div className="flex flex-wrap items-center gap-2">
@@ -68,8 +68,8 @@ export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean 
         <li>{String(job.date)}</li>
       </ul>
 
-      <p className="text-sm leading-relaxed">{excerpt || "No description provided."}</p>
-      {description.length > 280 && (
+      <p className={`text-sm leading-relaxed ${compact ? "line-clamp-4" : ""}`}>{excerpt || "No description provided."}</p>
+      {!compact && description.length > 280 && (
         <details>
           <summary className="w-fit cursor-pointer text-sm font-medium underline underline-offset-4">
             Read full description
