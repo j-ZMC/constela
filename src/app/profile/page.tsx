@@ -1,9 +1,9 @@
-import { BarrierSurvey } from "@/components/profile/barrier-survey";
+import { ProfileHub } from "@/components/profile/profile-hub";
 
 export default function ProfilePage() {
   return (
     <main className="mx-auto w-full max-w-6xl px-4 py-10">
-      <BarrierSurvey />
+      <ProfileHub />
     </main>
   );
 }
