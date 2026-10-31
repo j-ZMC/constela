@@ -36,7 +36,7 @@ The four MVP features from the features document, built in phases rather than da
 
 ### Checkpoint 2
 - [x] Tests with the mock model, lint, types and build pass
-- [ ] With a real Groq key, all three tasks return good results and extract takes under 15 s
+- [x] With a real Groq key, all three tasks return good results and extract takes under 15 s (2 to 5 s)
 
 ### Phase 3: Employers shell
 - [ ] Task 5: Layout, menu, hidden candidate menu, intro link and `employer-store.ts`
@@ -82,8 +82,8 @@ Never cut: the rules and their tests, the CV-pair test, the no-diagnosis rule, t
 | The team changes a shared object after Phase 3 | Med | Review in Phase 0; schemas are `.strict()`, so a mismatch fails loudly in tests |
 | The AI maps a requirement to the wrong skill | Med | The employer reviews every tag before saving; untagged requirements are shown but not ranked |
 | The AI invents a salary or a duration | High | Numbers must appear in the posting, so an invented one is dropped and the clarity score keeps asking for it |
-| Groq rejects the extract schema or extracts poorly | Med | The schema follows Groq's strict-mode rules and a test guards them; Checkpoint 2 settles it with a real key |
-| Groq free-tier limits during the demo | Med | Typed errors with a manual path; the clarity score and phrase hints work without AI |
+| The AI invents facts in a rewrite | High | Examples in the prompt; without a [bracket] a rewrite can only take words away; the employer accepts every suggestion |
+| Groq free-tier limits during the demo | Med | About 8 rewrites a minute: rehearse with pauses. Typed errors with a manual path; the clarity score and phrase hints work without AI |
 | Environment fit read as a candidate's weakness | High | Never ranked; employers see gaps as adjustments they could offer |
 | Barrier categories leaking to employers | High | Only `needsFromBarriers()` reads barrier ids; tests assert no category comes out |
 | Seal thresholds disputed | Low | Constants in one file; the SPEC lists them as proposals |

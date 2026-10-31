@@ -11,18 +11,24 @@ import {
 } from "@/lib/employer-ai";
 import { DEMO_VACANCY, clarityScore, vacancySchema, type Vacancy } from "@/lib/vacancy";
 
+const answer = (output: unknown) => ({
+  content: [{ type: "text" as const, text: typeof output === "string" ? output : JSON.stringify(output) }],
+  finishReason: { unified: "stop" as const, raw: undefined },
+  usage: {
+    inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
+    outputTokens: { total: 20, text: 20, reasoning: undefined },
+  },
+  warnings: [],
+});
+
 function modelReturning(output: unknown) {
-  return new MockLanguageModelV4({
-    doGenerate: async () => ({
-      content: [{ type: "text", text: typeof output === "string" ? output : JSON.stringify(output) }],
-      finishReason: { unified: "stop", raw: undefined },
-      usage: {
-        inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
-        outputTokens: { total: 20, text: 20, reasoning: undefined },
-      },
-      warnings: [],
-    }),
-  });
+  return new MockLanguageModelV4({ doGenerate: async () => answer(output) });
+}
+
+// Answers in turn, one per call, repeating the last.
+function modelAnswering(...outputs: unknown[]) {
+  let call = 0;
+  return new MockLanguageModelV4({ doGenerate: async () => answer(outputs[Math.min(call++, outputs.length - 1)]) });
 }
 
 const POSTING = `Junior Data Analyst at Ceiba Foods, Guadalajara.
@@ -175,6 +181,7 @@ describe("the rules the model gets", () => {
     expect(system).toContain('"fast-paced", "team player"');
     expect(system).toMatch(/Never invent a fact/);
     expect(system).toMatch(/square brackets/);
+    expect(system).toContain("Handle about [number] [tasks] a [day or week]"); // the small model follows examples, not rules alone
   });
 
   it("gives the rewrite the length of the field it goes back into", () => {
@@ -187,6 +194,10 @@ describe("the rules the model gets", () => {
     expect(system).toMatch(/Never write hypothetical questions/);
     expect(system).toMatch(/Never ask about health, disability, age/);
     expect(system).toMatch(/Never judge eye contact/);
+  });
+
+  it("keeps the rubric at the level of the requirement", () => {
+    expect(buildPrompt(INTERVIEW).system).toMatch(/Never ask for more than the requirement says/);
   });
 });
 
@@ -314,15 +325,26 @@ describe("rewrite", () => {
   });
 
   it("keeps numbers the line already had", async () => {
-    await expect(rewrite("Team player for 3 stores", { text: "Work with the staff of 3 stores" })).resolves.toEqual({
-      text: "Work with the staff of 3 stores",
+    await expect(rewrite("Team player for 3 stores", { text: "Work with [who] at 3 stores" })).resolves.toEqual({
+      text: "Work with [who] at 3 stores",
     });
+  });
+
+  it("accepts a rewrite that only takes words away, with no bracket", async () => {
+    await expect(rewrite("Acme wants a rockstar analyst for its dynamic team", { text: "Acme wants an analyst for its team" })).resolves.toEqual({
+      text: "Acme wants an analyst for its team", // "an" is grammar, not a fact
+    });
+  });
+
+  it("accepts new words next to a bracket: the employer still has to fill in the fact", async () => {
+    await expect(rewrite("Team player", { text: "Work with [who] on [which tasks]" })).resolves.toEqual({ text: "Work with [who] on [which tasks]" });
   });
 
   it.each([
     ["keeps a vague phrase", { text: "Be a real team player" }],
     ["swaps in another vague phrase", { text: "Thrive under pressure" }],
     ["invents a number", { text: "Handle about 20 orders a day" }],
+    ["adds facts without a bracket", { text: "Collaborate across departments to meet project deadlines" }],
     ["comes back empty", { text: "   " }],
     ["doesn't fit the field", { text: "Work with others ".repeat(10) }],
   ])("fails when the model %s", async (_, output) => {
@@ -350,6 +372,52 @@ describe("interview", () => {
     const many: EmployerAiRequest = { ...INTERVIEW, essential: Array.from({ length: 8 }, (_, i) => `Requirement ${i + 1}`) };
     const questions = await interview(Array.from({ length: 8 }, (_, i) => question(i + 1)), many);
     expect(questions).toHaveLength(6);
+  });
+});
+
+describe("one more try", () => {
+  const VAGUE = "Work in a fast-paced team";
+
+  it("tries again after an answer that breaks the schema, which the small model sometimes returns", async () => {
+    const model = modelAnswering("not json", { text: "Handle about [number] orders a day" });
+    await expect(runEmployerAi({ task: "rewrite", text: VAGUE }, model)).resolves.toEqual({ text: "Handle about [number] orders a day" });
+    expect(model.doGenerateCalls).toHaveLength(2);
+  });
+
+  it("tries again after an answer the rules reject", async () => {
+    const model = modelAnswering({ text: "Handle about 20 orders a day" }, { text: "Handle about [number] orders a day" });
+    await expect(runEmployerAi({ task: "rewrite", text: VAGUE }, model)).resolves.toEqual({ text: "Handle about [number] orders a day" });
+    expect(model.doGenerateCalls).toHaveLength(2);
+  });
+
+  it("gives up after the second try", async () => {
+    const model = modelAnswering({ text: "Handle about 20 orders a day" });
+    await expect(runEmployerAi({ task: "rewrite", text: VAGUE }, model)).rejects.toMatchObject({ code: "failed" });
+    expect(model.doGenerateCalls).toHaveLength(2);
+  });
+
+  it("makes one call when the first answer is good", async () => {
+    const model = modelAnswering({ text: "Handle about [number] orders a day" });
+    await runEmployerAi({ task: "rewrite", text: VAGUE }, model);
+    expect(model.doGenerateCalls).toHaveLength(1);
+  });
+
+  it.each(REQUESTS)("%s also gets its second try", async (_, request) => {
+    const model = modelAnswering("not json");
+    await expect(runEmployerAi(request, model)).rejects.toMatchObject({ code: "failed" });
+    expect(model.doGenerateCalls).toHaveLength(2);
+  });
+
+  it("shares one time limit between both tries", async () => {
+    let calls = 0;
+    const slow = new MockLanguageModelV4({
+      doGenerate: async ({ abortSignal }) => {
+        calls++;
+        return new Promise((_, reject) => abortSignal?.addEventListener("abort", () => reject(abortSignal.reason)));
+      },
+    });
+    await expect(runEmployerAi({ task: "rewrite", text: VAGUE }, slow, 20)).rejects.toMatchObject({ code: "timeout" });
+    expect(calls).toBe(1);
   });
 });
 

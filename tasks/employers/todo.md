@@ -80,7 +80,7 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Verification:**
 - [x] Tests pass with `MockLanguageModelV4`, including "only vacancy text reaches the provider"
 - [x] The schema sent to Groq meets its strict-mode rules, guarded by a test
-- [ ] With a real Groq key, all three tasks return good results and extracting the demo vacancy text takes under 15 s
+- [x] With a real Groq key, all three tasks return good results and extracting the demo vacancy text takes under 15 s
 
 **Dependencies:** Task 1
 

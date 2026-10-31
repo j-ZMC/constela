@@ -113,8 +113,11 @@ Errors match `/api/breakdown`: `invalid_input` 400, `not_configured` 503, `faile
 Code checks every answer, because an employer may accept a suggestion without reading it closely:
 
 - **Extract copies; it doesn't add.** Every number (salary, durations, response time) must appear in the posting. If it doesn't, it is dropped and the clarity score keeps asking for it, so "1 hour" or "within a week" may need typing in by hand. Skills, environment factors, modalities and formats outside the vocabularies are dropped, never guessed. Vague phrases stay in the draft so the score can flag them. An empty environment from the AI counts as not described: only the employer can say a job offers none of these.
-- **A rewrite never invents a fact.** A missing fact comes back as a [bracket] for the employer to fill in. A rewrite that keeps a vague phrase, adds a number the line didn't have, or doesn't fit its field is rejected, and the employer keeps the hint from the clarity score.
-- **Every interview question is tied to an essential requirement.** Anything else is dropped. The rubric judges the work, never eye contact, voice, speed or confidence.
+- **A rewrite doesn't invent facts.** A missing fact comes back as a [bracket] for the employer to fill in, and without a bracket a rewrite can only take words away. A rewrite that breaks this, keeps a vague phrase, adds a number the line didn't have, or doesn't fit its field is rejected, and the employer keeps the hint from the clarity score. Next to a bracket the code can't tell a joining word from a new fact, so the prompt's examples and the employer's review cover that case.
+- **Every interview question is tied to an essential requirement.** Anything else is dropped. The rubric judges the work, never eye contact, voice, speed or confidence, and stays at the level of the requirement.
+- **One more try.** The model sometimes breaks the schema or these rules, so each task gets a second try inside the same 15 seconds. If both fail, the employer gets a calm message and a Try again button.
+
+Measured with the real key on the default model: extract takes 2 to 5 seconds, and about 8 of 10 rewrites come back on the first press. Groq allows 8,000 tokens a minute and each rewrite uses about 1,000, so about 8 rewrites a minute.
 
 ## Contract with the other modules
 
