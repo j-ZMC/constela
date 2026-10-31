@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, ListChecks, MessagesSquare, Sparkles, UserRound } from "lucide-react";
+import { BriefcaseBusiness, ListChecks, UserRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { PersonalizationPanel } from "@/components/personalization-panel";
 import { cn } from "@/lib/utils";
@@ -10,9 +10,8 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/plan", label: "My plan", icon: ListChecks },
-  { href: "/recommended", label: "Recommended", icon: Sparkles },
   { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
-  { href: "/interview", label: "Interview", icon: MessagesSquare },
+  // Interview (Evy) joins the menu when its page is ready; /interview still works.
 ];
 
 export function SiteNav() {
@@ -28,7 +27,7 @@ export function SiteNav() {
         href={href}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex flex-1 flex-col items-center gap-1 whitespace-nowrap rounded-lg px-1 py-2 text-xs lg:flex-none lg:flex-row lg:gap-2 lg:px-3 lg:text-sm",
+          "flex min-h-11 flex-1 flex-col items-center justify-center gap-1 whitespace-nowrap rounded-lg px-1 py-2 text-sm lg:flex-none lg:flex-row lg:gap-2 lg:px-3 lg:text-base",
           active ? "bg-secondary font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"
         )}
       >

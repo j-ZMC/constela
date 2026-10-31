@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { barrierCatalog, loadBarrierPreferences, saveBarrierPreferences } from "@/lib/barrier-preferences";
+import { NEEDS_GROUPS, barrierCatalog, fullBarrierIds, loadBarrierPreferences, saveBarrierPreferences } from "@/lib/barrier-preferences";
 
 describe("barrier preferences", () => {
   let store: Record<string, string>;
@@ -35,5 +35,23 @@ describe("barrier preferences", () => {
     expect(loadBarrierPreferences()).toBeNull();
     saveBarrierPreferences([]);
     expect(loadBarrierPreferences()).toEqual([]);
+  });
+});
+
+describe("needs groups", () => {
+  it("place every catalog option in exactly one group", () => {
+    const all = barrierCatalog.categories.flatMap((c) => c.subtypes.map((s) => `${c.id}:${s.id}`));
+    const grouped = NEEDS_GROUPS.flatMap((g) => g.ids);
+    expect([...grouped].sort()).toEqual([...all].sort());
+    expect(new Set(grouped).size).toBe(grouped.length);
+  });
+
+  it("never use a diagnosis as a group name", () => {
+    const names = barrierCatalog.categories.map((c) => c.name_en.toLowerCase());
+    for (const g of NEEDS_GROUPS) expect(names.some((n) => g.label.toLowerCase().includes(n))).toBe(false);
+  });
+
+  it("turn profile subtype ids into stored ids", () => {
+    expect(fullBarrierIds(["sound", "sensory_load"])).toEqual(["autism_spectrum:sensory_load", "sensory_processing_differences:sound"]);
   });
 });

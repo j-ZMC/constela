@@ -16,6 +16,7 @@ const KEYS = [
   "account-profile",
   "resume-profile",
   "recommended-jobs-cache",
+  "saved-jobs",
   "tour",
 ];
 

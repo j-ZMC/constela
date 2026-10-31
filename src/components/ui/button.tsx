@@ -30,6 +30,9 @@ const variants = cva(
         "icon-sm":
           "size-7 rounded-[min(var(--radius-md),12px)] in-data-[slot=button-group]:rounded-lg",
         "icon-lg": "size-9",
+        // The app's standard: every action is at least 44px tall, with body-size text (see DESIGN.md).
+        touch: "h-11 gap-2 px-5 text-base has-data-[icon=inline-end]:pr-4 has-data-[icon=inline-start]:pl-4",
+        "icon-touch": "size-11",
       },
     },
     defaultVariants: {

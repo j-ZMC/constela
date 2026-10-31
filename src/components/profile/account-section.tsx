@@ -1,38 +1,58 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type FormEvent } from "react";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { loadLocalAccount, saveLocalAccount } from "@/lib/local-profile";
 
+// Optional details kept on this device. Not a real account: there is no password and nothing on a server.
 export function AccountSection() {
   const saved = loadLocalAccount();
   const [name, setName] = useState(saved?.name ?? "");
   const [email, setEmail] = useState(saved?.email ?? "");
   const [status, setStatus] = useState("");
 
-  function save(event: React.FormEvent<HTMLFormElement>) {
+  function save(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     saveLocalAccount({ name: name.trim(), email: email.trim() });
-    setStatus("Account details saved on this device.");
+    setStatus("Saved on this device.");
   }
 
   return (
-    <section aria-labelledby="account-heading" className="flex max-w-xl flex-col gap-5">
-      <div>
-        <h2 id="account-heading" className="text-2xl font-semibold">Account</h2>
-        <p className="mt-2 text-muted-foreground">These details stay on this device. No account or password is required.</p>
+    <section aria-labelledby="details-heading" className="flex flex-col gap-4">
+      <div className="flex flex-col gap-2">
+        <h2 id="details-heading" className="text-xl font-semibold">
+          Your details
+        </h2>
+        <p className="text-muted-foreground">Optional. They stay on this device. You do not need an account or a password.</p>
       </div>
-      <form onSubmit={save} className="flex flex-col gap-4">
-        <label className="flex flex-col gap-2 text-sm font-medium">
-          Name
-          <input value={name} onChange={(event) => setName(event.target.value)} className="h-11 rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-        </label>
-        <label className="flex flex-col gap-2 text-sm font-medium">
-          Email
-          <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="h-11 rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring" />
-        </label>
-        <Button type="submit" className="h-11 w-fit px-5">Save account</Button>
-        <p role="status" aria-live="polite" className="min-h-5 text-sm text-muted-foreground">{status}</p>
+      <form onSubmit={save} className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="details-name" className="text-base">
+            Name
+          </Label>
+          <Input id="details-name" autoComplete="name" value={name} onChange={(e) => setName(e.target.value)} className="h-11 text-base md:text-base" />
+        </div>
+        <div className="flex flex-col gap-2">
+          <Label htmlFor="details-email" className="text-base">
+            Email
+          </Label>
+          <Input
+            id="details-email"
+            type="email"
+            autoComplete="email"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            className="h-11 text-base md:text-base"
+          />
+        </div>
+        <Button type="submit" size="touch" className="w-fit">
+          Save details
+        </Button>
+        <p role="status" className="text-sm text-muted-foreground">
+          {status}
+        </p>
       </form>
     </section>
   );

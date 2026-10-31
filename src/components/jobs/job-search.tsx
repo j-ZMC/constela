@@ -2,117 +2,136 @@
 
 import { useState, type FormEvent } from "react";
 import Link from "next/link";
-import { Button } from "@/components/ui/button";
+import { Button, buttonVariants } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Label } from "@/components/ui/label";
 import { JobCard } from "@/components/jobs/job-card";
-import { loadBarrierPreferences } from "@/lib/barrier-preferences";
-import { JobSearchError, searchJobs, type JobSearchResponse } from "@/lib/jobs";
+import { effectiveBarrierPreferences } from "@/lib/barrier-preferences";
+import { searchJobs, type Job, type JobSearchRequest, type JobSearchResponse } from "@/lib/jobs";
+import { loadProfile, toJobPreferences } from "@/lib/profile";
 
-export function JobSearch() {
-  return <SearchForm />;
+// The work conditions the filter checks: saved choices, or the ones the profile points to.
+export function jobFilter(): string[] {
+  return effectiveBarrierPreferences(toJobPreferences(loadProfile() ?? {}).barriers);
 }
 
-function SearchForm() {
+// One calm message for every failure, in the plan's voice, with a way forward.
+export function JobsProblem({ onRetry }: { onRetry: () => void }) {
+  return (
+    <div role="alert" className="flex flex-col gap-3 rounded-xl border bg-card p-5">
+      <p className="font-semibold">We can&apos;t look for jobs right now.</p>
+      <p className="text-muted-foreground">It is not your fault. Try again in a moment. Your plan is still here.</p>
+      <div className="flex flex-wrap gap-3">
+        <Button size="touch" onClick={onRetry}>
+          Try again
+        </Button>
+        <Link href="/plan" className={buttonVariants({ variant: "outline", size: "touch" })}>
+          Back to my plan
+        </Link>
+      </div>
+    </div>
+  );
+}
+
+// Jobs first, the ones to check after: a mark never hides a job.
+export function JobResults({ results }: { results: JobSearchResponse }) {
+  const key = (job: Job) => job.url ?? `${job.company}:${job.similarity_rank}`;
+  const count = results.jobs.length;
+  return (
+    <div className="flex flex-col gap-6">
+      <p role="status" className="text-muted-foreground">
+        {count === 0 && results.blockedJobs.length === 0
+          ? "No jobs found. Try other words, like a job title or a skill."
+          : `${count} ${count === 1 ? "job" : "jobs"} found${results.blockedJobs.length ? `, and ${results.blockedJobs.length} to check` : ""}.`}
+      </p>
+      {count > 0 && (
+        <ul className="flex flex-col gap-4">
+          {results.jobs.map((job) => (
+            <li key={key(job)}>
+              <JobCard job={job} />
+            </li>
+          ))}
+        </ul>
+      )}
+      {results.blockedJobs.length > 0 && (
+        <section aria-labelledby="check-heading" className="flex flex-col gap-3">
+          <h3 id="check-heading" className="text-lg font-semibold">
+            Jobs to check first
+          </h3>
+          <p className="text-muted-foreground">These posts mention something you asked us to point out.</p>
+          <ul className="flex flex-col gap-4">
+            {results.blockedJobs.map((job) => (
+              <li key={key(job)}>
+                <JobCard job={job} flagged />
+              </li>
+            ))}
+          </ul>
+        </section>
+      )}
+    </div>
+  );
+}
+
+export function JobSearch() {
   const [query, setQuery] = useState("");
   const [results, setResults] = useState<JobSearchResponse | null>(null);
-  const [error, setError] = useState("");
+  const [failed, setFailed] = useState(false);
   const [loading, setLoading] = useState(false);
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!query.trim()) return;
+  async function run(request: JobSearchRequest) {
     setLoading(true);
-    setError("");
+    setFailed(false);
     setResults(null);
     try {
-      const userBlockers = loadBarrierPreferences() ?? [];
-      setResults(await searchJobs({ query, userBlockers }));
-    } catch (cause) {
-      setError(cause instanceof JobSearchError ? cause.message : "Could not reach the jobs service. Try again.");
+      setResults(await searchJobs(request));
+    } catch {
+      setFailed(true);
     } finally {
       setLoading(false);
     }
   }
 
+  function submit(event: FormEvent<HTMLFormElement>) {
+    event.preventDefault();
+    if (query.trim()) run({ query, userBlockers: jobFilter() });
+  }
+
   return (
-    <section className="mt-8 flex flex-col gap-6" aria-labelledby="job-search-heading">
-      <div className="rounded-xl border bg-card p-5 sm:p-6">
-        <h2 id="job-search-heading" className="text-xl font-semibold">Search current openings</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Search by role, skill, or work arrangement. Your search phrase is sent to OpenAI to find relevant jobs; your profile selections are not.
-        </p>
-        <form onSubmit={submit} className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <label className="flex-1">
-            <span className="sr-only">Job title, skill, or search phrase</span>
-            <input
-              type="search"
-              required
-              maxLength={200}
-              value={query}
-              onChange={(event) => setQuery(event.target.value)}
-              placeholder="For example, remote data analyst"
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
-            />
-          </label>
-          <Button type="submit" disabled={loading || !query.trim()} className="h-11 px-5 text-base">
-            {loading ? "Searching…" : "Find jobs"}
+    <div className="flex flex-col gap-6">
+      <form onSubmit={submit} className="flex flex-col gap-3">
+        <Label htmlFor="job-query" className="text-base font-semibold">
+          What kind of job are you looking for?
+        </Label>
+        <div className="flex flex-col gap-3 sm:flex-row">
+          <Input
+            id="job-query"
+            type="search"
+            required
+            maxLength={200}
+            value={query}
+            onChange={(e) => setQuery(e.target.value)}
+            placeholder="For example: remote data entry"
+            className="h-11 flex-1 text-base md:text-base"
+          />
+          <Button type="submit" size="touch" disabled={loading || !query.trim()}>
+            {loading ? "Looking…" : "Find jobs"}
           </Button>
-        </form>
-        <p className="mt-3 text-sm text-muted-foreground">
-          Saved profile conditions are used when you search and are not sent to OpenAI.{" "}
-          <Link href="/profile" className="font-medium underline underline-offset-4">Update profile</Link>
+        </div>
+        <p className="text-sm text-muted-foreground">
+          We use your profile to point out things you asked about.{" "}
+          <Link href="/privacy" className="underline underline-offset-4">
+            How we keep your data private
+          </Link>
         </p>
-      </div>
+      </form>
 
       {loading && (
-        <div role="status" aria-busy="true" className="flex flex-col gap-3" aria-label="Searching jobs">
-          <p className="text-sm text-muted-foreground">Searching the pre-vectorized job index. Only this query is embedded.</p>
-          {[0, 1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-xl border bg-card" />)}
-        </div>
+        <p role="status" className="text-muted-foreground">
+          Looking for jobs…
+        </p>
       )}
-
-      {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-card p-4 text-sm">{error}</p>}
-
-      {results && (
-        <div className="flex flex-col gap-6" aria-live="polite">
-          <p className="text-sm text-muted-foreground">
-            {results.summary.visibleMatches} {results.summary.visibleMatches === 1 ? "match" : "matches"} · {results.summary.blockedMatches} flagged for review · {results.summary.jobsExcludedByCompany} excluded by current company data
-          </p>
-          {results.summary.modalityFilterApplied && (
-            <p role="status" className="text-sm text-muted-foreground">
-              Work-mode filter: {results.summary.requestedModalities.map((mode) => mode === "on_site" ? "on-site" : mode).join(", ")}. {results.summary.modalityExcludedMatches} similar jobs excluded by the mode filter.
-            </p>
-          )}
-
-          {results.jobs.length > 0 ? (
-            <section aria-labelledby="matches-heading" className="flex flex-col gap-3">
-              <h2 id="matches-heading" className="text-lg font-semibold">Job matches</h2>
-              <ul className="grid gap-4">
-                {results.jobs.map((job) => <li key={job.url ?? `${job.company}:${job.similarity_rank}`}><JobCard job={job} /></li>)}
-              </ul>
-            </section>
-          ) : results.blockedJobs.length > 0 ? (
-            <p className="text-sm text-muted-foreground">No other matches were found. Review the flagged postings below if you want to.</p>
-          ) : (
-            <p role="status" className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
-              No matching jobs found. Try a different role, skill, or phrase.
-            </p>
-          )}
-
-          {results.blockedJobs.length > 0 && (
-            <section aria-labelledby="review-heading" className="flex flex-col gap-3">
-              <div>
-                <h2 id="review-heading" className="text-lg font-semibold">Possible conditions to review</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  These matches are shown separately, not hidden. Review the posting and decide what works for you.
-                </p>
-              </div>
-              <ul className="grid gap-4">
-                {results.blockedJobs.map((job) => <li key={job.url ?? `${job.company}:${job.similarity_rank}`}><JobCard job={job} flagged /></li>)}
-              </ul>
-            </section>
-          )}
-        </div>
-      )}
-    </section>
+      {failed && <JobsProblem onRetry={() => run({ query, userBlockers: jobFilter() })} />}
+      {results && <JobResults results={results} />}
+    </div>
   );
 }

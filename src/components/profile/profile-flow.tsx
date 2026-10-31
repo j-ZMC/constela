@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, type ReactNode } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
@@ -11,11 +11,12 @@ import { useHydrated } from "@/lib/use-hydrated";
 
 // Saved answers live in localStorage, which the server can't see. Render the flow only after
 // hydration so its lazy state reads storage without a server/client mismatch.
-export function ProfileFlow() {
-  return useHydrated() ? <Flow /> : null;
+// `after` (work choices, CV, details) shows on the welcome and summary screens, never between questions.
+export function ProfileFlow({ after }: { after?: ReactNode }) {
+  return useHydrated() ? <Flow after={after} /> : null;
 }
 
-function Flow() {
+function Flow({ after }: { after?: ReactNode }) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Answers>(() => loadProfile() ?? {});
   const [step, setStep] = useState(loadStep);
@@ -36,6 +37,7 @@ function Flow() {
 
   if (step === -1) {
     return (
+      <>
       <section className="flex flex-col gap-6">
         <Constellation lit={QUESTIONS.map(() => false)} label={`${QUESTIONS.length} short questions`} />
         <h1 className="text-3xl font-bold text-balance">Let&apos;s get to know you</h1>
@@ -52,19 +54,24 @@ function Flow() {
           </Button>
         </div>
       </section>
+      {after}
+      </>
     );
   }
 
   if (step >= QUESTIONS.length) {
     return (
-      <ProfileSummary
-        answers={answers}
-        onEdit={(i) => {
-          setDraft(answers[QUESTIONS[i].id]);
-          setEditing(true);
-          go(i);
-        }}
-      />
+      <>
+        <ProfileSummary
+          answers={answers}
+          onEdit={(i) => {
+            setDraft(answers[QUESTIONS[i].id]);
+            setEditing(true);
+            go(i);
+          }}
+        />
+        {after}
+      </>
     );
   }
 
