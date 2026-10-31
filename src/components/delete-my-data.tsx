@@ -3,8 +3,21 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-// Everything Constela keeps lives in this browser under these keys (profile, plan, reading and personalization).
-const KEYS = ["profile", "profile-step", "plan", "a11y", "pz", "pz-boot"];
+// Everything Constela keeps lives in this browser under these keys: profile, plan, reading and personalization,
+// job filter choices, account details, the read CV, cached recommendations and which tours were seen.
+const KEYS = [
+  "profile",
+  "profile-step",
+  "plan",
+  "a11y",
+  "pz",
+  "pz-boot",
+  "job-barrier-preferences",
+  "account-profile",
+  "resume-profile",
+  "recommended-jobs-cache",
+  "tour",
+];
 
 export function DeleteMyData() {
   const [step, setStep] = useState<"idle" | "confirm" | "done">("idle");

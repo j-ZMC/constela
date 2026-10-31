@@ -13,12 +13,15 @@ export default function PrivacyPage() {
         <p className="text-muted-foreground">Draft for the Constela prototype. Last updated 29 October 2026.</p>
       </header>
 
-      <Summarized summary="Your data stays on this device. Only a task you choose to break down reaches the AI. You can delete everything below.">
+      <Summarized summary="Your data stays on this device. Only what you choose to search for, break down or upload is sent to be processed, and it is not stored. You can delete everything below.">
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">What we keep, and where</h2>
-        <p>Your answers, your plan and your settings stay in this browser, on this device. We do not have accounts, and we do not keep your data on a server.</p>
+        <p>Everything below stays in this browser, on this device. We do not have real accounts, and we do not keep your data on a server.</p>
         <ul className="list-disc space-y-1 pl-6">
           <li>Your profile answers, which describe needs, never diagnoses</li>
+          <li>The work conditions you chose for the job filter</li>
+          <li>The name and email you typed in Account, if you did</li>
+          <li>What we read from your CV, if you uploaded one</li>
           <li>Your plan: steps, stars and stages</li>
           <li>How you said you feel today, if you used the check-in</li>
           <li>Your reading and personalization settings</li>
@@ -32,8 +35,17 @@ export default function PrivacyPage() {
           steps. We also send three settings that shape the answer, like &quot;keep steps short&quot;, and which starter step it is.
         </p>
         <p>
-          We never send your profile answers, how you feel, or your name. Constela does not save the task text; Groq handles it
-          under its own privacy policy.
+          When you search for jobs, we send the words you typed to an AI service (OpenAI) to compare them with job posts. For
+          Recommended jobs, we send a short summary of the skills and experience read from your CV, never your name, email or
+          phone. The work conditions you chose are checked on Constela&apos;s server and are not sent to the AI.
+        </p>
+        <p>
+          When you upload a CV, the PDF goes to Constela&apos;s server only to read its text. We delete the file right after,
+          and the result is saved on your device.
+        </p>
+        <p>
+          We never send your profile answers or how you feel to an AI service. Constela does not store what you send; Groq and
+          OpenAI handle it under their own privacy policies.
         </p>
       </section>
 

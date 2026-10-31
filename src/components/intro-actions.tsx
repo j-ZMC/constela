@@ -4,19 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
+import { loadProfile } from "@/lib/profile";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const action = "h-11 px-5 text-base";
 
 const HOW = [
-  { title: "Choose what matters at work", text: "Select workplace conditions for the job filter to review. No diagnosis required." },
+  { title: "Tell us what helps you", text: "A few questions about how you work best and what to watch for at work. Never about a diagnosis." },
   { title: "Get one small step at a time", text: "Your plan shows what to do now, and breaks big tasks into small ones." },
   { title: "Watch your stars light up", text: "Every step you finish lights a star, from getting ready to your first interview." },
 ];
 
 // One clear way in. Accounts come later (Supabase); until then the account line says so plainly.
 export function IntroActions() {
-  const hasProfile = useHydrated() && loadBarrierPreferences() !== null;
+  // Either part of the profile counts: the needs questions or the job filter choices.
+  const hasProfile = useHydrated() && (loadProfile() !== null || loadBarrierPreferences() !== null);
   const [how, setHow] = useState(false);
   const [note, setNote] = useState(false);
   return (
