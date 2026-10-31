@@ -13,6 +13,7 @@ The four MVP features from the features document, built in phases rather than da
 - **One storage module**, `employer-store.ts`, versioned and validated like `src/lib/plan.ts`, so broken JSON never crashes a page.
 - **`/employers` shares the header.** `SiteNav` swaps to the employer menu and name there, so the two menus can never show together. `employers/layout.tsx` sets the section's title and description. No route groups: teammates' pages don't move during the sprint.
 - **Ranking by essential skills only.** Environment fit is shown, never ranked (SPEC decision 5).
+- **Pages read stored data through `useEmployerData()`.** Next keeps visited pages alive and hidden, so data read once on mount would go stale. The hook re-reads when a page comes back.
 
 ## Task List
 
@@ -47,11 +48,14 @@ The four MVP features from the features document, built in phases rather than da
 - [ ] A real screen reader reads the menu (the accessibility tree already has the right names)
 
 ### Phase 4: Clear vacancy (feature 1)
-- [ ] Task 6: Vacancy editor with live clarity score
-- [ ] Task 7: Published vacancies on `/jobs`
+- [x] Task 6: Vacancy editor with live clarity score
+- [x] Task 7: Published vacancies on `/jobs`
 
 ### Checkpoint 4
-- [ ] Demo script steps 1 to 3 work
+- [x] Tests, lint, types and build pass
+- [x] Demo script steps 1 to 3 work in Chrome at 375 px and desktop, with simulated AI answers
+- [x] Demo script steps 1 to 3 work with a real Groq key
+- [ ] Zahid and Juan agree with the `/jobs` change
 
 ### Phase 5: Talent search (feature 2)
 - [ ] Task 8: Anonymous ranked profiles, fit and invitations
@@ -96,7 +100,7 @@ Never cut: the rules and their tests, the CV-pair test, the no-diagnosis rule, t
 ## Parallel Work
 
 - Phase 2 (server) and Phase 3 (UI shell) don't depend on each other.
-- After Phase 3, Luis can review the shared header, and Zahid and Juan can place `<PublishedVacancies />`.
+- Luis can review the shared header, and Zahid and Juan can review `<PublishedVacancies />` on `/jobs`.
 
 ## Open Questions
 

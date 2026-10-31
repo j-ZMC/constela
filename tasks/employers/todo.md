@@ -117,17 +117,19 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Description:** Paste text → extract → review the card → see the score and each fix → accept or edit rewrites (the score updates live) → fill the process template → publish. Vague phrases are highlighted in the pasted text.
 
 **Acceptance criteria:**
-- [ ] Nothing from the AI is saved until the employer accepts it
-- [ ] A rewrite with a [bracket] can't be saved until the employer fills it in
-- [ ] Without AI, the employer can fill the card by hand and still get the score and phrase hints
-- [ ] Publishing needs a title, company and at least one hiring step
+- [x] Nothing from the AI is saved until the employer accepts it
+- [x] A rewrite with a [bracket] can't be saved until the employer fills it in
+- [x] Without AI, the employer can fill the card by hand and still get the score and phrase hints
+- [x] Publishing needs a title, company and at least one hiring step
+- [x] Unsaved work survives moving around the menu, and leaving or reloading asks first
 
 **Verification:**
-- [ ] Manual: demo script steps 1 and 2
+- [x] Tests pass; demo script steps 1 and 2 checked in Chrome with simulated AI answers
+- [x] Demo script steps 1 and 2 with a real Groq key
 
 **Dependencies:** Tasks 4 and 5
 
-**Files:** `src/app/employers/vacancies/…`, `src/components/employers/…`
+**Files:** `src/app/employers/vacancies/page.tsx`, `src/components/employers/vacancy-workspace.tsx`, `vacancy-editor.tsx`, `vacancy-fields.tsx`, `phrase-help.tsx`, `clarity-panel.tsx`, `src/lib/vacancy-editor.ts`, `src/lib/vacancy-editor.test.ts`, `src/lib/employer-ai-client.ts`, `src/lib/employer-store.ts`
 
 **Estimated scope:** L
 
@@ -136,11 +138,12 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Description:** `<PublishedVacancies />` shows published cards on `/jobs` with the seal level and, when the candidate has a barrier survey, the environment fit from `needsFromBarriers()`.
 
 **Acceptance criteria:**
-- [ ] One line added to `src/app/jobs/page.tsx`; Zahid and Juan agree
-- [ ] Fit wording is calm: "This job offers 3 of the 4 things you asked for"
+- [x] One line added to `src/app/jobs/page.tsx`, plus its import
+- [ ] Zahid and Juan agree
+- [x] Fit wording is calm: "This job offers 3 of the 4 things you asked for"
 
 **Verification:**
-- [ ] Manual: demo script step 3
+- [x] Demo script step 3 checked in Chrome
 
 **Dependencies:** Task 6
 

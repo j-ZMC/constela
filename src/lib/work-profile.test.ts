@@ -5,6 +5,7 @@ import {
   DEMO_PROFILES,
   anonymize,
   compatibility,
+  fitSummary,
   identityFor,
   needsFromBarriers,
   rankCandidates,
@@ -103,6 +104,27 @@ describe("compatibility", () => {
   it("treats no modality preference as any", () => {
     expect(compatibility(DEMO_VACANCY, { needs: [], modalities: [] }).modality).toBe("any");
     expect(compatibility(DEMO_VACANCY, { needs: [], modalities: ["hybrid"] }).modality).toBe("met");
+  });
+});
+
+describe("fitSummary", () => {
+  const summary = (needs: EnvironmentFactor[], v: Vacancy = DEMO_VACANCY) => fitSummary(compatibility(v, { needs, modalities: [] }));
+
+  it("says how many of the things the candidate asked for the job offers", () => {
+    expect(summary(["quiet_space", "focus_time", "steady_pace", "soft_lighting"])).toBe("This job offers 3 of the 4 things you asked for.");
+    expect(summary(["soft_lighting"])).toBe("This job offers 0 of the 1 thing you asked for.");
+  });
+
+  it("is plain when the job offers everything", () => {
+    expect(summary(["quiet_space", "focus_time"])).toBe("This job offers everything you asked for.");
+  });
+
+  it("doesn't count a job against the candidate when its environment isn't described", () => {
+    expect(summary(["quiet_space"], { ...DEMO_VACANCY, environment: undefined })).toBe("This employer has not described the work environment yet.");
+  });
+
+  it("says nothing when the candidate asked for nothing", () => {
+    expect(summary([])).toBeNull();
   });
 });
 

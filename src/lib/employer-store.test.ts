@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadEmployerData, saveEmployerData, type EmployerData } from "@/lib/employer-store";
+import { employerStore, loadEmployerData, saveEmployerData, saveVacancy, type EmployerData } from "@/lib/employer-store";
 import { DEMO_VACANCY } from "@/lib/vacancy";
 import type { Permission } from "@/lib/work-profile";
 
@@ -91,6 +91,48 @@ describe("employer store", () => {
     expect(loadEmployerData().guideRead).toBe(false);
   });
 
+  it("adds a new vacancy and replaces a saved one in place", () => {
+    const other = { ...DEMO_VACANCY, id: "other" };
+    saveVacancy(DEMO_VACANCY);
+    saveVacancy(other);
+    saveVacancy({ ...DEMO_VACANCY, title: "Senior Data Analyst" });
+    expect(loadEmployerData().vacancies.map((v) => [v.id, v.title])).toEqual([
+      [DEMO_VACANCY.id, "Senior Data Analyst"],
+      ["other", DEMO_VACANCY.title],
+    ]);
+  });
+
+  it("leaves permissions, responses and the guide alone when saving a vacancy", () => {
+    saveEmployerData({ ...data, vacancies: [] });
+    expect(saveVacancy(DEMO_VACANCY)).toBe(true);
+    expect(loadEmployerData()).toEqual(data);
+  });
+
+  it("gives the same snapshot until the data changes, as React needs", () => {
+    saveEmployerData(data);
+    const first = employerStore.snapshot();
+    expect(employerStore.snapshot()).toBe(first);
+    saveVacancy({ ...DEMO_VACANCY, title: "Changed" });
+    expect(employerStore.snapshot()).not.toBe(first);
+    expect(employerStore.snapshot().vacancies[0].title).toBe("Changed");
+  });
+
+  it("tells open pages about a save here and in another tab, until they stop listening", () => {
+    const tabs = new EventTarget();
+    vi.stubGlobal("window", tabs);
+    const listener = vi.fn();
+    const stop = employerStore.subscribe(listener);
+
+    saveEmployerData(data);
+    tabs.dispatchEvent(new Event("storage"));
+    expect(listener).toHaveBeenCalledTimes(2);
+
+    stop();
+    saveEmployerData(data);
+    tabs.dispatchEvent(new Event("storage"));
+    expect(listener).toHaveBeenCalledTimes(2);
+  });
+
   it("loads empty and reports a failed save when the browser blocks storage", () => {
     const blocked = () => {
       throw new Error("blocked");
@@ -98,5 +140,7 @@ describe("employer store", () => {
     vi.stubGlobal("localStorage", { getItem: blocked, setItem: blocked });
     expect(loadEmployerData()).toEqual(EMPTY);
     expect(saveEmployerData(data)).toBe(false);
+    expect(saveVacancy(DEMO_VACANCY)).toBe(false);
+    expect(employerStore.snapshot()).toEqual(EMPTY);
   });
 });

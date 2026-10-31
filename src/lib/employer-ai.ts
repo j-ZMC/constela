@@ -10,6 +10,7 @@ import {
   ENVIRONMENT_FACTORS,
   MAX_ITEMS,
   MAX_LINE,
+  MAX_POSTING,
   MAX_SHORT,
   MAX_STAGES,
   MAX_SUMMARY,
@@ -24,7 +25,6 @@ import {
   vacancySchema,
 } from "@/lib/vacancy";
 
-const MAX_POSTING = 8000;
 const MAX_QUESTIONS = 6;
 const MAX_QUESTION = 200;
 const TIMEOUT_MS = 15_000;

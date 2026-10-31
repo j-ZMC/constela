@@ -1,5 +1,6 @@
 // Constela for Employers: everything the employer side keeps in this browser. See SPEC-employers.md.
 // shortcut: single-browser demo, move to a database with accounts before any real employer uses it.
+import { useSyncExternalStore } from "react";
 import { z } from "zod";
 import type { SealResponse } from "@/lib/seal";
 import { vacancySchema, type Vacancy } from "@/lib/vacancy";
@@ -30,9 +31,16 @@ function keepValid<T>(schema: z.ZodType<T>, items: unknown): T[] {
   return items.map((item) => schema.safeParse(item)).flatMap((r) => (r.success ? [r.data] : []));
 }
 
-export function loadEmployerData(): EmployerData {
+function readRaw(): string | null {
   try {
-    const raw = localStorage.getItem(STORAGE_KEY);
+    return localStorage.getItem(STORAGE_KEY);
+  } catch {
+    return null;
+  }
+}
+
+function parse(raw: string | null): EmployerData {
+  try {
     if (!raw) return emptyData();
     const data = JSON.parse(raw);
     if (data?.version !== VERSION) return emptyData();
@@ -47,12 +55,50 @@ export function loadEmployerData(): EmployerData {
   }
 }
 
+export const loadEmployerData = (): EmployerData => parse(readRaw());
+
+const listeners = new Set<() => void>();
+
 // False when the browser blocks storage or it is full, so the page can tell the employer their work wasn't saved.
 export function saveEmployerData(data: EmployerData): boolean {
   try {
     localStorage.setItem(STORAGE_KEY, JSON.stringify({ version: VERSION, ...data }));
+    listeners.forEach((listener) => listener());
     return true;
   } catch {
     return false;
   }
+}
+
+// Reads the store first, so saving a vacancy never overwrites what another page changed since.
+export function saveVacancy(vacancy: Vacancy): boolean {
+  const data = loadEmployerData();
+  const known = data.vacancies.some((v) => v.id === vacancy.id);
+  const vacancies = known ? data.vacancies.map((v) => (v.id === vacancy.id ? vacancy : v)) : [...data.vacancies, vacancy];
+  return saveEmployerData({ ...data, vacancies });
+}
+
+let cached: { raw: string | null; data: EmployerData } | undefined;
+const SERVER_DATA = emptyData();
+
+export const employerStore = {
+  // The same object until the data changes: useSyncExternalStore loops forever otherwise.
+  snapshot(): EmployerData {
+    const raw = readRaw();
+    if (!cached || cached.raw !== raw) cached = { raw, data: parse(raw) };
+    return cached.data;
+  },
+  subscribe(listener: () => void) {
+    listeners.add(listener);
+    window.addEventListener("storage", listener); // another tab saved
+    return () => {
+      listeners.delete(listener);
+      window.removeEventListener("storage", listener);
+    };
+  },
+};
+
+// Next keeps visited pages alive but hidden, so data read once would go stale. This re-reads when a page comes back.
+export function useEmployerData(): EmployerData {
+  return useSyncExternalStore(employerStore.subscribe, employerStore.snapshot, () => SERVER_DATA);
 }

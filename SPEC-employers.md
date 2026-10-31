@@ -120,12 +120,20 @@ Code checks every answer, because an employer may accept a suggestion without re
 
 Measured with the real key on the default model: extract takes 2 to 5 seconds, and about 8 of 10 rewrites come back on the first press. Groq allows 8,000 tokens a minute and each rewrite uses about 1,000, so about 8 rewrites a minute.
 
+### Vacancy editor
+
+- **Paste or type.** The AI fills the form, and nothing reaches storage until the employer presses Save draft or Publish. Without AI the same form works by hand, with the score and the phrase hints.
+- **A [bracket] stops at the suggestion.** "Use this version" stays off until every bracket is filled, so an AI blank never enters the card. Brackets in the employer's own text are left alone.
+- **What saving needs.** A draft needs a title and a company, like every stored vacancy. Publishing also needs one hiring step. The clarity score guides and never blocks.
+- **The process template has names and formats only.** A duration is a fact, so the employer gives it, the same rule the AI follows.
+- **Candidates see it on `/jobs`** with their fit, read on their own device. Their needs never reach the employer.
+
 ## Contract with the other modules
 
 | Teammate | What we need |
 | --- | --- |
 | Luis (Profile, My plan) | Review the shared header: on `/employers`, `SiteNav` swaps to the employer menu and name. `DeleteMyData` now removes the `employers` key. Employer flows will call `addStepToPlan()` ("Read your interview questions") and `markEvent()`. |
-| Zahid and Juan (Jobs) | One `<PublishedVacancies />` line in `src/app/jobs/page.tsx`. Agree on wording: their badge stays "Verified company", ours is "Neuroinclusive seal". A new barrier subtype needs a line in `needsFromBarriers()`; a test fails until it has one. |
+| Zahid and Juan (Jobs) | Review `<PublishedVacancies />`, added above `<JobSearch />` in `src/app/jobs/page.tsx`. It shows nothing until a vacancy is published. Agree on wording: their badge stays "Verified company", ours is "Neuroinclusive seal". A new barrier subtype needs a line in `needsFromBarriers()`; a test fails until it has one. |
 | Evy (Interview) | Decide where the candidate reads the structured questions 48 hours before: the invitation view or `/interview`. |
 | Regina (extension) | Optional: `GET /api/public/seal` and `GET /api/public/vacancies/[id]` with CORS. |
 
@@ -152,7 +160,10 @@ src/lib/seal.ts                   → seal levels and checks
 src/lib/employer-ai.ts            → AI tasks: extract, rewrite, interview (Phase 2)
 src/app/api/employer-ai/route.ts  → validated AI boundary (Phase 2)
 src/lib/employer-store.ts         → localStorage for vacancies, permissions, responses, guide (Phase 3)
+src/lib/vacancy-editor.ts         → the editor's rules: form to vacancy, what saving needs, phrase marks (Phase 4)
+src/lib/employer-ai-client.ts     → the browser side of the AI route (Phase 4)
 src/app/employers/                → layout, overview, vacancies, talent, guide (Phases 3 to 7)
+src/components/employers/         → vacancy editor, clarity panel, phrase help, published vacancies (Phase 4 on)
 src/components/site-nav.tsx       → shared header: swaps to the employer menu on /employers (Phase 3)
 ```
 
@@ -183,7 +194,7 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 
 - [x] Clarity score, ranking, environment fit, seal and privacy rules are pure functions with tests.
 - [x] The CV-pair test passes 10 of 10, and sharing needs or disability-related text never changes a score.
-- [ ] An employer turns a pasted vacancy into a clear card (80+) and publishes it; candidates see it on `/jobs`.
+- [x] An employer turns a pasted vacancy into a clear card (80+) and publishes it; candidates see it on `/jobs`.
 - [ ] Talent search shows anonymous profiles ranked by skills, with reasons and fit; identity shows only after the candidate accepts.
 - [ ] An invited candidate sees the process tracker, the questions 48 hours before, and can choose an alternative format.
 - [ ] The seal panel shows the level, every check and how to reach the next level.

@@ -130,6 +130,15 @@ export function compatibility(v: Vacancy, p: Pick<WorkProfile, "needs" | "modali
   };
 }
 
+// For the candidate's eyes, so it says what the job offers and never what the person lacks.
+export function fitSummary(fit: Compatibility): string | null {
+  const asked = fit.met.length + fit.gaps.length + fit.unknown.length;
+  if (asked === 0) return null;
+  if (fit.unknown.length > 0) return "This employer has not described the work environment yet.";
+  if (fit.gaps.length === 0) return "This job offers everything you asked for.";
+  return `This job offers ${fit.met.length} of the ${asked} ${asked === 1 ? "thing" : "things"} you asked for.`;
+}
+
 // Ranking v1 reads essential skills only: exact and verified counts 1, exact and declared 0.6, an equivalent tool half
 // of that. Needs, modalities, sources and names are never read, so sharing a need can't cost a place (CV-pair test).
 const EVIDENCE_WEIGHT: Record<Evidence, number> = { verified: 1, declared: 0.6 };

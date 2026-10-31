@@ -6,6 +6,7 @@ import {
   clarityScore,
   findExclusionaryPhrases,
   offersAlternativeFormat,
+  salaryText,
   vacancySchema,
   type Vacancy,
 } from "@/lib/vacancy";
@@ -102,6 +103,13 @@ describe("findExclusionaryPhrases", () => {
 
   it("gives every phrase a hint for the rewrite", () => {
     expect(EXCLUSIONARY_PHRASES.every((p) => p.hint.length > 0)).toBe(true);
+  });
+});
+
+describe("salaryText", () => {
+  it("reads as a range, or as one amount when both ends match", () => {
+    expect(salaryText({ min: 18000, max: 22000, currency: "MXN", period: "month" })).toBe("MXN 18,000 to 22,000 per month");
+    expect(salaryText({ min: 25, max: 25, currency: "USD", period: "hour" })).toBe("USD 25 per hour");
   });
 });
 

@@ -1,3 +1,4 @@
+import { PublishedVacancies } from "@/components/employers/published-vacancies";
 import { JobSearch } from "@/components/jobs/job-search";
 
 export default function JobsPage() {
@@ -7,6 +8,7 @@ export default function JobsPage() {
       <p className="mt-2 max-w-3xl text-muted-foreground">
         Search current openings from the job database. Your profile conditions flag possible matches for review; they never automatically rule out a job.
       </p>
+      <PublishedVacancies />
       <JobSearch />
     </main>
   );

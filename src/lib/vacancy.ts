@@ -84,6 +84,7 @@ export const EQUIVALENT_SKILLS: readonly (readonly SkillId[])[] = [
 
 export const MODALITIES = ["remote", "hybrid", "on-site"] as const;
 export type Modality = (typeof MODALITIES)[number];
+export const MODALITY_LABELS: Record<Modality, string> = { remote: "Remote", hybrid: "Hybrid", "on-site": "On-site" };
 
 export const CURRENCIES = ["MXN", "USD"] as const;
 export const SALARY_PERIODS = ["hour", "month", "year"] as const;
@@ -91,8 +92,17 @@ export const SALARY_PERIODS = ["hour", "month", "year"] as const;
 // The last three are the alternative formats: a written first stage, a work sample, a paid practical task.
 export const STAGE_FORMATS = ["video-call", "phone-call", "in-person", "written", "work-sample", "paid-task"] as const;
 export const ALTERNATIVE_FORMATS = ["written", "work-sample", "paid-task"] as const;
+export const STAGE_FORMAT_LABELS: Record<(typeof STAGE_FORMATS)[number], string> = {
+  "video-call": "Video call",
+  "phone-call": "Phone call",
+  "in-person": "In person",
+  written: "Written answers",
+  "work-sample": "Work sample",
+  "paid-task": "Paid task",
+};
 
 // Field limits, shared with src/lib/employer-ai.ts so an AI draft always fits.
+export const MAX_POSTING = 8000;
 export const MAX_SHORT = 80;
 export const MAX_LINE = 120;
 export const MAX_SUMMARY = 400;
@@ -150,6 +160,13 @@ export const vacancySchema = z
   .strict();
 
 export type Vacancy = z.infer<typeof vacancySchema>;
+export type Requirement = Vacancy["essential"][number];
+export type Stage = Vacancy["process"][number];
+
+export function salaryText(s: NonNullable<Vacancy["salary"]>): string {
+  const money = (n: number) => n.toLocaleString("en-US");
+  return `${s.currency} ${s.min === s.max ? money(s.min) : `${money(s.min)} to ${money(s.max)}`} per ${s.period}`;
+}
 
 export function offersAlternativeFormat(v: Vacancy): boolean {
   return v.process.some((s) => s.alternative !== undefined || (ALTERNATIVE_FORMATS as readonly string[]).includes(s.format));

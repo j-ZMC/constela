@@ -1,14 +1,12 @@
 import type { Metadata } from "next";
-import { SectionPlaceholder } from "@/components/section-placeholder";
+import { VacancyWorkspace } from "@/components/employers/vacancy-workspace";
 
 export const metadata: Metadata = { title: "Vacancies" };
 
 export default function VacanciesPage() {
   return (
-    <SectionPlaceholder
-      title="Your vacancies"
-      what="Paste a vacancy, see what is missing, and publish a clear version."
-      owner="Phase 4"
-    />
+    <main className="mx-auto w-full max-w-5xl px-4 py-10">
+      <VacancyWorkspace />
+    </main>
   );
 }
