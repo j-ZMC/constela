@@ -3,8 +3,8 @@
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
-// Everything Constela keeps lives in this browser under these keys (profile, plan, reading and personalization).
-const KEYS = ["profile", "profile-step", "plan", "a11y", "pz", "pz-boot"];
+// Everything Constela keeps lives in this browser under these keys (profile, plan, reading, personalization and employers).
+const KEYS = ["profile", "profile-step", "plan", "a11y", "pz", "pz-boot", "employers"];
 
 export function DeleteMyData() {
   const [step, setStep] = useState<"idle" | "confirm" | "done">("idle");
@@ -17,7 +17,7 @@ export function DeleteMyData() {
         </Button>
       ) : (
         <>
-          <p className="w-full">This deletes your profile, your plan and your settings on this device. It cannot be undone.</p>
+          <p className="w-full">This deletes your profile, your plan, your settings and any employer vacancies on this device. It cannot be undone.</p>
           <Button
             variant="destructive"
             className="h-11 px-5 text-base"

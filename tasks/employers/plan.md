@@ -11,7 +11,7 @@ The four MVP features from the features document, built in phases rather than da
 - **Rules as pure functions in `src/lib`.** `vacancy.ts`, `work-profile.ts` and `seal.ts` hold every score and privacy rule, with tests. Components never compute a score.
 - **AI logic separate from the route**, copying `breakdown.ts`: Zod schemas, the prompt and the call in `src/lib/employer-ai.ts`; the route only validates, picks the model and maps errors. Tests use `MockLanguageModelV4`.
 - **One storage module**, `employer-store.ts`, versioned and validated like `src/lib/plan.ts`, so broken JSON never crashes a page.
-- **`/employers` gets its own layout.** No route groups: teammates' pages don't move during the sprint.
+- **`/employers` shares the header.** `SiteNav` swaps to the employer menu and name there, so the two menus can never show together. `employers/layout.tsx` sets the section's title and description. No route groups: teammates' pages don't move during the sprint.
 - **Ranking by essential skills only.** Environment fit is shown, never ranked (SPEC decision 5).
 
 ## Task List
@@ -39,7 +39,12 @@ The four MVP features from the features document, built in phases rather than da
 - [x] With a real Groq key, all three tasks return good results and extract takes under 15 s (2 to 5 s)
 
 ### Phase 3: Employers shell
-- [ ] Task 5: Layout, menu, hidden candidate menu, intro link and `employer-store.ts`
+- [x] Task 5: Layout, menu, hidden candidate menu, intro link and `employer-store.ts`
+
+### Checkpoint 3
+- [x] Tests, lint, types and build pass
+- [x] Menus, 44 px targets, keyboard and the largest text checked in Chrome at 375 px and desktop
+- [ ] A real screen reader reads the menu (the accessibility tree already has the right names)
 
 ### Phase 4: Clear vacancy (feature 1)
 - [ ] Task 6: Vacancy editor with live clarity score
@@ -91,7 +96,7 @@ Never cut: the rules and their tests, the CV-pair test, the no-diagnosis rule, t
 ## Parallel Work
 
 - Phase 2 (server) and Phase 3 (UI shell) don't depend on each other.
-- After Phase 3, Luis can wire `DeleteMyData` and the menu, and Zahid and Juan can place `<PublishedVacancies />`.
+- After Phase 3, Luis can review the shared header, and Zahid and Juan can place `<PublishedVacancies />`.
 
 ## Open Questions
 

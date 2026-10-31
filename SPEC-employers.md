@@ -29,7 +29,7 @@ MVP for the Mexico stage, four features on one demo flow:
 
 ## Decisions
 
-1. **Same app, own section.** `/employers` has its own layout and menu ("Constela for Employers"); the candidate menu is hidden there. Not a candidate tab: one more tab adds load and can make candidates feel watched. Not a separate site: another origin means separate `localStorage`, which breaks the single-browser demo.
+1. **Same app, own section.** `/employers` has its own menu and name ("Constela for Employers") in the shared header, and the candidate menu never shows there. Not a candidate tab: one more tab adds load and can make candidates feel watched. Not a separate site: another origin means separate `localStorage`, which breaks the single-browser demo.
 2. **Storage like the rest of the app.** `localStorage` plus demo fixtures. `shortcut: single-browser demo, move to a database with accounts before any real employer uses it.`
 3. **Rules in code, AI for text.** The clarity score, ranking and seal are pure functions with tests. The AI (Groq through the AI SDK, same pattern as `src/lib/breakdown.ts`) only extracts and rewrites vacancy text and drafts interview questions. The employer reviews every suggestion before saving. Only vacancy text reaches the provider, never candidate data.
 4. **No diagnosis anywhere.** `WorkProfile` is a `.strict()` schema with no field for a diagnosis, age, photo or work-history gap. Barrier ids from the survey start with a diagnosis category (`autism_spectrum:sensory_load`), so they never leave the candidate side: `needsFromBarriers()` turns them into situation-based environment factors.
@@ -52,6 +52,7 @@ Agree these with the team before Phase 3. Field changes after that are announced
 - **WorkProfile:** `id`, `headline`, `skills` (each `{ skill, evidence: verified or declared, source? }`), `needs` (factor ids the candidate chose to share), `modalities` (empty means any), `identity` (`name`, hidden until accepted).
 - **Permission:** `{ candidateId, vacancyId, status: invited, accepted or declined, at }`.
 - **Vocabularies:** 18 environment factors (`ENVIRONMENT`), 37 skills (`SKILLS`) and 8 pairs of equivalent tools (`EQUIVALENT_SKILLS`), for example Excel and Google Sheets.
+- **Storage:** one `localStorage` key, `employers`, version 1: `{ vacancies, permissions, responses, guideRead }`. Broken or old data loads as empty, and one bad item is dropped without losing the others. Delete my data removes the key.
 
 ## Rules v1
 
@@ -123,7 +124,7 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 
 | Teammate | What we need |
 | --- | --- |
-| Luis (Profile, My plan) | Hide `SiteNav` on `/employers` (one line). Employer flows call `addStepToPlan()` ("Read your interview questions") and `markEvent()`. `DeleteMyData` gets the employer storage keys. |
+| Luis (Profile, My plan) | Review the shared header: on `/employers`, `SiteNav` swaps to the employer menu and name. `DeleteMyData` now removes the `employers` key. Employer flows will call `addStepToPlan()` ("Read your interview questions") and `markEvent()`. |
 | Zahid and Juan (Jobs) | One `<PublishedVacancies />` line in `src/app/jobs/page.tsx`. Agree on wording: their badge stays "Verified company", ours is "Neuroinclusive seal". A new barrier subtype needs a line in `needsFromBarriers()`; a test fails until it has one. |
 | Evy (Interview) | Decide where the candidate reads the structured questions 48 hours before: the invitation view or `/interview`. |
 | Regina (extension) | Optional: `GET /api/public/seal` and `GET /api/public/vacancies/[id]` with CORS. |
@@ -152,6 +153,7 @@ src/lib/employer-ai.ts            → AI tasks: extract, rewrite, interview (Pha
 src/app/api/employer-ai/route.ts  → validated AI boundary (Phase 2)
 src/lib/employer-store.ts         → localStorage for vacancies, permissions, responses, guide (Phase 3)
 src/app/employers/                → layout, overview, vacancies, talent, guide (Phases 3 to 7)
+src/components/site-nav.tsx       → shared header: swaps to the employer menu on /employers (Phase 3)
 ```
 
 ## Code Style
@@ -168,6 +170,7 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 - Unit tests for every rule, vocabulary mapping and privacy rule (done in Phase 1).
 - The CV-pair test on every ranking change.
 - The AI route with `MockLanguageModelV4`, including a test that only vacancy text reaches the provider.
+- The shared menu with `react-dom/server`: each side sees only its own links.
 - Manual: the demo script at 375 px and desktop, keyboard only, with a screen reader, and with the Reading settings on.
 
 ## Boundaries

@@ -65,6 +65,9 @@ export function IntroActions() {
       <Link href="/privacy" className="w-fit text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
         How we keep your data private
       </Link>
+      <Link href="/employers" className="flex min-h-11 w-fit items-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+        Hiring? Constela for Employers
+      </Link>
     </div>
   );
 }

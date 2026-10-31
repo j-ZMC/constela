@@ -92,19 +92,21 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 
 ## Task 5: Layout, menu, hidden candidate menu, intro link and store
 
-**Description:** `/employers` layout with "Constela for Employers" and its own menu (Overview, Vacancies, Talent, Guide), keeping the Personalize panel. Hide `SiteNav` there (agree with Luis). A quiet "Hiring? Constela for Employers" link on the intro. `employer-store.ts` saves vacancies, permissions, responses and "guide read", versioned and validated.
+**Description:** `/employers` layout with "Constela for Employers" and its own menu (Overview, Vacancies, Talent, Guide), keeping the Personalize panel. `SiteNav` swaps to this menu there, so the two menus never show together (Luis to review). A quiet "Hiring? Constela for Employers" link on the intro, and a way back on the overview. `employer-store.ts` saves vacancies, permissions, responses and "guide read", versioned and validated. Delete my data removes the new key.
 
 **Acceptance criteria:**
-- [ ] The candidate menu never shows on `/employers`, and the employer menu never shows elsewhere
-- [ ] Broken or old data in storage loads as empty, without crashing
-- [ ] Targets are 44 px; the menu works with the keyboard and a screen reader
+- [x] The candidate menu never shows on `/employers`, and the employer menu never shows elsewhere
+- [x] Broken or old data in storage loads as empty, without crashing
+- [x] Targets are 44 px; the menu works with the keyboard
+- [x] At the largest text, on a phone, nothing scrolls sideways and every control stays on screen
+- [ ] A real screen reader reads the menu (the accessibility tree already has the right names)
 
 **Verification:**
-- [ ] Store tests pass; manual check at 375 px and desktop
+- [x] Store and menu tests pass; checked in Chrome at 375 px and desktop
 
 **Dependencies:** Phase 1
 
-**Files:** `src/app/employers/layout.tsx`, `src/app/employers/page.tsx`, `src/components/site-nav.tsx`, `src/app/page.tsx`, `src/lib/employer-store.ts`, `src/lib/employer-store.test.ts`
+**Files:** `src/app/employers/layout.tsx`, `src/app/employers/page.tsx`, `src/app/employers/vacancies/page.tsx`, `src/app/employers/talent/page.tsx`, `src/app/employers/guide/page.tsx`, `src/components/site-nav.tsx`, `src/components/site-nav.test.ts`, `src/components/intro-actions.tsx`, `src/components/personalization-panel.tsx`, `src/components/delete-my-data.tsx`, `src/app/globals.css`, `src/lib/employer-store.ts`, `src/lib/employer-store.test.ts`
 
 **Estimated scope:** M
 
@@ -225,7 +227,7 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 
 ## Task 12: Privacy, accessibility, critique, demo data and rehearsal
 
-**Description:** Update `/privacy` (vacancy text goes to Groq) and `DeleteMyData` keys. Check every screen at 375 px, keyboard only, with a screen reader and the Reading settings on. Run `/impeccable critique`. Add demo data and an "Employers" row to the README. Rehearse the 5-minute script.
+**Description:** Update `/privacy` (vacancy text goes to Groq, and what the employer side keeps). Check every screen at 375 px, keyboard only, with a screen reader and the Reading settings on. Run `/impeccable critique`. Add demo data and an "Employers" row to the README. Rehearse the 5-minute script.
 
 **Acceptance criteria:**
 - [ ] Every SPEC success criterion is checked
