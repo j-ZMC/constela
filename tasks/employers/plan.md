@@ -58,7 +58,12 @@ The four MVP features from the features document, built in phases rather than da
 - [ ] Zahid and Juan agree with the `/jobs` change
 
 ### Phase 5: Talent search (feature 2)
-- [ ] Task 8: Anonymous ranked profiles, fit and invitations
+- [x] Task 8: Anonymous ranked profiles, fit and invitations
+
+### Checkpoint 5
+- [x] Tests, lint, types and build pass
+- [x] Demo script step 4 works in Chrome at 375 px and desktop, by keyboard and at the largest text
+- [ ] A candidate says yes from their own screen (Phase 6); until then a stored answer stands in for it
 
 ### Phase 6: Process and interview (feature 3)
 - [ ] Task 9: Structured interview, question checker and interviewer guide
@@ -94,6 +99,7 @@ Never cut: the rules and their tests, the CV-pair test, the no-diagnosis rule, t
 | The AI invents facts in a rewrite | High | Examples in the prompt; without a [bracket] a rewrite can only take words away; the employer accepts every suggestion |
 | Groq free-tier limits during the demo | Med | About 8 rewrites a minute: rehearse with pauses. Typed errors with a manual path; the clarity score and phrase hints work without AI |
 | Environment fit read as a candidate's weakness | High | Never ranked; employers see gaps as adjustments they could offer |
+| An employer skips someone because of a shared need | High | The order can't change and the page says so; whether needs show before a yes is open question 6 |
 | Barrier categories leaking to employers | High | Only `needsFromBarriers()` reads barrier ids; tests assert no category comes out |
 | Seal thresholds disputed | Low | Constants in one file; the SPEC lists them as proposals |
 

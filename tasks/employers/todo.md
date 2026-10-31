@@ -158,16 +158,16 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Description:** Pick a vacancy and see the demo pool ranked by `rankCandidates()`, each with its reasons ("SQL: verified", "Excel: via Google Sheets, counts half") and fit shown as adjustments to offer. "Invite" creates an `invited` permission.
 
 **Acceptance criteria:**
-- [ ] The page states that needs never change the order
-- [ ] Names appear only after the candidate accepts
-- [ ] A vacancy without skill-tagged requirements asks the employer to tag them
+- [x] The page states that needs never change the order
+- [x] Names appear only after the candidate accepts (checked with a stored answer until Task 10 lets a candidate give one)
+- [x] A vacancy without skill-tagged requirements asks the employer to tag them
 
 **Verification:**
-- [ ] Manual: demo script step 4
+- [x] Tests pass; demo script step 4 checked in Chrome at 375 px and desktop
 
 **Dependencies:** Task 5
 
-**Files:** `src/app/employers/talent/…`, `src/components/employers/…`
+**Files:** `src/app/employers/talent/page.tsx`, `src/components/employers/talent-search.tsx`, `src/lib/work-profile.ts`, `src/lib/employer-store.ts`
 
 **Estimated scope:** M
 

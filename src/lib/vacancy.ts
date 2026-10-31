@@ -26,6 +26,7 @@ export const ENVIRONMENT = {
 } as const;
 export type EnvironmentFactor = keyof typeof ENVIRONMENT;
 export const ENVIRONMENT_FACTORS = Object.keys(ENVIRONMENT) as [EnvironmentFactor, ...EnvironmentFactor[]];
+export const factorNames = (factors: EnvironmentFactor[]) => factors.map((f) => ENVIRONMENT[f]).join(", ");
 
 // shortcut: a small curated vocabulary keeps matching exact and explainable; move to ESCO when vacancies need skills outside it.
 export const SKILLS = {

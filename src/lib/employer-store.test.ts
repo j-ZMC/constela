@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { employerStore, loadEmployerData, saveEmployerData, saveVacancy, type EmployerData } from "@/lib/employer-store";
+import { addPermission, employerStore, loadEmployerData, saveEmployerData, saveVacancy, type EmployerData } from "@/lib/employer-store";
 import { DEMO_VACANCY } from "@/lib/vacancy";
 import type { Permission } from "@/lib/work-profile";
 
@@ -108,6 +108,13 @@ describe("employer store", () => {
     expect(loadEmployerData()).toEqual(data);
   });
 
+  it("adds an answer after the others, so the latest can win, and leaves the rest alone", () => {
+    saveEmployerData(data);
+    const declined: Permission = { ...permission, status: "declined", at: "2026-11-02T10:00:00.000Z" };
+    expect(addPermission(declined)).toBe(true);
+    expect(loadEmployerData()).toEqual({ ...data, permissions: [permission, declined] });
+  });
+
   it("gives the same snapshot until the data changes, as React needs", () => {
     saveEmployerData(data);
     const first = employerStore.snapshot();
@@ -141,6 +148,7 @@ describe("employer store", () => {
     expect(loadEmployerData()).toEqual(EMPTY);
     expect(saveEmployerData(data)).toBe(false);
     expect(saveVacancy(DEMO_VACANCY)).toBe(false);
+    expect(addPermission(permission)).toBe(false);
     expect(employerStore.snapshot()).toEqual(EMPTY);
   });
 });

@@ -3,12 +3,16 @@ import { barrierCatalog } from "@/lib/barrier-preferences";
 import { DEMO_VACANCY, SKILLS, SKILL_IDS, type EnvironmentFactor, type SkillId, type Vacancy } from "@/lib/vacancy";
 import {
   DEMO_PROFILES,
+  adjustmentNotes,
   anonymize,
   compatibility,
   fitSummary,
   identityFor,
+  latestPermission,
+  matchReason,
   needsFromBarriers,
   rankCandidates,
+  talentRows,
   workProfileSchema,
   type Permission,
   type WorkProfile,
@@ -65,6 +69,17 @@ describe("anonymous view and permission", () => {
 
   it("hides the identity again when the candidate later says no", () => {
     expect(identityFor(p, [permit("declined", 3), permit("accepted", 2)], DEMO_VACANCY.id)).toBeNull();
+  });
+
+  it("finds the latest answer for that person and that vacancy", () => {
+    expect(latestPermission([], p.id, DEMO_VACANCY.id)).toBeUndefined();
+    expect(latestPermission([permit("accepted", 2), permit("invited", 1)], p.id, DEMO_VACANCY.id)?.status).toBe("accepted");
+    expect(latestPermission([permit("accepted", 2, "other-vacancy")], p.id, DEMO_VACANCY.id)).toBeUndefined();
+    expect(latestPermission([permit("accepted", 2)], "someone-else", DEMO_VACANCY.id)).toBeUndefined();
+  });
+
+  it("lets the answer given last win when two share a time", () => {
+    expect(latestPermission([permit("accepted", 2), permit("declined", 2)], p.id, DEMO_VACANCY.id)?.status).toBe("declined");
   });
 });
 
@@ -167,6 +182,98 @@ describe("rankCandidates", () => {
     expect(top.id).toBe("c-2187"); // declared SQL, verified Power BI, Google Sheets for Excel
     expect(top.score).toBeGreaterThan(0);
     expect(top.matches.every((m) => m.requirement.length > 0)).toBe(true);
+  });
+});
+
+describe("matchReason", () => {
+  const reason = (skills: WorkProfile["skills"]) => matchReason(rankCandidates(asking(["excel"]), [person("a", skills)])[0].matches[0]);
+
+  it("says how each requirement was met", () => {
+    expect(reason([{ skill: "excel", evidence: "verified" }])).toBe("Excel: verified");
+    expect(reason([{ skill: "excel", evidence: "declared" }])).toBe("Excel: declared");
+    expect(reason([{ skill: "google_sheets", evidence: "verified" }])).toBe("Excel: via Google Sheets, verified, counts half");
+    expect(reason([{ skill: "google_sheets", evidence: "declared" }])).toBe("Excel: via Google Sheets, declared, counts half");
+    expect(reason([])).toBe("Excel: not on this profile");
+  });
+});
+
+describe("adjustmentNotes", () => {
+  const notes = (v: Vacancy, p: Pick<WorkProfile, "needs" | "modalities">) => adjustmentNotes(compatibility(v, p), p.modalities, v);
+
+  it("shows a gap as something the employer could offer", () => {
+    expect(notes(DEMO_VACANCY, { needs: ["quiet_space", "flexible_breaks"], modalities: [] })).toEqual([
+      "Already offered: Quiet place to work.",
+      "You could offer: Freedom to take breaks and move around.",
+    ]);
+  });
+
+  it("asks for the environment when the vacancy hasn't described it", () => {
+    expect(notes({ ...DEMO_VACANCY, environment: undefined }, { needs: ["quiet_space"], modalities: [] })).toEqual([
+      "Would help this person: Quiet place to work. Describe your work environment to see what you already offer.",
+    ]);
+  });
+
+  it("mentions work mode only when there is something to talk about", () => {
+    expect(notes(DEMO_VACANCY, { needs: [], modalities: ["remote", "on-site"] })).toEqual(["Work mode: prefers Remote or On-site. This job is Hybrid."]);
+    expect(notes({ ...DEMO_VACANCY, modality: undefined }, { needs: [], modalities: ["remote"] })).toEqual(["Work mode: prefers Remote. Add the work mode to see if it fits."]);
+    expect(notes(DEMO_VACANCY, { needs: [], modalities: ["hybrid"] })).toEqual([]);
+  });
+
+  it("says nothing when the person shared nothing", () => {
+    expect(notes(DEMO_VACANCY, { needs: [], modalities: [] })).toEqual([]);
+  });
+});
+
+describe("talentRows", () => {
+  const v = asking(["sql", "excel"]);
+  const strong = person("c-0001", [{ skill: "sql", evidence: "verified" }, { skill: "excel", evidence: "verified" }], { needs: ["soft_lighting"], modalities: ["remote"] });
+  const partial = person("c-0002", [{ skill: "sql", evidence: "declared" }]);
+  const none = person("c-0003", [{ skill: "figma", evidence: "verified" }]);
+  const pool = [none, partial, strong];
+  const permit = (candidateId: string, status: Permission["status"], minute = 1, vacancyId = v.id): Permission => ({
+    candidateId,
+    vacancyId,
+    status,
+    at: `2026-10-30T10:0${minute}:00.000Z`,
+  });
+
+  it("keeps the order of the ranking, with the score and its reasons", () => {
+    const rows = talentRows(v, pool, []);
+    expect(rows.map((r) => [r.profile.id, r.score])).toEqual([
+      ["c-0001", 100],
+      ["c-0002", 30],
+    ]);
+    expect(rows[1].reasons).toEqual(["SQL: declared", "Excel: not on this profile"]);
+  });
+
+  it("leaves out people with none of these skills, unless they were already invited", () => {
+    expect(talentRows(v, pool, []).map((r) => r.profile.id)).not.toContain("c-0003");
+    expect(talentRows(v, pool, [permit("c-0003", "invited")]).map((r) => r.profile.id)).toContain("c-0003");
+  });
+
+  it("never carries a name, in any field, before the person says yes", () => {
+    const rows = talentRows(v, pool, [permit("c-0001", "invited"), permit("c-0002", "declined")]);
+    expect(JSON.stringify(rows)).not.toContain("Person c-");
+    expect(rows.map((r) => r.status)).toEqual(["invited", "declined"]);
+  });
+
+  it("gives the name after a yes, for that vacancy only", () => {
+    const [row] = talentRows(v, pool, [permit("c-0001", "invited", 1), permit("c-0001", "accepted", 2)]);
+    expect(row.name).toBe("Person c-0001");
+    expect(row.status).toBe("accepted");
+    expect(talentRows(v, pool, [permit("c-0001", "accepted", 2, "other-vacancy")])[0].name).toBeNull();
+  });
+
+  it("hides the name again after a later no", () => {
+    const [row] = talentRows(v, pool, [permit("c-0001", "accepted", 2), permit("c-0001", "declined", 3)]);
+    expect(row.name).toBeNull();
+    expect(row.status).toBe("declined");
+  });
+
+  it("explains fit without changing the order", () => {
+    const rows = talentRows(v, pool, []);
+    expect(rows[0].notes).toContain("You could offer: Soft or natural light.");
+    expect(rows.map((r) => r.profile.id)).toEqual(rankCandidates(v, pool).slice(0, 2).map((r) => r.id));
   });
 });
 

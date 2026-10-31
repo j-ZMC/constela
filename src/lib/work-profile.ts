@@ -6,8 +6,12 @@ import {
   ENVIRONMENT_FACTORS,
   EQUIVALENT_SKILLS,
   MODALITIES,
+  MODALITY_LABELS,
+  SKILLS,
   SKILL_IDS,
+  factorNames,
   type EnvironmentFactor,
+  type Modality,
   type SkillId,
   type Vacancy,
 } from "@/lib/vacancy";
@@ -58,12 +62,15 @@ export function anonymize(p: WorkProfile): AnonymousProfile {
 }
 
 // The latest answer wins, so saying no after saying yes hides the identity again. ISO times sort as text.
-export function identityFor(p: WorkProfile, permissions: Permission[], vacancyId: string): WorkProfile["identity"] | null {
-  const latest = permissions
-    .filter((x) => x.candidateId === p.id && x.vacancyId === vacancyId)
+export function latestPermission(permissions: Permission[], candidateId: string, vacancyId: string): Permission | undefined {
+  return permissions
+    .filter((x) => x.candidateId === candidateId && x.vacancyId === vacancyId)
     .sort((a, b) => a.at.localeCompare(b.at))
     .at(-1);
-  return latest?.status === "accepted" ? p.identity : null;
+}
+
+export function identityFor(p: WorkProfile, permissions: Permission[], vacancyId: string): WorkProfile["identity"] | null {
+  return latestPermission(permissions, p.id, vacancyId)?.status === "accepted" ? p.identity : null;
 }
 
 // The barrier survey's ids start with a diagnosis category ("autism_spectrum:sensory_load"). Only the situation part is
@@ -170,9 +177,59 @@ export function rankCandidates(v: Vacancy, profiles: WorkProfile[]): RankedCandi
     .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 }
 
+// The reason behind each part of the score, in the words the employer reads.
+export function matchReason({ skill, via, evidence }: SkillMatch): string {
+  if (!evidence) return `${SKILLS[skill]}: not on this profile`;
+  return `${SKILLS[skill]}: ${via ? `via ${SKILLS[via]}, ${evidence}, counts half` : evidence}`;
+}
+
+// For the employer, so a gap reads as an adjustment they could offer and never as something the person lacks.
+export function adjustmentNotes(fit: Compatibility, modalities: Modality[], v: Vacancy): string[] {
+  const notes: string[] = [];
+  if (fit.met.length > 0) notes.push(`Already offered: ${factorNames(fit.met)}.`);
+  if (fit.gaps.length > 0) notes.push(`You could offer: ${factorNames(fit.gaps)}.`);
+  if (fit.unknown.length > 0) notes.push(`Would help this person: ${factorNames(fit.unknown)}. Describe your work environment to see what you already offer.`);
+  const wanted = modalities.map((m) => MODALITY_LABELS[m]).join(" or ");
+  if (fit.modality === "gap" && v.modality) notes.push(`Work mode: prefers ${wanted}. This job is ${MODALITY_LABELS[v.modality]}.`);
+  if (fit.modality === "unknown") notes.push(`Work mode: prefers ${wanted}. Add the work mode to see if it fits.`);
+  return notes;
+}
+
+// One person in talent search. Built from the anonymous view on purpose, so a card has no name to show until they say yes.
+export type TalentRow = {
+  profile: AnonymousProfile;
+  name: string | null;
+  status: Permission["status"] | null;
+  score: number;
+  reasons: string[];
+  notes: string[];
+};
+
+// In ranking order. People with none of these skills stay out of the list, unless the employer already invited them.
+export function talentRows(v: Vacancy, profiles: WorkProfile[], permissions: Permission[]): TalentRow[] {
+  const byId = new Map(profiles.map((p) => [p.id, p]));
+  return rankCandidates(v, profiles).flatMap(({ id, score, matches }) => {
+    const p = byId.get(id);
+    const status = latestPermission(permissions, id, v.id)?.status ?? null;
+    if (!p || (score === 0 && !status)) return [];
+    return [
+      {
+        profile: anonymize(p),
+        name: identityFor(p, permissions, v.id)?.name ?? null,
+        status,
+        score,
+        reasons: matches.map(matchReason),
+        notes: adjustmentNotes(compatibility(v, p), p.modalities, v),
+      },
+    ];
+  });
+}
+
 // Demo talent pool from many kinds of work, not only tech. Names are fictional.
 // shortcut: fixed demo profiles with badges marked "demo" because no skills-check module exists yet; replace with
 // profiles candidates choose to share once there are accounts.
+// shortcut: this pool ships in the browser bundle, so only the screen hides the names; with real people, the server must
+// send a name only after a yes.
 const DEMO_BADGE = "Constela skill check (demo)";
 const verified = (skill: SkillId): ProfileSkill => ({ skill, evidence: "verified", source: DEMO_BADGE });
 const declared = (skill: SkillId): ProfileSkill => ({ skill, evidence: "declared" });

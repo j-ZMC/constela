@@ -5,11 +5,10 @@ import { BadgeCheck } from "lucide-react";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { useEmployerData } from "@/lib/employer-store";
 import { computeSeal, type SealLevel } from "@/lib/seal";
-import { ENVIRONMENT, MODALITY_LABELS, STAGE_FORMAT_LABELS, salaryText, type EnvironmentFactor, type Stage, type Vacancy } from "@/lib/vacancy";
+import { ENVIRONMENT, MODALITY_LABELS, STAGE_FORMAT_LABELS, factorNames, salaryText, type EnvironmentFactor, type Stage, type Vacancy } from "@/lib/vacancy";
 import { compatibility, fitSummary, needsFromBarriers } from "@/lib/work-profile";
 
 const SEAL_NAMES: Record<SealLevel, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
-const names = (factors: EnvironmentFactor[]) => factors.map((f) => ENVIRONMENT[f]).join(", ");
 const noUpdates = () => () => {};
 
 // What the employer published, for candidates on /jobs. Nothing shows until there is something published.
@@ -100,8 +99,8 @@ function VacancyCard({ vacancy: v, level, needs }: { vacancy: Vacancy; level: Se
       {summary && (
         <div className="flex flex-col gap-1 rounded-lg bg-secondary p-3 text-sm">
           <p className="font-semibold">{summary}</p>
-          {fit.met.length > 0 && <p>It offers: {names(fit.met)}.</p>}
-          {fit.gaps.length > 0 && <p>Not listed: {names(fit.gaps)}. You can ask about these.</p>}
+          {fit.met.length > 0 && <p>It offers: {factorNames(fit.met)}.</p>}
+          {fit.gaps.length > 0 && <p>Not listed: {factorNames(fit.gaps)}. You can ask about these.</p>}
         </div>
       )}
 

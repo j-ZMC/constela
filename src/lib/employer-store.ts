@@ -78,6 +78,12 @@ export function saveVacancy(vacancy: Vacancy): boolean {
   return saveEmployerData({ ...data, vacancies });
 }
 
+// Every answer stays, in order: latestPermission() reads the last one, so a later no always wins.
+export function addPermission(permission: Permission): boolean {
+  const data = loadEmployerData();
+  return saveEmployerData({ ...data, permissions: [...data.permissions, permission] });
+}
+
 let cached: { raw: string | null; data: EmployerData } | undefined;
 const SERVER_DATA = emptyData();
 

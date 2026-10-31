@@ -128,6 +128,15 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 - **The process template has names and formats only.** A duration is a fact, so the employer gives it, the same rule the AI follows.
 - **Candidates see it on `/jobs`** with their fit, read on their own device. Their needs never reach the employer.
 
+### Talent search
+
+- **Pick a published vacancy.** A draft can't take invitations: there is nothing yet for the candidate to read.
+- **The order comes from `rankCandidates()` and nothing else.** There are no filters, and the page says that needs never change the order. People with none of the skills stay out of the list, and a line says how many. A vacancy with no skill tags asks the employer to add them.
+- **Cards are built from the anonymous view.** `talentRows()` gives a card a name only after a yes, so a card has no name to show by mistake.
+- **Reasons explain the score.** "SQL: verified", or "Excel: via Google Sheets, verified, counts half".
+- **Fit reads as adjustments.** "Already offered" and "You could offer", never as something the person lacks.
+- **Invite adds an `invited` permission.** Answers stay in order and the last one wins. After a no there is no way to invite that person again for that vacancy.
+
 ## Contract with the other modules
 
 | Teammate | What we need |
@@ -163,7 +172,7 @@ src/lib/employer-store.ts         → localStorage for vacancies, permissions, r
 src/lib/vacancy-editor.ts         → the editor's rules: form to vacancy, what saving needs, phrase marks (Phase 4)
 src/lib/employer-ai-client.ts     → the browser side of the AI route (Phase 4)
 src/app/employers/                → layout, overview, vacancies, talent, guide (Phases 3 to 7)
-src/components/employers/         → vacancy editor, clarity panel, phrase help, published vacancies (Phase 4 on)
+src/components/employers/         → vacancy editor, clarity panel, phrase help, published vacancies, talent search (Phase 4 on)
 src/components/site-nav.tsx       → shared header: swaps to the employer menu on /employers (Phase 3)
 ```
 
@@ -208,3 +217,4 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 3. Where candidates read interview questions: the invitation view or `/interview` (Evy).
 4. Badge wording next to the jobs page's "Verified" badge.
 5. Verified skills are labelled "demo" until a skills-check or course module exists.
+6. Should employers see shared needs before a candidate says yes? Today they do, as the features document asks. The order can't change, but a person could still skip someone because of a need. The other option is to show needs only after a yes, which gives employers less to plan adjustments with.
