@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, ListChecks, MessagesSquare, UserRound } from "lucide-react";
+import { BriefcaseBusiness, ListChecks, MessagesSquare, Sparkles, UserRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { PersonalizationPanel } from "@/components/personalization-panel";
 import { cn } from "@/lib/utils";
@@ -10,6 +10,7 @@ import { cn } from "@/lib/utils";
 const links = [
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/plan", label: "My plan", icon: ListChecks },
+  { href: "/recommended", label: "Recommended", icon: Sparkles },
   { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
   { href: "/interview", label: "Interview", icon: MessagesSquare },
 ];

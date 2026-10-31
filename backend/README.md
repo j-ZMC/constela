@@ -162,7 +162,7 @@ Known bugs already fixed (do NOT reintroduce):
   to OpenAI, while selected `user_blockers` are passed only to the local filter.
 - `SIMILARITY_THRESHOLD` is a standard-deviation multiplier above the mean
   similarity (`2.0` by default): the cutoff is `mean + 2 * standard_deviation`.
-  `BLOCKED_THRESHOLD` is currently `0.385`.
+  `BLOCKED_THRESHOLD` is currently `0.30`, so selected workplace blockers are intentionally more conservative and surface more jobs for review.
 
 ## 7. Company inclusion matching (`company_inclusion.py`)
 
