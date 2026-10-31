@@ -18,13 +18,15 @@ The challenge asks for AI that supports **executive function**: planning, focus,
 | Personalization | Colors, text, cursor, icons, amount of information and motion, saved on the device ([PERSONALIZATION.md](PERSONALIZATION.md)) | Personalize panel | Regina |
 | My plan | A five-stage job search path, up to 3 steps a day, a daily check-in and "Break it down for me" ([SPEC-plan.md](SPEC-plan.md), [SPEC-path.md](SPEC-path.md)) | `/plan` | Luis |
 | Job filter backend | Cleaned US jobs dataset, barrier detection with embeddings and a company inclusion score ([backend/README.md](backend/README.md)) | `backend/` | Zahid |
-| Jobs for you | Openings filtered by profile and explained in plain language, plus course suggestions | `/jobs` | Zahid & Juan |
+| Jobs | "For you" (from the CV) and "Search", with work conditions pointed out, never hidden; "Save this job" feeds My plan | `/jobs` | Zahid & Juan |
 | Interview | Guided practice, "What to expect" and "Translate this" for recruiter messages | `/interview` | Evy |
 | LinkedIn extension (optional) | A "less chaotic" mode with the same look and settings | — | Regina |
 
 AI lives inside each feature with a clear purpose instead of a blank chatbot, so nobody has to figure out what to ask.
 
 ## Design principles
+
+The full rules every screen follows are in [DESIGN.md](DESIGN.md). In short:
 
 - Adapt by needs, not by diagnosis.
 - Calm by default: mint background, navy text, star gold only for achievements, no alarm red. Motion only on the intro.
