@@ -150,7 +150,7 @@ function QuestionRow({ number, question: q, onChange }: { number: number; questi
             <p key={f.id}>{f.problem}</p>
           ))}
           <p>A concrete version: {concreteQuestion(q.requirement)}</p>
-          <Button variant="outline" className={`${action} w-fit`} aria-label={`Use the concrete version of question ${number}`} onClick={() => onChange({ ...q, question: concreteQuestion(q.requirement) })}>
+          <Button variant="outline" className={`${action} w-fit`} aria-label={`Use this version for question ${number}`} onClick={() => onChange({ ...q, question: concreteQuestion(q.requirement) })}>
             Use this version
           </Button>
         </div>

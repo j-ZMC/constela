@@ -82,15 +82,15 @@ The four MVP features from the features document, built in phases rather than da
 - [x] The level follows the data in Chrome at 375 px and desktop, and is never stored
 
 ### Phase 8: Polish and demo
-- [ ] Task 12: Privacy, accessibility, critique, demo data and rehearsal
+- [x] Task 12: Privacy, accessibility, critique, demo data and rehearsal
 
 ### Checkpoint: Complete
-- [ ] Every success criterion in SPEC-employers.md is met
-- [ ] The 5-minute demo script runs end to end
+- [ ] Every success criterion in SPEC-employers.md is met (only the real screen reader is left)
+- [x] The 5-minute demo script runs end to end, with the real AI
 - [ ] Review with the team
 
 ### Phase 9 (optional): Extension API
-- [ ] Task 13: Public seal and vacancy endpoints for Regina's extension
+- [ ] Task 13: Public seal and vacancy endpoints for Regina's extension. Not built: vacancies live in the browser, so a server has nothing to return until there is a database.
 
 ## If time runs short
 

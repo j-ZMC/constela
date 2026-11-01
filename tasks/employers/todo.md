@@ -235,7 +235,11 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Description:** Update `/privacy` (vacancy text goes to Groq, and what the employer side keeps). Check every screen at 375 px, keyboard only, with a screen reader and the Reading settings on. Run `/impeccable critique`. Add demo data and an "Employers" row to the README. Rehearse the 5-minute script.
 
 **Acceptance criteria:**
-- [ ] Every SPEC success criterion is checked
+- [x] `/privacy` says what really leaves the device, and Delete my data removes every key, guarded by a test
+- [x] Every screen passes at 375 px, by keyboard, with AA contrast and the Reading settings on
+- [x] A sample vacancy can be loaded for rehearsals
+- [x] The 5-minute script runs end to end with the real AI
+- [ ] A real screen reader reads every screen
 
 **Dependencies:** Tasks 6 to 11
 
@@ -247,6 +251,8 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 
 **Description:** `GET /api/public/seal` and `GET /api/public/vacancies/[id]` with CORS for Regina's extension, returning published data only.
 
-**Dependencies:** Tasks 6 and 11
+**Not built:** vacancies live in the browser, so a server has nothing to return until there is a database.
+
+**Dependencies:** Tasks 6 and 11, and a database
 
 **Estimated scope:** S

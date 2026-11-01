@@ -10,30 +10,43 @@ export default function PrivacyPage() {
     <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-10">
       <header className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Your privacy</h1>
-        <p className="text-muted-foreground">Draft for the Constela prototype. Last updated 29 October 2026.</p>
+        <p className="text-muted-foreground">Draft for the Constela prototype. Last updated 1 November 2026.</p>
       </header>
 
-      <Summarized summary="Your data stays on this device. Only a task you choose to break down reaches the AI. You can delete everything below.">
+      <Summarized summary="Your data stays on this device. Only what you choose to send reaches an AI service: a task to break down, a job search or a vacancy. You can delete everything below.">
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">What we keep, and where</h2>
         <p>Your answers, your plan and your settings stay in this browser, on this device. We do not have accounts, and we do not keep your data on a server.</p>
         <ul className="list-disc space-y-1 pl-6">
           <li>Your profile answers, which describe needs, never diagnoses</li>
+          <li>The workplace conditions you chose for the job filter</li>
+          <li>What Constela read from your CV, if you uploaded one</li>
           <li>Your plan: steps, stars and stages</li>
           <li>How you said you feel today, if you used the check-in</li>
           <li>Your reading and personalization settings</li>
+          <li>Invitations from employers, and your answers</li>
+          <li>If you use Constela for Employers: your vacancies and interview questions</li>
         </ul>
       </section>
 
       <section className="flex flex-col gap-2">
         <h2 className="text-xl font-semibold">What leaves your device</h2>
         <p>
-          Only when you press &quot;Break it down for me&quot;, we send the text of that task to an AI service (Groq) to get smaller
+          When you press &quot;Break it down for me&quot;, we send the text of that task to an AI service (Groq) to get smaller
           steps. We also send three settings that shape the answer, like &quot;keep steps short&quot;, and which starter step it is.
         </p>
         <p>
-          We never send your profile answers, how you feel, or your name. Constela does not save the task text; Groq handles it
-          under its own privacy policy.
+          When you search for jobs, we send your search phrase to an AI service (OpenAI) to find matching jobs. On Recommended, we
+          send a short summary of your CV instead. We do not send your workplace conditions to OpenAI.
+        </p>
+        <p>When you upload a CV, our server reads the file and deletes it right away. What it found stays on this device.</p>
+        <p>
+          If you use Constela for Employers: when you press &quot;Read it for me&quot;, &quot;Suggest a clear version&quot; or &quot;Draft
+          with AI&quot;, we send that vacancy text to Groq. No candidate&apos;s details go with it.
+        </p>
+        <p>
+          We never send your profile answers, how you feel, or your name. Constela does not save what it sends. Groq and OpenAI
+          handle it under their own privacy policies.
         </p>
       </section>
 
@@ -43,6 +56,7 @@ export default function PrivacyPage() {
           <li>We do not guess your feelings or your condition from what you write.</li>
           <li>We do not use ads or tracking.</li>
           <li>We do not sell or share your data.</li>
+          <li>We do not show employers your name unless you say yes to an invitation.</li>
         </ul>
       </section>
       </Summarized>

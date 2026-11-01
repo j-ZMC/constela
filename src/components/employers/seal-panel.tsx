@@ -2,9 +2,12 @@
 
 import Link from "next/link";
 import { Check, Circle, Star } from "lucide-react";
-import { useEmployerData, useSeal } from "@/lib/employer-store";
+import { action } from "@/components/employers/vacancy-fields";
+import { Button } from "@/components/ui/button";
+import { saveVacancy, useEmployerData, useSeal } from "@/lib/employer-store";
 import { SEAL_LEVELS, nextLevel, type SealCheck, type SealLevel } from "@/lib/seal";
 import { useHydrated } from "@/lib/use-hydrated";
+import { DEMO_VACANCY } from "@/lib/vacancy";
 
 const NAMES: Record<SealLevel, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 
@@ -14,7 +17,8 @@ export function SealPanel() {
 }
 
 function Panel() {
-  const seal = useSeal(useEmployerData());
+  const data = useEmployerData();
+  const seal = useSeal(data);
   const next = nextLevel(seal);
   const toDo = seal.checks.filter((c) => c.level === next && !c.met).length;
 
@@ -33,6 +37,13 @@ function Panel() {
           </p>
         )}
       </div>
+
+      {/* A way to look around, and a way to rehearse the demo if the AI is down. */}
+      {data.vacancies.length === 0 && (
+        <Button variant="outline" className={`${action} w-fit`} onClick={() => saveVacancy(DEMO_VACANCY)}>
+          Load a sample vacancy
+        </Button>
+      )}
 
       {SEAL_LEVELS.map((level) => (
         <div key={level} className="flex flex-col gap-2">
@@ -64,7 +75,7 @@ function SealRow({ check }: { check: SealCheck }) {
         </p>
         {!check.met && <p className="text-muted-foreground">{check.detail}</p>}
         {!check.met && check.href && (
-          <Link href={check.href} aria-label={`Do this: ${check.todo}`} className="flex min-h-11 w-fit items-center font-medium underline underline-offset-4">
+          <Link href={check.href} aria-label={`Go there: ${check.todo}`} className="flex min-h-11 w-fit items-center font-medium underline underline-offset-4">
             Go there
           </Link>
         )}

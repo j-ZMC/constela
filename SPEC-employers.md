@@ -23,8 +23,8 @@ MVP for the Mexico stage, four features on one demo flow:
 2. Accept the AI rewrites. The score rises.
 3. The vacancy card appears for candidates on `/jobs`.
 4. Search talent: anonymous profiles ranked by skills, each with reasons and environment fit.
-5. Invite a candidate. They accept, see the process tracker and the questions 48 hours before, and choose a written first stage.
-6. The seal goes up a level.
+5. Read the interviewer guide and save the questions. Invite a candidate. They accept, see the process tracker and the questions 48 hours before, and choose a written first stage.
+6. Set the interview time and mark your answer as sent. The seal reaches silver.
 7. Show the CV-pair test passing.
 
 ## Decisions
@@ -124,6 +124,7 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 
 - **Paste or type.** The AI fills the form, and nothing reaches storage until the employer presses Save draft or Publish. Without AI the same form works by hand, with the score and the phrase hints.
 - **A [bracket] stops at the suggestion.** "Use this version" stays off until every bracket is filled, so an AI blank never enters the card. Brackets in the employer's own text are left alone.
+- **The score reads the card, not the pasted text.** Vague phrases are marked when the employer pastes. If the AI leaves one out of the card, candidates won't see it, so it doesn't count.
 - **What saving needs.** A draft needs a title and a company, like every stored vacancy. Publishing also needs one hiring step. The clarity score guides and never blocks.
 - **The process template has names and formats only.** A duration is a fact, so the employer gives it, the same rule the AI follows.
 - **Candidates see it on `/jobs`** with their fit, read on their own device. Their needs never reach the employer.
@@ -153,7 +154,7 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 | Luis (Profile, My plan) | Review the shared header: on `/employers`, `SiteNav` swaps to the employer menu and name. `DeleteMyData` now removes the `employers` key. Employer flows will call `addStepToPlan()` ("Read your interview questions") and `markEvent()`. |
 | Zahid and Juan (Jobs) | Review `<PublishedVacancies />`, added above `<JobSearch />` in `src/app/jobs/page.tsx`. It shows nothing until a vacancy is published. Agree on wording: their badge stays "Verified company", ours is "Neuroinclusive seal". A new barrier subtype needs a line in `needsFromBarriers()`; a test fails until it has one. |
 | Evy (Interview) | Candidates read the structured questions on `/invitations` for now. Say if they should also appear on `/interview`. |
-| Regina (extension) | Optional: `GET /api/public/seal` and `GET /api/public/vacancies/[id]` with CORS. |
+| Regina (extension) | `GET /api/public/seal` and `GET /api/public/vacancies/[id]` wait for a database: vacancies live in the browser, so a server has nothing to return yet. |
 
 ## Tech Stack
 
@@ -219,8 +220,10 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 - [x] Talent search shows anonymous profiles ranked by skills, with reasons and fit; identity shows only after the candidate accepts.
 - [x] An invited candidate sees the process tracker, the questions 48 hours before, and can choose an alternative format.
 - [x] The seal panel shows the level, every check and how to reach the next level.
-- [ ] Usable at 375 px, keyboard only, with a screen reader; `/impeccable critique` issues fixed.
-- [ ] The 5-minute demo script runs end to end.
+- [x] Usable at 375 px and by keyboard alone, at the largest text, with AA contrast.
+- [ ] A real screen reader reads every screen (the accessibility tree already has the right names).
+- [x] `/impeccable critique` issues fixed (reduced run: the detector and one reviewer, with no separate agents).
+- [x] The 5-minute demo script runs end to end.
 
 ## Open Questions
 

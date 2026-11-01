@@ -45,14 +45,17 @@ function InvitationCard({ invitation }: { invitation: Invitation }) {
     place.current?.focus();
   }
 
+  // The names start with the words on the button, so voice control can find it by what it says.
+  const yesWords = status === "declined" ? "Say yes after all" : "Say yes";
+  const noWords = status === "accepted" ? "Say no after all" : "Say no";
   const yes = (
-    <Button variant="outline" className={action} aria-label={`Say yes to ${vacancy.title}`} onClick={() => answer("accepted")}>
-      {status === "declined" ? "Say yes after all" : "Say yes"}
+    <Button variant="outline" className={action} aria-label={`${yesWords}: ${vacancy.title}, ${alias}`} onClick={() => answer("accepted")}>
+      {yesWords}
     </Button>
   );
   const no = (
-    <Button variant="outline" className={action} aria-label={`Say no to ${vacancy.title}`} onClick={() => answer("declined")}>
-      {status === "accepted" ? "Say no after all" : "Say no"}
+    <Button variant="outline" className={action} aria-label={`${noWords}: ${vacancy.title}, ${alias}`} onClick={() => answer("declined")}>
+      {noWords}
     </Button>
   );
 
