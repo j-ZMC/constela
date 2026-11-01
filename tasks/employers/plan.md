@@ -63,11 +63,16 @@ The four MVP features from the features document, built in phases rather than da
 ### Checkpoint 5
 - [x] Tests, lint, types and build pass
 - [x] Demo script step 4 works in Chrome at 375 px and desktop, by keyboard and at the largest text
-- [ ] A candidate says yes from their own screen (Phase 6); until then a stored answer stands in for it
+- [x] A candidate says yes from their own screen (Phase 6)
 
 ### Phase 6: Process and interview (feature 3)
-- [ ] Task 9: Structured interview, question checker and interviewer guide
-- [ ] Task 10: The candidate's invitation view
+- [x] Task 9: Structured interview, question checker and interviewer guide
+- [x] Task 10: The candidate's invitation view
+
+### Checkpoint 6
+- [x] Tests, lint, types and build pass
+- [x] Demo script step 5 works in Chrome at 375 px and desktop, with real AI questions
+- [ ] Evy agrees that candidates read the questions on `/invitations`
 
 ### Phase 7: Seal (feature 4)
 - [ ] Task 11: Overview with the seal

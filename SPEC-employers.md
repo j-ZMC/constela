@@ -52,7 +52,7 @@ Agree these with the team before Phase 3. Field changes after that are announced
 - **WorkProfile:** `id`, `headline`, `skills` (each `{ skill, evidence: verified or declared, source? }`), `needs` (factor ids the candidate chose to share), `modalities` (empty means any), `identity` (`name`, hidden until accepted).
 - **Permission:** `{ candidateId, vacancyId, status: invited, accepted or declined, at }`.
 - **Vocabularies:** 18 environment factors (`ENVIRONMENT`), 37 skills (`SKILLS`) and 8 pairs of equivalent tools (`EQUIVALENT_SKILLS`), for example Excel and Google Sheets.
-- **Storage:** one `localStorage` key, `employers`, version 1: `{ vacancies, permissions, responses, guideRead }`. Broken or old data loads as empty, and one bad item is dropped without losing the others. Delete my data removes the key.
+- **Storage:** one `localStorage` key, `employers`, version 1: `{ vacancies, permissions, responses, guideRead, interviews, bookings }`. Broken or old data loads as empty, and one bad item is dropped without losing the others. Delete my data removes the key.
 
 ## Rules v1
 
@@ -137,13 +137,22 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 - **Fit reads as adjustments.** "Already offered" and "You could offer", never as something the person lacks.
 - **Invite adds an `invited` permission.** Answers stay in order and the last one wins. After a no there is no way to invite that person again for that vacancy.
 
+### Structured interview and invitations
+
+- **The same questions for everyone.** Questions belong to the vacancy, not the candidate. They come from the AI, or from a fixed template with no AI, and nothing is saved until the employer saves it.
+- **The question checker.** Hypothetical and vague questions get a warning and a concrete version. Questions about the person (age, health, family) stop the save. The check reads what is asked of the person, so a job about "health records" isn't flagged.
+- **The candidate decides on `/invitations`.** They see the whole process before answering. Yes and no look the same and take one press, and they can change their answer. A no hides their name again.
+- **48 hours before.** Once the employer sets the date, the questions open 48 hours before it. A shorter notice gets a calm note, not a block.
+- **Alternative formats.** On a step that offers one, the candidate picks it and the employer sees the choice.
+- **Answers the employer owes.** A yes creates an answer due by the date the vacancy promised, and the employer marks it as sent. This feeds the seal. A no cancels an answer not sent yet, so a candidate who leaves never counts against the employer.
+
 ## Contract with the other modules
 
 | Teammate | What we need |
 | --- | --- |
 | Luis (Profile, My plan) | Review the shared header: on `/employers`, `SiteNav` swaps to the employer menu and name. `DeleteMyData` now removes the `employers` key. Employer flows will call `addStepToPlan()` ("Read your interview questions") and `markEvent()`. |
 | Zahid and Juan (Jobs) | Review `<PublishedVacancies />`, added above `<JobSearch />` in `src/app/jobs/page.tsx`. It shows nothing until a vacancy is published. Agree on wording: their badge stays "Verified company", ours is "Neuroinclusive seal". A new barrier subtype needs a line in `needsFromBarriers()`; a test fails until it has one. |
-| Evy (Interview) | Decide where the candidate reads the structured questions 48 hours before: the invitation view or `/interview`. |
+| Evy (Interview) | Candidates read the structured questions on `/invitations` for now. Say if they should also appear on `/interview`. |
 | Regina (extension) | Optional: `GET /api/public/seal` and `GET /api/public/vacancies/[id]` with CORS. |
 
 ## Tech Stack
@@ -171,6 +180,9 @@ src/app/api/employer-ai/route.ts  → validated AI boundary (Phase 2)
 src/lib/employer-store.ts         → localStorage for vacancies, permissions, responses, guide (Phase 3)
 src/lib/vacancy-editor.ts         → the editor's rules: form to vacancy, what saving needs, phrase marks (Phase 4)
 src/lib/employer-ai-client.ts     → the browser side of the AI route (Phase 4)
+src/lib/interview-questions.ts    → question checker, fixed questions, the 48-hour rule (Phase 6)
+src/lib/invitations.ts            → what an invited candidate sees, and the step in My plan (Phase 6)
+src/app/invitations/              → the candidate's invitation view (Phase 6)
 src/app/employers/                → layout, overview, vacancies, talent, guide (Phases 3 to 7)
 src/components/employers/         → vacancy editor, clarity panel, phrase help, published vacancies, talent search (Phase 4 on)
 src/components/site-nav.tsx       → shared header: swaps to the employer menu on /employers (Phase 3)
@@ -204,8 +216,8 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 - [x] Clarity score, ranking, environment fit, seal and privacy rules are pure functions with tests.
 - [x] The CV-pair test passes 10 of 10, and sharing needs or disability-related text never changes a score.
 - [x] An employer turns a pasted vacancy into a clear card (80+) and publishes it; candidates see it on `/jobs`.
-- [ ] Talent search shows anonymous profiles ranked by skills, with reasons and fit; identity shows only after the candidate accepts.
-- [ ] An invited candidate sees the process tracker, the questions 48 hours before, and can choose an alternative format.
+- [x] Talent search shows anonymous profiles ranked by skills, with reasons and fit; identity shows only after the candidate accepts.
+- [x] An invited candidate sees the process tracker, the questions 48 hours before, and can choose an alternative format.
 - [ ] The seal panel shows the level, every check and how to reach the next level.
 - [ ] Usable at 375 px, keyboard only, with a screen reader; `/impeccable critique` issues fixed.
 - [ ] The 5-minute demo script runs end to end.
@@ -214,7 +226,7 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 
 1. Seal thresholds (90%, 5 ratings, average 4): confirm with Angel.
 2. Talent pool: demo profiles only for the MVP, or a "share my work profile" step for real candidates? That would need skills in the Profile (Luis).
-3. Where candidates read interview questions: the invitation view or `/interview` (Evy).
+3. Where candidates read interview questions: `/invitations` for now, or also `/interview` (Evy).
 4. Badge wording next to the jobs page's "Verified" badge.
 5. Verified skills are labelled "demo" until a skills-check or course module exists.
 6. Should employers see shared needs before a candidate says yes? Today they do, as the features document asks. The order can't change, but a person could still skip someone because of a need. The other option is to show needs only after a yes, which gives employers less to plan adjustments with.

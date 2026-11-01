@@ -6,7 +6,7 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
 // 44px at least, and taller when the text is: at the largest settings a long label wraps instead of leaving the screen.
-export const action = "h-auto min-h-11 whitespace-normal px-5 py-2 text-base";
+export const action = "h-auto min-h-11 max-w-full shrink whitespace-normal px-5 py-2 text-base";
 
 // 44px targets, and the base font size on every screen so phones don't zoom in.
 const control = "h-11 bg-card font-normal text-base md:text-base";

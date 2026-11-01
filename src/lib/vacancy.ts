@@ -107,6 +107,7 @@ export const MAX_POSTING = 8000;
 export const MAX_SHORT = 80;
 export const MAX_LINE = 120;
 export const MAX_SUMMARY = 400;
+export const MAX_QUESTION = 200;
 export const MAX_ITEMS = 10;
 export const MAX_STAGES = 6;
 export const MINUTES_RANGE = [5, 480] as const;

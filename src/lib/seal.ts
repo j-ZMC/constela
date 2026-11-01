@@ -7,7 +7,7 @@ export const SEAL_LEVELS = ["bronze", "silver", "gold"] as const;
 export type SealLevel = (typeof SEAL_LEVELS)[number];
 
 // An answer the employer owes a candidate after a hiring step, due on the date they promised.
-export type SealResponse = { dueAt: string; answeredAt?: string };
+export type SealResponse = { dueAt: string; answeredAt?: string; candidateId?: string; vacancyId?: string };
 export type SealInput = { vacancies: Vacancy[]; guideRead: boolean; responses: SealResponse[]; ratings: number[] };
 export type SealCheck = { id: string; level: SealLevel; met: boolean; detail: string };
 export type Seal = { level: SealLevel | null; checks: SealCheck[] };

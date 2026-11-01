@@ -11,6 +11,7 @@ import {
   MAX_ITEMS,
   MAX_LINE,
   MAX_POSTING,
+  MAX_QUESTION,
   MAX_SHORT,
   MAX_STAGES,
   MAX_SUMMARY,
@@ -26,7 +27,6 @@ import {
 } from "@/lib/vacancy";
 
 const MAX_QUESTIONS = 6;
-const MAX_QUESTION = 200;
 const TIMEOUT_MS = 15_000;
 
 export const employerAiRequest = z.discriminatedUnion("task", [

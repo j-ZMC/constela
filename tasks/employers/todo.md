@@ -178,15 +178,16 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Description:** Draft questions from the essential requirements (AI `interview`, or a fixed template without AI), flag hypothetical or vague questions with a concrete version, and a one-page guide with "I read it".
 
 **Acceptance criteria:**
-- [ ] Every candidate for a vacancy gets the same questions and rubric
-- [ ] "I read it" feeds the seal's training check
+- [x] Every candidate for a vacancy gets the same questions and rubric
+- [x] "I read it" feeds the seal's training check
+- [x] A question about the person can't be saved
 
 **Verification:**
-- [ ] Tests for the question checker; manual check of the guide
+- [x] Tests for the question checker; the guide and real AI questions checked in Chrome
 
 **Dependencies:** Task 4
 
-**Files:** `src/lib/interview-questions.ts`, `src/app/employers/guide/…`
+**Files:** `src/lib/interview-questions.ts`, `src/app/employers/guide/page.tsx`, `src/components/employers/interviewer-guide.tsx`, `src/components/employers/interview-questions.tsx`, `src/lib/employer-store.ts`
 
 **Estimated scope:** M
 
@@ -195,15 +196,16 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Description:** The candidate accepts or declines an invitation, sees the process as a tracker (steps, format, duration, who, response date), reads the questions when 48 hours or less remain, and picks the alternative format. Accepting adds "Read your interview questions" to My plan with `addStepToPlan()`.
 
 **Acceptance criteria:**
-- [ ] No red and no "overdue"; every step says how long it takes
-- [ ] Declining is as easy as accepting and hides the identity again
+- [x] No red and no "overdue"; every step says how long it takes
+- [x] Declining is as easy as accepting and hides the identity again
+- [x] A no cancels an answer not sent yet, so it never counts against the seal
 
 **Verification:**
-- [ ] Manual: demo script step 5
+- [x] Demo script step 5 checked in Chrome at 375 px and desktop
 
 **Dependencies:** Tasks 8 and 9
 
-**Files:** `src/app/invitations/…`, `src/components/employers/…`
+**Files:** `src/app/invitations/page.tsx`, `src/components/employers/invitation-list.tsx`, `src/components/employers/talent-search.tsx`, `src/components/employers/published-vacancies.tsx`, `src/lib/invitations.ts`, `src/lib/employer-store.ts`
 
 **Estimated scope:** M
 

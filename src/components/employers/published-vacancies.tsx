@@ -1,12 +1,14 @@
 "use client";
 
 import { useSyncExternalStore, type ReactNode } from "react";
+import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { useEmployerData } from "@/lib/employer-store";
+import { waitingInvitations } from "@/lib/invitations";
 import { computeSeal, type SealLevel } from "@/lib/seal";
 import { ENVIRONMENT, MODALITY_LABELS, STAGE_FORMAT_LABELS, factorNames, salaryText, type EnvironmentFactor, type Stage, type Vacancy } from "@/lib/vacancy";
-import { compatibility, fitSummary, needsFromBarriers } from "@/lib/work-profile";
+import { DEMO_PROFILES, compatibility, fitSummary, needsFromBarriers } from "@/lib/work-profile";
 
 const SEAL_NAMES: Record<SealLevel, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 const noUpdates = () => () => {};
@@ -23,9 +25,15 @@ export function PublishedVacancies() {
   const needs = needsFromBarriers(barriers ? barriers.split(",") : []);
   // shortcut: one browser holds one employer, so every vacancy shares a seal; give each company its own with accounts.
   const { level } = computeSeal({ vacancies: data.vacancies, guideRead: data.guideRead, responses: data.responses, ratings: [] }, new Date());
+  const waiting = waitingInvitations(data, DEMO_PROFILES);
 
   return (
     <section aria-labelledby="clear-vacancies-heading" className="mt-8 flex flex-col gap-3">
+      {waiting > 0 && (
+        <Link href="/invitations" className="flex min-h-11 items-center rounded-lg bg-secondary px-3 font-medium underline underline-offset-4">
+          You have {waiting === 1 ? "1 invitation" : `${waiting} invitations`}. See {waiting === 1 ? "it" : "them"}.
+        </Link>
+      )}
       <div>
         <h2 id="clear-vacancies-heading" className="text-lg font-semibold">
           Vacancies written for clarity

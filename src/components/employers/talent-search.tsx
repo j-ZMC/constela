@@ -2,11 +2,13 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { SelectField, action } from "@/components/employers/vacancy-fields";
+import { Field, SelectField, action } from "@/components/employers/vacancy-fields";
 import { Button, buttonVariants } from "@/components/ui/button";
-import { addPermission, useEmployerData } from "@/lib/employer-store";
+import { Input } from "@/components/ui/input";
+import { addPermission, markAnswerSent, scheduleInterview, useEmployerData, type EmployerData } from "@/lib/employer-store";
+import { opensAt, toLocalInput } from "@/lib/interview-questions";
 import { useHydrated } from "@/lib/use-hydrated";
-import type { Vacancy } from "@/lib/vacancy";
+import { STAGE_FORMAT_LABELS, type Vacancy } from "@/lib/vacancy";
 import { DEMO_PROFILES, talentRows, type TalentRow } from "@/lib/work-profile";
 
 const ANSWERS: Record<NonNullable<TalentRow["status"]>, string> = {
@@ -32,7 +34,8 @@ function ToVacancies({ message }: { message: string }) {
 }
 
 function Search() {
-  const { vacancies, permissions } = useEmployerData();
+  const data = useEmployerData();
+  const { vacancies, permissions } = data;
   const [chosen, setChosen] = useState<string>();
   const published = vacancies.filter((v) => v.status === "published");
   // Next keeps this page alive while the employer is elsewhere, so the chosen vacancy may have been unpublished since.
@@ -45,7 +48,7 @@ function Search() {
     <div className="flex flex-col gap-6">
       <SelectField label="Vacancy" value={vacancy.id} options={options} onChange={setChosen} />
       {vacancy.essential.some((r) => r.skill) ? (
-        <Results vacancy={vacancy} rows={talentRows(vacancy, DEMO_PROFILES, permissions)} />
+        <Results vacancy={vacancy} rows={talentRows(vacancy, DEMO_PROFILES, permissions)} data={data} />
       ) : (
         <ToVacancies message="This vacancy has no skills to match yet. Pick a skill for each essential requirement." />
       )}
@@ -53,7 +56,7 @@ function Search() {
   );
 }
 
-function Results({ vacancy, rows }: { vacancy: Vacancy; rows: TalentRow[] }) {
+function Results({ vacancy, rows, data }: { vacancy: Vacancy; rows: TalentRow[]; data: EmployerData }) {
   const untagged = vacancy.essential.filter((r) => !r.skill).length;
   const others = DEMO_PROFILES.length - rows.length;
   return (
@@ -67,7 +70,7 @@ function Results({ vacancy, rows }: { vacancy: Vacancy; rows: TalentRow[] }) {
         <ol className="flex flex-col gap-4">
           {rows.map((row, i) => (
             <li key={`${vacancy.id}:${row.profile.id}`}>
-              <TalentCard row={row} rank={i + 1} vacancy={vacancy} />
+              <TalentCard row={row} rank={i + 1} vacancy={vacancy} data={data} />
             </li>
           ))}
         </ol>
@@ -83,7 +86,7 @@ function Results({ vacancy, rows }: { vacancy: Vacancy; rows: TalentRow[] }) {
   );
 }
 
-function TalentCard({ row, rank, vacancy }: { row: TalentRow; rank: number; vacancy: Vacancy }) {
+function TalentCard({ row, rank, vacancy, data }: { row: TalentRow; rank: number; vacancy: Vacancy; data: EmployerData }) {
   const { profile, name, status, score, reasons, notes } = row;
   const place = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
@@ -132,7 +135,57 @@ function TalentCard({ row, rank, vacancy }: { row: TalentRow; rank: number; vaca
         )}
         {/* Stays in the page, so screen readers announce the answer when it arrives. */}
         <p role="status">{failed ? "This browser could not save the invitation. Try again." : status && ANSWERS[status]}</p>
+        {/* shortcut: one browser holds both sides for the demo; with accounts the candidate gets this page in their own session. */}
+        {status === "invited" && (
+          <Link href="/invitations" className="flex min-h-11 items-center underline underline-offset-4">
+            See what the candidate sees
+          </Link>
+        )}
       </div>
+
+      {status === "accepted" && <AfterYes candidateId={profile.id} vacancy={vacancy} data={data} />}
     </article>
+  );
+}
+
+// What the employer does once a person says yes: set the time, see what they chose, and send the answer they promised.
+function AfterYes({ candidateId, vacancy, data }: { candidateId: string; vacancy: Vacancy; data: EmployerData }) {
+  const pair = (x: { candidateId?: string; vacancyId?: string }) => x.candidateId === candidateId && x.vacancyId === vacancy.id;
+  const booking = data.bookings.find(pair);
+  const response = data.responses.find(pair);
+  const interviewAt = booking?.interviewAt;
+  const shortNotice = interviewAt !== undefined && opensAt(interviewAt) < new Date(data.permissions.findLast(pair)?.at ?? 0);
+
+  return (
+    <div className="flex flex-col gap-3 border-t pt-3">
+      <Field label="Interview date and time">
+        <Input
+          type="datetime-local"
+          value={interviewAt ? toLocalInput(interviewAt) : ""}
+          onChange={(e) => scheduleInterview(candidateId, vacancy.id, e.target.value ? new Date(e.target.value).toISOString() : undefined)}
+          className="h-11 bg-card text-base font-normal md:text-base"
+        />
+      </Field>
+      {shortNotice && <p className="text-sm">Candidates get the questions 48 hours before. Pick a later time if you can.</p>}
+      {booking?.choices.map((choice) => (
+        <p key={choice.stage} className="text-sm">
+          For “{choice.stage}”, they chose: {STAGE_FORMAT_LABELS[choice.format]}.
+        </p>
+      ))}
+      {response && (
+        <div className="flex flex-wrap items-center gap-3">
+          {!response.answeredAt && (
+            <Button variant="outline" className={action} onClick={() => markAnswerSent(candidateId, vacancy.id, new Date())}>
+              I sent my answer
+            </Button>
+          )}
+          <p role="status">
+            {response.answeredAt
+              ? `You answered on ${new Date(response.answeredAt).toLocaleDateString("en-US", { month: "long", day: "numeric" })}.`
+              : `Your answer is due by ${new Date(response.dueAt).toLocaleDateString("en-US", { month: "long", day: "numeric" })}.`}
+          </p>
+        </div>
+      )}
+    </div>
   );
 }

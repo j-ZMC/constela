@@ -2,28 +2,58 @@
 // shortcut: single-browser demo, move to a database with accounts before any real employer uses it.
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
+import type { InterviewQuestion } from "@/lib/employer-ai";
 import type { SealResponse } from "@/lib/seal";
-import { vacancySchema, type Vacancy } from "@/lib/vacancy";
+import { ALTERNATIVE_FORMATS, MAX_ITEMS, MAX_LINE, MAX_QUESTION, MAX_SHORT, MAX_STAGES, vacancySchema, type Vacancy } from "@/lib/vacancy";
 import type { Permission } from "@/lib/work-profile";
 
 const STORAGE_KEY = "employers"; // also listed in delete-my-data.tsx
 const VERSION = 1;
+const DAY_MS = 24 * 60 * 60 * 1000;
 
-export type EmployerData = { vacancies: Vacancy[]; permissions: Permission[]; responses: SealResponse[]; guideRead: boolean };
+// One list of questions per vacancy, so everyone gets the same ones.
+export type VacancyInterview = { vacancyId: string; questions: InterviewQuestion[] };
+export type StageChoice = { stage: string; format: (typeof ALTERNATIVE_FORMATS)[number] };
+export type Booking = { candidateId: string; vacancyId: string; interviewAt?: string; choices: StageChoice[] };
+
+export type EmployerData = {
+  vacancies: Vacancy[];
+  permissions: Permission[];
+  responses: SealResponse[];
+  guideRead: boolean;
+  interviews: VacancyInterview[];
+  bookings: Booking[];
+};
 
 // ISO times only: identityFor() sorts them as text, so a hand-edited value could otherwise win as the latest answer.
 const time = z.iso.datetime();
+const id = z.string().min(1).max(64);
 const permissionSchema: z.ZodType<Permission> = z
+  .object({ candidateId: id, vacancyId: id, status: z.enum(["invited", "accepted", "declined"]), at: time })
+  .strict();
+const responseSchema: z.ZodType<SealResponse> = z
+  .object({ dueAt: time, answeredAt: time.optional(), candidateId: id.optional(), vacancyId: id.optional() })
+  .strict();
+const line = (max: number) => z.string().trim().min(1).max(max);
+const interviewSchema: z.ZodType<VacancyInterview> = z
   .object({
-    candidateId: z.string().min(1).max(64),
-    vacancyId: z.string().min(1).max(64),
-    status: z.enum(["invited", "accepted", "declined"]),
-    at: time,
+    vacancyId: id,
+    questions: z
+      .array(z.object({ requirement: line(MAX_LINE), question: line(MAX_QUESTION), strong: line(MAX_QUESTION), basic: line(MAX_QUESTION) }).strict())
+      .min(1)
+      .max(MAX_ITEMS),
   })
   .strict();
-const responseSchema: z.ZodType<SealResponse> = z.object({ dueAt: time, answeredAt: time.optional() }).strict();
+const bookingSchema: z.ZodType<Booking> = z
+  .object({
+    candidateId: id,
+    vacancyId: id,
+    interviewAt: time.optional(),
+    choices: z.array(z.object({ stage: line(MAX_SHORT), format: z.enum(ALTERNATIVE_FORMATS) }).strict()).max(MAX_STAGES),
+  })
+  .strict();
 
-const emptyData = (): EmployerData => ({ vacancies: [], permissions: [], responses: [], guideRead: false });
+const emptyData = (): EmployerData => ({ vacancies: [], permissions: [], responses: [], guideRead: false, interviews: [], bookings: [] });
 
 // Storage can be edited by hand: keep the items that still pass, so one bad item doesn't lose the others.
 function keepValid<T>(schema: z.ZodType<T>, items: unknown): T[] {
@@ -49,6 +79,8 @@ function parse(raw: string | null): EmployerData {
       permissions: keepValid(permissionSchema, data.permissions),
       responses: keepValid(responseSchema, data.responses),
       guideRead: data.guideRead === true,
+      interviews: keepValid(interviewSchema, data.interviews),
+      bookings: keepValid(bookingSchema, data.bookings),
     };
   } catch {
     return emptyData();
@@ -83,6 +115,48 @@ export function addPermission(permission: Permission): boolean {
   const data = loadEmployerData();
   return saveEmployerData({ ...data, permissions: [...data.permissions, permission] });
 }
+
+const samePair = (candidateId: string, vacancyId: string) => (x: { candidateId?: string; vacancyId?: string }) => x.candidateId === candidateId && x.vacancyId === vacancyId;
+
+// Saying yes means the employer now owes an answer by the date the vacancy promised. Saying no cancels one not sent yet,
+// so a candidate who leaves never counts against the seal.
+export function answerInvitation(candidateId: string, vacancy: Vacancy, status: "accepted" | "declined", now: Date): boolean {
+  const data = loadEmployerData();
+  const pair = samePair(candidateId, vacancy.id);
+  const permissions = [...data.permissions, { candidateId, vacancyId: vacancy.id, status, at: now.toISOString() }];
+  let responses = data.responses.filter((r) => !(status === "declined" && pair(r) && !r.answeredAt));
+  if (status === "accepted" && vacancy.responseDays && !responses.some(pair)) {
+    responses = [...responses, { candidateId, vacancyId: vacancy.id, dueAt: new Date(now.getTime() + vacancy.responseDays * DAY_MS).toISOString() }];
+  }
+  return saveEmployerData({ ...data, permissions, responses });
+}
+
+export function markAnswerSent(candidateId: string, vacancyId: string, now: Date): boolean {
+  const data = loadEmployerData();
+  const pair = samePair(candidateId, vacancyId);
+  return saveEmployerData({ ...data, responses: data.responses.map((r) => (pair(r) ? { ...r, answeredAt: now.toISOString() } : r)) });
+}
+
+export function saveInterview(interview: VacancyInterview): boolean {
+  const data = loadEmployerData();
+  return saveEmployerData({ ...data, interviews: [...data.interviews.filter((i) => i.vacancyId !== interview.vacancyId), interview] });
+}
+
+export const markGuideRead = () => saveEmployerData({ ...loadEmployerData(), guideRead: true });
+
+function updateBooking(candidateId: string, vacancyId: string, change: (booking: Booking) => Booking): boolean {
+  const data = loadEmployerData();
+  const pair = samePair(candidateId, vacancyId);
+  const booking = data.bookings.find(pair) ?? { candidateId, vacancyId, choices: [] };
+  return saveEmployerData({ ...data, bookings: [...data.bookings.filter((b) => !pair(b)), change(booking)] });
+}
+
+export const scheduleInterview = (candidateId: string, vacancyId: string, interviewAt: string | undefined) =>
+  updateBooking(candidateId, vacancyId, (b) => ({ ...b, interviewAt }));
+
+// No format means the step as planned.
+export const chooseFormat = (candidateId: string, vacancyId: string, stage: string, format: StageChoice["format"] | undefined) =>
+  updateBooking(candidateId, vacancyId, (b) => ({ ...b, choices: [...b.choices.filter((c) => c.stage !== stage), ...(format ? [{ stage, format }] : [])] }));
 
 let cached: { raw: string | null; data: EmployerData } | undefined;
 const SERVER_DATA = emptyData();
