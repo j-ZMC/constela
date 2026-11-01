@@ -218,7 +218,7 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 - [x] An employer turns a pasted vacancy into a clear card (80+) and publishes it; candidates see it on `/jobs`.
 - [x] Talent search shows anonymous profiles ranked by skills, with reasons and fit; identity shows only after the candidate accepts.
 - [x] An invited candidate sees the process tracker, the questions 48 hours before, and can choose an alternative format.
-- [ ] The seal panel shows the level, every check and how to reach the next level.
+- [x] The seal panel shows the level, every check and how to reach the next level.
 - [ ] Usable at 375 px, keyboard only, with a screen reader; `/impeccable critique` issues fixed.
 - [ ] The 5-minute demo script runs end to end.
 

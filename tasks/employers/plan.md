@@ -75,7 +75,11 @@ The four MVP features from the features document, built in phases rather than da
 - [ ] Evy agrees that candidates read the questions on `/invitations`
 
 ### Phase 7: Seal (feature 4)
-- [ ] Task 11: Overview with the seal
+- [x] Task 11: Overview with the seal
+
+### Checkpoint 7
+- [x] Tests, lint, types and build pass
+- [x] The level follows the data in Chrome at 375 px and desktop, and is never stored
 
 ### Phase 8: Polish and demo
 - [ ] Task 12: Privacy, accessibility, critique, demo data and rehearsal

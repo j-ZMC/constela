@@ -3,7 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
 import type { InterviewQuestion } from "@/lib/employer-ai";
-import type { SealResponse } from "@/lib/seal";
+import { computeSeal, type Seal, type SealResponse } from "@/lib/seal";
 import { ALTERNATIVE_FORMATS, MAX_ITEMS, MAX_LINE, MAX_QUESTION, MAX_SHORT, MAX_STAGES, vacancySchema, type Vacancy } from "@/lib/vacancy";
 import type { Permission } from "@/lib/work-profile";
 
@@ -181,4 +181,14 @@ export const employerStore = {
 // Next keeps visited pages alive but hidden, so data read once would go stale. This re-reads when a page comes back.
 export function useEmployerData(): EmployerData {
   return useSyncExternalStore(employerStore.subscribe, employerStore.snapshot, () => SERVER_DATA);
+}
+
+const noUpdates = () => () => {};
+
+// Worked out from the data on every look and never stored, so it drops as soon as a metric does. Time counts too: an answer
+// can pass its date while the page sits hidden, and the minute makes the seal look again when the page comes back.
+// shortcut: no candidate ratings exist yet, so gold can't be reached; add them once real candidates can rate a process.
+export function useSeal(data: EmployerData): Seal {
+  const minute = useSyncExternalStore(noUpdates, () => Math.floor(Date.now() / 60_000), () => 0);
+  return computeSeal({ vacancies: data.vacancies, guideRead: data.guideRead, responses: data.responses, ratings: [] }, new Date(minute * 60_000));
 }

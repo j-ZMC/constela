@@ -9,7 +9,8 @@ export type SealLevel = (typeof SEAL_LEVELS)[number];
 // An answer the employer owes a candidate after a hiring step, due on the date they promised.
 export type SealResponse = { dueAt: string; answeredAt?: string; candidateId?: string; vacancyId?: string };
 export type SealInput = { vacancies: Vacancy[]; guideRead: boolean; responses: SealResponse[]; ratings: number[] };
-export type SealCheck = { id: string; level: SealLevel; met: boolean; detail: string };
+// todo says what to do next, never what went wrong; href is where to do it.
+export type SealCheck = { id: string; level: SealLevel; met: boolean; detail: string; todo: string; href?: string };
 export type Seal = { level: SealLevel | null; checks: SealCheck[] };
 
 const SHARE = 0.9; // the target from the features document: 90% of vacancies
@@ -32,24 +33,32 @@ export function computeSeal(input: SealInput, now: Date): Seal {
       level: "bronze",
       met: share(clear),
       detail: `${clear} of ${published.length} published vacancies have a clarity score of ${CLEAR_SCORE} or more.`,
+      todo: `Publish vacancies with a clarity score of ${CLEAR_SCORE} or more.`,
+      href: "/employers/vacancies",
     },
     {
       id: "training",
       level: "bronze",
       met: input.guideRead,
-      detail: input.guideRead ? "You read the interviewer guide." : "Read the interviewer guide.",
+      detail: input.guideRead ? "You read the interviewer guide." : "The guide takes a few minutes.",
+      todo: "Read the interviewer guide.",
+      href: "/employers/guide",
     },
     {
       id: "adjustments",
       level: "silver",
       met: share(adjusted),
       detail: `${adjusted} of ${published.length} published vacancies offer adjustments and another interview format.`,
+      todo: "Offer default adjustments and another interview format in your vacancies.",
+      href: "/employers/vacancies",
     },
     {
       id: "response-time",
       level: "silver",
       met: due.length > 0 && onTime === due.length,
       detail: `${onTime} of ${due.length} answers to candidates were sent by the promised date.`,
+      todo: "Send each candidate your answer by the date you promised.",
+      href: "/employers/talent",
     },
     {
       id: "ratings",
@@ -57,7 +66,8 @@ export function computeSeal(input: SealInput, now: Date): Seal {
       met: input.ratings.length >= MIN_RATINGS && average >= MIN_AVERAGE,
       detail: input.ratings.length
         ? `Candidates rate your process ${average.toFixed(1)} out of 5 (${input.ratings.length} ratings). Gold needs ${MIN_AVERAGE} or more from ${MIN_RATINGS} people.`
-        : `No candidate ratings yet. Gold needs ${MIN_AVERAGE} or more from ${MIN_RATINGS} people.`,
+        : "Ratings come with real candidates.",
+      todo: `Earn an average of ${MIN_AVERAGE} or more out of 5 from ${MIN_RATINGS} candidates.`,
     },
   ];
 
@@ -68,4 +78,8 @@ export function computeSeal(input: SealInput, now: Date): Seal {
     level = l;
   }
   return { level, checks };
+}
+
+export function nextLevel({ level }: Seal): SealLevel | null {
+  return SEAL_LEVELS[level ? SEAL_LEVELS.indexOf(level) + 1 : 0] ?? null;
 }

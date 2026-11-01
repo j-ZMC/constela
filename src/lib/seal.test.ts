@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { computeSeal, type SealInput } from "@/lib/seal";
+import { computeSeal, nextLevel, type SealInput } from "@/lib/seal";
 import { DEMO_VACANCY, type Vacancy } from "@/lib/vacancy";
 
 const now = new Date("2026-11-01T12:00:00.000Z");
@@ -54,5 +54,36 @@ describe("computeSeal", () => {
 
   it("ignores drafts, so an unfinished vacancy never costs the seal", () => {
     expect(computeSeal(input({ vacancies: [DEMO_VACANCY, { ...unclear, status: "draft" }] }), now).level).toBe("silver");
+  });
+
+  it("says what to do for every check, without blame", () => {
+    for (const check of computeSeal(input({ vacancies: [], guideRead: false, responses: [] }), now).checks) {
+      expect(check.todo).toMatch(/^[A-Z][a-z]+ /); // a sentence that starts with what to do
+      expect(check.todo).not.toMatch(/fail|wrong|missing|overdue|not met/i);
+    }
+  });
+
+  it("never tells a check as done before it is", () => {
+    const training = computeSeal(input({ guideRead: false }), now).checks.find((c) => c.id === "training");
+    expect(training?.met).toBe(false);
+    expect(training?.detail).not.toContain("You read");
+  });
+
+  it("points to the page where each check gets done", () => {
+    const href = (id: string) => computeSeal(input(), now).checks.find((c) => c.id === id)?.href;
+    expect(href("clarity")).toBe("/employers/vacancies");
+    expect(href("training")).toBe("/employers/guide");
+    expect(href("adjustments")).toBe("/employers/vacancies");
+    expect(href("response-time")).toBe("/employers/talent");
+    expect(href("ratings")).toBeUndefined(); // candidate ratings don't exist yet, so there is nowhere to send the employer
+  });
+});
+
+describe("nextLevel", () => {
+  it("is the level after the current one, and nothing after gold", () => {
+    expect(nextLevel(computeSeal(input({ vacancies: [] }), now))).toBe("bronze");
+    expect(nextLevel(computeSeal(input({ responses: [] }), now))).toBe("silver");
+    expect(nextLevel(computeSeal(input(), now))).toBe("gold");
+    expect(nextLevel(computeSeal(input({ ratings: [5, 5, 5, 5, 5] }), now))).toBeNull();
   });
 });

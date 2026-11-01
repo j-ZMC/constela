@@ -216,15 +216,15 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 **Description:** `/employers` overview shows the level, every check with its detail and what is needed for the next level.
 
 **Acceptance criteria:**
-- [ ] The level is never stored; it is computed on every visit
-- [ ] Unmet checks say what to do, not what went wrong
+- [x] The level is never stored; it is computed on every visit
+- [x] Unmet checks say what to do, not what went wrong
 
 **Verification:**
-- [ ] Manual: demo script step 6
+- [x] Demo script step 6 checked in Chrome at 375 px and desktop
 
 **Dependencies:** Tasks 5 and 9
 
-**Files:** `src/app/employers/page.tsx`, `src/components/employers/seal-panel.tsx`
+**Files:** `src/app/employers/page.tsx`, `src/components/employers/seal-panel.tsx`, `src/lib/seal.ts`, `src/lib/employer-store.ts`
 
 **Estimated scope:** S
 

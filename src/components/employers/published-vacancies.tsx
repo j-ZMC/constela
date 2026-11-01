@@ -4,9 +4,9 @@ import { useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { BadgeCheck } from "lucide-react";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
-import { useEmployerData } from "@/lib/employer-store";
+import { useEmployerData, useSeal } from "@/lib/employer-store";
 import { waitingInvitations } from "@/lib/invitations";
-import { computeSeal, type SealLevel } from "@/lib/seal";
+import type { SealLevel } from "@/lib/seal";
 import { ENVIRONMENT, MODALITY_LABELS, STAGE_FORMAT_LABELS, factorNames, salaryText, type EnvironmentFactor, type Stage, type Vacancy } from "@/lib/vacancy";
 import { DEMO_PROFILES, compatibility, fitSummary, needsFromBarriers } from "@/lib/work-profile";
 
@@ -16,6 +16,8 @@ const noUpdates = () => () => {};
 // What the employer published, for candidates on /jobs. Nothing shows until there is something published.
 export function PublishedVacancies() {
   const data = useEmployerData();
+  // shortcut: one browser holds one employer, so every vacancy shares a seal; give each company its own with accounts.
+  const { level } = useSeal(data);
   // Re-read each time Jobs comes back: Next keeps this page alive, and the person may have changed their survey meanwhile.
   const barriers = useSyncExternalStore(noUpdates, () => (loadBarrierPreferences() ?? []).join(","), () => "");
   const published = data.vacancies.filter((v) => v.status === "published");
@@ -23,8 +25,6 @@ export function PublishedVacancies() {
 
   // Read on the candidate's own device: the needs stay here and never reach the employer.
   const needs = needsFromBarriers(barriers ? barriers.split(",") : []);
-  // shortcut: one browser holds one employer, so every vacancy shares a seal; give each company its own with accounts.
-  const { level } = computeSeal({ vacancies: data.vacancies, guideRead: data.guideRead, responses: data.responses, ratings: [] }, new Date());
   const waiting = waitingInvitations(data, DEMO_PROFILES);
 
   return (
