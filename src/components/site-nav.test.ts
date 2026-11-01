@@ -6,7 +6,7 @@ import { SiteNav } from "@/components/site-nav";
 const route = vi.hoisted(() => ({ path: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => route.path }));
 
-const CANDIDATE_PAGES = ["/profile", "/plan", "/jobs", "/interview"];
+const CANDIDATE_PAGES = ["/profile", "/plan", "/recommended", "/jobs", "/interview"];
 const EMPLOYER_PAGES = ["/employers", "/employers/vacancies", "/employers/talent", "/employers/guide"];
 
 function render(path: string) {
