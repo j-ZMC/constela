@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, ListChecks, UserRound } from "lucide-react";
+import { BriefcaseBusiness, ListChecks, MessageSquare, UserRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { PersonalizationPanel } from "@/components/personalization-panel";
 import { cn } from "@/lib/utils";
@@ -11,7 +11,7 @@ const links = [
   { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/plan", label: "My plan", icon: ListChecks },
   { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
-  // Interview (Evy) joins the menu when its page is ready; /interview still works.
+  { href: "/interview", label: "Interview", icon: MessageSquare },
 ];
 
 export function SiteNav() {

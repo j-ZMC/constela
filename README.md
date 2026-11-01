@@ -19,7 +19,7 @@ The challenge asks for AI that supports **executive function**: planning, focus,
 | My plan | A five-stage job search path, up to 3 steps a day, a daily check-in and "Break it down for me" ([SPEC-plan.md](SPEC-plan.md), [SPEC-path.md](SPEC-path.md)) | `/plan` | Luis |
 | Job filter backend | Cleaned US jobs dataset, barrier detection with embeddings and a company inclusion score ([backend/README.md](backend/README.md)) | `backend/` | Zahid |
 | Jobs | "For you" (from the CV) and "Search", with work conditions pointed out, never hidden; "Save this job" feeds My plan | `/jobs` | Zahid & Juan |
-| Interview | Guided practice, "What to expect" and "Translate this" for recruiter messages | `/interview` | Evy |
+| Interview | Practice a question with AI feedback and "What to expect"; "Translate this" for recruiter messages is next | `/interview` | Evy |
 | LinkedIn extension (optional) | A "less chaotic" mode with the same look and settings | — | Regina |
 
 AI lives inside each feature with a clear purpose instead of a blank chatbot, so nobody has to figure out what to ask.

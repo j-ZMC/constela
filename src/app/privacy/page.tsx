@@ -35,6 +35,10 @@ export default function PrivacyPage() {
           steps. We also send three settings that shape the answer, like &quot;keep steps short&quot;, and which starter step it is.
         </p>
         <p>
+          When you practice an interview question, we send the question, your answer and the job title you typed (if any) to
+          Groq to get feedback or a new question. We also send two settings that shape the wording. We do not save your answer.
+        </p>
+        <p>
           When you search for jobs, we send the words you typed to an AI service (OpenAI) to compare them with job posts. For
           Recommended jobs, we send a short summary of the skills and experience read from your CV, never your name, email or
           phone. The work conditions you chose are checked on Constela&apos;s server and are not sent to the AI.
