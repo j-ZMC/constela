@@ -193,7 +193,7 @@ html[data-area="employers"] {
     --employer-scale: 1.25;
   }
 }
-html[data-area="employers"] [data-margin-sky] {
+html[data-area="employers"] [data-background-sky] {
   display: none;
 }
 

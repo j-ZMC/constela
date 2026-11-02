@@ -37,7 +37,7 @@ Personalize can override these with presets; build with tokens and it just works
 
 Never wider than the header. Pages use `mx-auto w-full px-4 py-10`.
 
-**The page sky.** App pages open with `PageSky` (`src/components/page-sky.tsx`): the intro's night sky, still, edge to edge, with the `h1` and one line of text in it. Text on it is white (`text-white/80` for secondary), buttons on it add `onSky`, and the content below starts with `py-8`. My plan lets the current step rise into the sky (`-mt-8`). The intro keeps its full-screen sky. Wide screens show faint gray real constellations in the margins (`MarginSky`); content must not cover them.
+**The page sky.** App pages open with `PageSky` (`src/components/page-sky.tsx`): the intro's night sky, still, edge to edge, with the `h1` and one line of text in it. Text on it is white (`text-white/80` for secondary), buttons on it add `onSky`, and the content below starts with `py-8`. My plan lets the current step rise into the sky (`-mt-8`). The intro keeps its full-screen sky. Behind every page sits a faint gray sky of real constellations (`BackgroundSky`), softer behind the content column so text stays easy to read. Cards are opaque and cover it.
 
 Spacing: `gap-8` between sections, `gap-5` inside a card, `gap-3` between related controls.
 
@@ -99,7 +99,7 @@ Every screen that loads data has all four:
 - Every input has a visible `Label`. Icon-only buttons have `aria-label`.
 - When an action removes the button the person pressed, move focus to the new heading or message.
 - Announce changes in a `role="status"` region.
-- Respect Reduce motion: the default state of every animation is the final, still state. Motion only on the intro sky, the slow gray twinkle of the margin constellations (wide screens) and a star lighting up.
+- Respect Reduce motion: the default state of every animation is the final, still state. Motion only on the intro sky, the slow gray twinkle of the background constellations and a star lighting up.
 - Content marked `data-detail="extra"` hides in the "Reduced" information view.
 
 ## Adapting to the person

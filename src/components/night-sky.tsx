@@ -71,7 +71,7 @@ export function NightSky({ className, still = false }: { className?: string; sti
   );
 }
 
-// Real constellations for the empty sides of wide screens, drawn like the intro sky but in soft gray.
+// Real constellations for the page background, drawn like the intro sky but in soft gray.
 // Each star is [x, y, magnitude] in a 0–1 box (lower magnitude is brighter), and lines join stars by index.
 type Real = { name: string; stars: [number, number, number][]; lines: [number, number][] };
 
@@ -131,24 +131,28 @@ const REAL = {
   },
 } satisfies Record<string, Real>;
 
-// Where each one sits on a 600 × 1000 side: [constellation, x, y, size, rotation in degrees].
-// Two loose columns at different sizes and angles, so it reads like a sky rather than a grid.
+// Where each one sits on a 1800 × 1000 sky: [constellation, x, y, size, rotation in degrees].
+// Three loose bands at different sizes and angles, so it reads like a sky rather than a grid. Phones show the middle.
 type Placement = [keyof typeof REAL, number, number, number, number];
-const LEFT_SKY: Placement[] = [
+const PLACEMENTS: Placement[] = [
   ["bigDipper", 80, 40, 230, -8],
   ["cassiopeia", 370, 120, 150, 14],
   ["orion", 120, 330, 190, 6],
   ["lyra", 400, 420, 110, -12],
   ["leo", 70, 640, 220, -4],
   ["crux", 410, 700, 120, 10],
-];
-const RIGHT_SKY: Placement[] = [
-  ["cygnus", 360, 50, 190, 8],
-  ["gemini", 80, 150, 160, -10],
-  ["scorpius", 300, 360, 240, 4],
-  ["littleDipper", 70, 520, 170, 16],
-  ["cassiopeia", 360, 720, 140, -18],
-  ["lyra", 90, 820, 100, 6],
+  ["littleDipper", 690, 30, 160, -14],
+  ["scorpius", 960, 80, 220, 8],
+  ["cygnus", 640, 300, 180, -6],
+  ["gemini", 1000, 420, 150, 12],
+  ["orion", 700, 620, 170, -10],
+  ["bigDipper", 960, 760, 200, 6],
+  ["cygnus", 1560, 50, 190, 8],
+  ["gemini", 1280, 150, 160, -10],
+  ["scorpius", 1500, 360, 240, 4],
+  ["littleDipper", 1270, 520, 170, 16],
+  ["cassiopeia", 1560, 720, 140, -18],
+  ["lyra", 1290, 820, 100, 6],
 ];
 
 function placeStars(placements: Placement[]) {
@@ -167,7 +171,7 @@ function placeStars(placements: Placement[]) {
 function dust(seed: number, count: number) {
   const rand = seeded(seed);
   return Array.from({ length: count }, () => ({
-    x: rand() * 600,
+    x: rand() * 1800,
     y: rand() * 1000,
     r: 0.5 + rand() * 1.1,
     o: 0.3 + rand() * 0.7,
@@ -176,79 +180,65 @@ function dust(seed: number, count: number) {
   }));
 }
 
-const SIDES = {
-  left: { figures: placeStars(LEFT_SKY), dust: dust(21, 70) },
-  right: { figures: placeStars(RIGHT_SKY), dust: dust(42, 70) },
-};
+const FIGURES = placeStars(PLACEMENTS);
+const DUST = dust(21, 200);
 
 // Brighter stars are bigger and less transparent, like a real sky.
 const radius = (mag: number) => Math.max(1, 4.2 - mag * 0.75);
 const glow = (mag: number) => Math.min(1, Math.max(0.35, 1.15 - mag * 0.18));
 
-function Side({ side }: { side: "left" | "right" }) {
-  const sky = SIDES[side];
-  return (
-    <svg
-      aria-hidden
-      viewBox="0 0 600 1000"
-      // Cropped on the outer side, so the constellations nearest the content always show.
-      preserveAspectRatio={side === "left" ? "xMaxYMid slice" : "xMinYMid slice"}
-      // Up to 1.5rem from the widest content column (max-w-3xl, 48rem), so the sky never runs under the page.
-      className={`absolute top-16 bottom-0 w-[max(0px,calc(50vw-25.5rem))] ${side === "left" ? "left-0" : "right-0"}`}
-    >
-      {/* The intro's motion, slower and in gray. The visible state is the default, so Reduce motion shows a still sky. */}
-      <g fill="var(--foreground)" opacity="0.2">
-        {sky.dust.map((s, i) => (
-          <g key={i} opacity={s.o}>
-            <circle cx={s.x} cy={s.y} r={s.r} className="sky-twinkle" style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s` }} />
-          </g>
-        ))}
-      </g>
-      {sky.figures.map((f, n) => {
-        const segments = f.lines
-          .map(([a, b]) => `M${f.stars[a].x.toFixed(1)} ${f.stars[a].y.toFixed(1)} L${f.stars[b].x.toFixed(1)} ${f.stars[b].y.toFixed(1)}`)
-          .join(" ");
-        return (
-          <g key={n}>
-            <path d={segments} fill="none" stroke="var(--foreground)" strokeOpacity="0.14" strokeWidth="1.2" strokeLinecap="round" />
-            {f.trail && (
-              <path
-                d={segments}
-                pathLength={1}
-                fill="none"
-                stroke="var(--foreground)"
-                strokeOpacity="0.35"
-                strokeWidth="1.4"
-                strokeLinecap="round"
-                className="sky-trail"
-                style={{ animationDelay: `${4 + n * 2.3}s`, animationDuration: "14s" }}
-              />
-            )}
-            {f.stars.map((s, i) => (
-              <g key={i} opacity={0.32 * glow(s.mag)}>
-                <circle
-                  cx={s.x}
-                  cy={s.y}
-                  r={radius(s.mag)}
-                  fill="var(--foreground)"
-                  className="sky-twinkle"
-                  style={{ animationDelay: `${(n * 1.3 + i * 0.7) % 6}s`, animationDuration: `${5 + ((n + i) % 4)}s` }}
-                />
-              </g>
-            ))}
-          </g>
-        );
-      })}
-    </svg>
-  );
-}
+// Behind the content column the sky fades to a third, so text on the page stays easy to read.
+const FADE = "linear-gradient(to right, black 18%, rgb(0 0 0 / 0.35) 36%, rgb(0 0 0 / 0.35) 64%, black 82%)";
 
-export function MarginSky() {
-  // Only on wide screens, where the content column leaves real empty space on both sides.
+// The whole page background: real constellations in soft gray, in the intro's style. Cards sit on top of it.
+export function BackgroundSky() {
   return (
-    <div aria-hidden data-margin-sky className="pointer-events-none fixed inset-0 -z-10 hidden lg:block">
-      <Side side="left" />
-      <Side side="right" />
+    <div aria-hidden data-background-sky className="pointer-events-none fixed inset-x-0 top-16 bottom-0 -z-10">
+      <svg viewBox="0 0 1800 1000" preserveAspectRatio="xMidYMid slice" className="h-full w-full" style={{ maskImage: FADE }}>
+        {/* The intro's motion, slower and in gray. The visible state is the default, so Reduce motion shows a still sky. */}
+        <g fill="var(--foreground)" opacity="0.2">
+          {DUST.map((s, i) => (
+            <g key={i} opacity={s.o}>
+              <circle cx={s.x} cy={s.y} r={s.r} className="sky-twinkle" style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s` }} />
+            </g>
+          ))}
+        </g>
+        {FIGURES.map((f, n) => {
+          const segments = f.lines
+            .map(([a, b]) => `M${f.stars[a].x.toFixed(1)} ${f.stars[a].y.toFixed(1)} L${f.stars[b].x.toFixed(1)} ${f.stars[b].y.toFixed(1)}`)
+            .join(" ");
+          return (
+            <g key={n}>
+              <path d={segments} fill="none" stroke="var(--foreground)" strokeOpacity="0.14" strokeWidth="1.2" strokeLinecap="round" />
+              {f.trail && (
+                <path
+                  d={segments}
+                  pathLength={1}
+                  fill="none"
+                  stroke="var(--foreground)"
+                  strokeOpacity="0.35"
+                  strokeWidth="1.4"
+                  strokeLinecap="round"
+                  className="sky-trail"
+                  style={{ animationDelay: `${4 + n * 2.3}s`, animationDuration: "14s" }}
+                />
+              )}
+              {f.stars.map((s, i) => (
+                <g key={i} opacity={0.32 * glow(s.mag)}>
+                  <circle
+                    cx={s.x}
+                    cy={s.y}
+                    r={radius(s.mag)}
+                    fill="var(--foreground)"
+                    className="sky-twinkle"
+                    style={{ animationDelay: `${(n * 1.3 + i * 0.7) % 6}s`, animationDuration: `${5 + ((n + i) % 4)}s` }}
+                  />
+                </g>
+              ))}
+            </g>
+          );
+        })}
+      </svg>
     </div>
   );
 }

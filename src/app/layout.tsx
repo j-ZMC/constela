@@ -3,7 +3,7 @@ import { Atkinson_Hyperlegible_Next, Geist_Mono } from "next/font/google";
 import "@fontsource/opendyslexic/400.css";
 import "@fontsource/opendyslexic/700.css";
 import "./globals.css";
-import { MarginSky } from "@/components/night-sky";
+import { BackgroundSky } from "@/components/night-sky";
 import { SiteNav } from "@/components/site-nav";
 
 // Designed by the Braille Institute for maximum legibility.
@@ -39,7 +39,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <MarginSky />
+        <BackgroundSky />
         <SiteNav />
         <div className="flex flex-1 flex-col pb-24 lg:pb-0">{children}</div>
       </body>
