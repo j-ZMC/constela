@@ -1,3 +1,4 @@
+import { PublishedVacancies } from "@/components/employers/published-vacancies";
 import { JobsView } from "@/components/jobs/jobs-view";
 
 export default function JobsPage() {
@@ -7,6 +8,7 @@ export default function JobsPage() {
         <h1 className="text-2xl font-bold sm:text-3xl">Jobs</h1>
         <p className="text-muted-foreground">Jobs picked for you, or search for any job. We point out what you asked us to watch for.</p>
       </div>
+      <PublishedVacancies />
       <JobsView />
     </main>
   );

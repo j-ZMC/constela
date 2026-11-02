@@ -20,6 +20,7 @@ The challenge asks for AI that supports **executive function**: planning, focus,
 | Job filter backend | Cleaned US jobs dataset, barrier detection with embeddings and a company inclusion score ([backend/README.md](backend/README.md)) | `backend/` | Zahid |
 | Jobs | "For you" (from the CV) and "Search", with work conditions pointed out, never hidden; "Save this job" feeds My plan | `/jobs` | Zahid & Juan |
 | Interview | Practice a question with AI feedback and "What to expect"; "Translate this" for recruiter messages is next | `/interview` | Evy |
+| Constela for Employers | Clear vacancies with a clarity score, talent search by skills, structured interviews and a Neuroinclusive seal ([SPEC-employers.md](SPEC-employers.md)) | `/employers`, `/invitations` | Employers team |
 | LinkedIn extension (optional) | A "less chaotic" mode with the same look and settings | — | Regina |
 
 AI lives inside each feature with a clear purpose instead of a blank chatbot, so nobody has to figure out what to ask.

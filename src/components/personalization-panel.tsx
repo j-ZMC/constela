@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { Palette } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
@@ -8,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
-  DEFAULT_PREFS, DEFAULT_ROLES, PRESETS, ROLE_LABELS, applyPrefs, checkContrast, loadPrefs, savePrefs,
+  DEFAULT_PREFS, DEFAULT_ROLES, EMPLOYER_ROLES, PRESETS, ROLE_LABELS, applyPrefs, checkContrast, loadPrefs, savePrefs,
   type Prefs, type Roles,
 } from "@/lib/personalization";
 import { setReadingOption } from "@/lib/reading";
@@ -43,7 +44,9 @@ function Slider({ id, label, value, min, max, step, shown, onChange }: { id: str
   );
 }
 
-export function PersonalizationPanel() {
+export function PersonalizationPanel({ className }: { className?: string }) {
+  // Employers start from their own look, so the color pickers and the font name match what the person sees.
+  const employers = usePathname().startsWith("/employers");
   const [p, setP] = useState<Prefs>(DEFAULT_PREFS);
   const [tab, setTab] = useState<Tab>("colors");
   const [name, setName] = useState("");
@@ -57,7 +60,7 @@ export function PersonalizationPanel() {
     savePrefs(n);
   }
 
-  const roles: Roles = p.colors ?? DEFAULT_ROLES;
+  const roles: Roles = p.colors ?? (employers ? EMPLOYER_ROLES : DEFAULT_ROLES);
   const checks = p.colors ? checkContrast(p.colors) : [];
   const setRole = (k: keyof Roles, v: string) => update({ colors: { ...roles, [k]: v }, preset: "custom" });
   const choosePreset = (id: string, colors: Roles | null) => update({ colors, preset: id });
@@ -85,8 +88,8 @@ export function PersonalizationPanel() {
       const dys = document.documentElement.classList.contains("dyslexic");
       setP({ ...l, font: dys ? "dyslexic" : l.font === "dyslexic" ? "default" : l.font });
     }}>
-      <DialogTrigger render={<Button data-tour="personalize" variant="outline" size="touch" />}>
-        <Palette aria-hidden data-pz-icon />
+      <DialogTrigger render={<Button data-tour="personalize" variant="outline" size="touch" className={className} />}>
+        <Palette aria-hidden data-pz-icon className={employers ? "size-6" : undefined} />
         <span data-pz-label>Personalize</span>
       </DialogTrigger>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-xl">
@@ -163,7 +166,7 @@ export function PersonalizationPanel() {
             <>
               <Label htmlFor="pz-font" className="flex flex-col items-start gap-1">Font
                 <select id="pz-font" className={field} value={p.font} onChange={(e) => setFont(e.target.value as Prefs["font"])}>
-                  <option value="default">Default (Atkinson Hyperlegible)</option>
+                  <option value="default">Default ({employers ? "Noto Sans" : "Atkinson Hyperlegible"})</option>
                   <option value="system">System sans-serif</option>
                   <option value="verdana">Verdana</option>
                   <option value="dyslexic">OpenDyslexic</option>
