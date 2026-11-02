@@ -53,6 +53,11 @@ describe("homeSummary", () => {
     expect(home.people[1]).toBe("1 answer is due Friday, November 6.");
   });
 
+  it("opens the person who is waiting", () => {
+    const home = summary({ responses: [{ dueAt: friday, candidateId: "c-1042", vacancyId: "v-1" }] });
+    expect(home.next?.href).toBe("/employers/talent?job=v-1&person=c-1042");
+  });
+
   it("names the earliest answer when several are waiting", () => {
     const home = summary({ responses: [{ dueAt: friday }, { dueAt: lastWeek }] });
     expect(home.next?.title).toBe("2 people are waiting for your answer.");

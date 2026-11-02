@@ -18,12 +18,12 @@ function nextStep(data: EmployerData, seal: Seal, now: Date): NextStep | null {
   const { vacancies, permissions } = data;
   const owed = data.responses.filter((r) => !r.answeredAt).sort((a, b) => a.dueAt.localeCompare(b.dueAt));
   if (owed[0]) {
-    const late = Date.parse(owed[0].dueAt) < now.getTime();
+    const { dueAt, candidateId, vacancyId } = owed[0];
     return {
       title: `${count(owed.length, "person is", "people are")} waiting for your answer.`,
-      detail: late ? "Send it today." : `Send it by ${dayText(owed[0].dueAt)}.`,
+      detail: Date.parse(dueAt) < now.getTime() ? "Send it today." : `Send it by ${dayText(dueAt)}.`,
       action: "Open people",
-      href: PEOPLE,
+      href: candidateId && vacancyId ? `${PEOPLE}?job=${encodeURIComponent(vacancyId)}&person=${encodeURIComponent(candidateId)}` : PEOPLE,
     };
   }
   if (vacancies.length === 0) return { title: "Write your first job post.", action: "Start", href: JOBS };

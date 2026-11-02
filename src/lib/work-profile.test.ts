@@ -12,6 +12,7 @@ import {
   matchReason,
   needsFromBarriers,
   rankCandidates,
+  skillsLine,
   talentRows,
   workProfileSchema,
   type Permission,
@@ -189,11 +190,24 @@ describe("matchReason", () => {
   const reason = (skills: WorkProfile["skills"]) => matchReason(rankCandidates(asking(["excel"]), [person("a", skills)])[0].matches[0]);
 
   it("says how each requirement was met", () => {
-    expect(reason([{ skill: "excel", evidence: "verified" }])).toBe("Excel: verified");
-    expect(reason([{ skill: "excel", evidence: "declared" }])).toBe("Excel: declared");
-    expect(reason([{ skill: "google_sheets", evidence: "verified" }])).toBe("Excel: via Google Sheets, verified, counts half");
-    expect(reason([{ skill: "google_sheets", evidence: "declared" }])).toBe("Excel: via Google Sheets, declared, counts half");
+    expect(reason([{ skill: "excel", evidence: "verified" }])).toBe("Excel: checked by Constela");
+    expect(reason([{ skill: "excel", evidence: "declared" }])).toBe("Excel: they say they have it");
+    expect(reason([{ skill: "google_sheets", evidence: "verified" }])).toBe("Excel: they use Google Sheets, a similar tool, checked by Constela");
+    expect(reason([{ skill: "google_sheets", evidence: "declared" }])).toBe("Excel: they use Google Sheets, a similar tool, they say they have it");
     expect(reason([])).toBe("Excel: not on this profile");
+  });
+});
+
+describe("skillsLine", () => {
+  it("says the score in words and whole numbers", () => {
+    expect(skillsLine({ has: 2, similar: 1, total: 3 })).toBe("2 of 3 skills, 1 similar");
+    expect(skillsLine({ has: 1, similar: 0, total: 3 })).toBe("1 of 3 skills");
+    expect(skillsLine({ has: 1, similar: 0, total: 1 })).toBe("1 of 1 skill");
+  });
+
+  it("doesn't say 0 of 3 when a similar tool is all there is", () => {
+    expect(skillsLine({ has: 0, similar: 1, total: 3 })).toBe("1 similar skill");
+    expect(skillsLine({ has: 0, similar: 2, total: 3 })).toBe("2 similar skills");
   });
 });
 
@@ -202,7 +216,7 @@ describe("adjustmentNotes", () => {
 
   it("shows a gap as something the employer could offer", () => {
     expect(notes(DEMO_VACANCY, { needs: ["quiet_space", "flexible_breaks"], modalities: [] })).toEqual([
-      "Already offered: Quiet place to work.",
+      "You already offer: Quiet place to work.",
       "You could offer: Freedom to take breaks and move around.",
     ]);
   });
@@ -214,8 +228,8 @@ describe("adjustmentNotes", () => {
   });
 
   it("mentions work mode only when there is something to talk about", () => {
-    expect(notes(DEMO_VACANCY, { needs: [], modalities: ["remote", "on-site"] })).toEqual(["Work mode: prefers Remote or On-site. This job is Hybrid."]);
-    expect(notes({ ...DEMO_VACANCY, modality: undefined }, { needs: [], modalities: ["remote"] })).toEqual(["Work mode: prefers Remote. Add the work mode to see if it fits."]);
+    expect(notes(DEMO_VACANCY, { needs: [], modalities: ["remote", "on-site"] })).toEqual(["They prefer remote or on-site work. This job is hybrid."]);
+    expect(notes({ ...DEMO_VACANCY, modality: undefined }, { needs: [], modalities: ["remote"] })).toEqual(["They prefer remote work. Add the work mode to see if it fits."]);
     expect(notes(DEMO_VACANCY, { needs: [], modalities: ["hybrid"] })).toEqual([]);
   });
 
@@ -243,7 +257,18 @@ describe("talentRows", () => {
       ["c-0001", 100],
       ["c-0002", 30],
     ]);
-    expect(rows[1].reasons).toEqual(["SQL: declared", "Excel: not on this profile"]);
+    expect(rows[1].reasons).toEqual(["SQL: they say they have it", "Excel: not on this profile"]);
+  });
+
+  it("counts skills and similar tools apart, as the demo pool shows", () => {
+    const counts = talentRows(DEMO_VACANCY, DEMO_PROFILES, []).map((r) => [r.profile.id, r.has, r.similar, r.total]);
+    expect(counts).toEqual([
+      ["c-2187", 2, 1, 3],
+      ["c-1042", 2, 1, 3],
+      ["c-9417", 1, 0, 3],
+      ["c-3772", 1, 0, 3],
+      ["c-2659", 0, 1, 3],
+    ]);
   });
 
   it("leaves out people with none of these skills, unless they were already invited", () => {

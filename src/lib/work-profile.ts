@@ -177,21 +177,30 @@ export function rankCandidates(v: Vacancy, profiles: WorkProfile[]): RankedCandi
     .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 }
 
+const EVIDENCE_WORDS: Record<Evidence, string> = { verified: "checked by Constela", declared: "they say they have it" };
+
 // The reason behind each part of the score, in the words the employer reads.
 export function matchReason({ skill, via, evidence }: SkillMatch): string {
   if (!evidence) return `${SKILLS[skill]}: not on this profile`;
-  return `${SKILLS[skill]}: ${via ? `via ${SKILLS[via]}, ${evidence}, counts half` : evidence}`;
+  return `${SKILLS[skill]}: ${via ? `they use ${SKILLS[via]}, a similar tool, ${EVIDENCE_WORDS[evidence]}` : EVIDENCE_WORDS[evidence]}`;
+}
+
+// The score in words and whole numbers, which is what the employer reads. The score itself still sets the order.
+export function skillsLine({ has, similar, total }: Pick<TalentRow, "has" | "similar" | "total">): string {
+  const own = `${has} of ${total} ${total === 1 ? "skill" : "skills"}`;
+  if (has === 0) return `${similar} similar ${similar === 1 ? "skill" : "skills"}`;
+  return similar > 0 ? `${own}, ${similar} similar` : own;
 }
 
 // For the employer, so a gap reads as an adjustment they could offer and never as something the person lacks.
 export function adjustmentNotes(fit: Compatibility, modalities: Modality[], v: Vacancy): string[] {
   const notes: string[] = [];
-  if (fit.met.length > 0) notes.push(`Already offered: ${factorNames(fit.met)}.`);
+  if (fit.met.length > 0) notes.push(`You already offer: ${factorNames(fit.met)}.`);
   if (fit.gaps.length > 0) notes.push(`You could offer: ${factorNames(fit.gaps)}.`);
   if (fit.unknown.length > 0) notes.push(`Would help this person: ${factorNames(fit.unknown)}. Describe your work environment to see what you already offer.`);
-  const wanted = modalities.map((m) => MODALITY_LABELS[m]).join(" or ");
-  if (fit.modality === "gap" && v.modality) notes.push(`Work mode: prefers ${wanted}. This job is ${MODALITY_LABELS[v.modality]}.`);
-  if (fit.modality === "unknown") notes.push(`Work mode: prefers ${wanted}. Add the work mode to see if it fits.`);
+  const wanted = modalities.map((m) => MODALITY_LABELS[m].toLowerCase()).join(" or ");
+  if (fit.modality === "gap" && v.modality) notes.push(`They prefer ${wanted} work. This job is ${MODALITY_LABELS[v.modality].toLowerCase()}.`);
+  if (fit.modality === "unknown") notes.push(`They prefer ${wanted} work. Add the work mode to see if it fits.`);
   return notes;
 }
 
@@ -201,6 +210,9 @@ export type TalentRow = {
   name: string | null;
   status: Permission["status"] | null;
   score: number;
+  has: number; // essential skills on the profile
+  similar: number; // essential skills covered by a similar tool
+  total: number;
   reasons: string[];
   notes: string[];
 };
@@ -218,6 +230,9 @@ export function talentRows(v: Vacancy, profiles: WorkProfile[], permissions: Per
         name: identityFor(p, permissions, v.id)?.name ?? null,
         status,
         score,
+        has: matches.filter((m) => m.evidence && !m.via).length,
+        similar: matches.filter((m) => m.via).length,
+        total: matches.length,
         reasons: matches.map(matchReason),
         notes: adjustmentNotes(compatibility(v, p), p.modalities, v),
       },
