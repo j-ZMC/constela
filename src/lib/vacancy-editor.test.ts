@@ -146,6 +146,8 @@ describe("partStatuses", () => {
     expect(partStatuses(blank).every((p) => p.empty)).toBe(true);
     expect(part({ ...blank, summary: "Sales reports" }, "job").empty).toBe(false);
     expect(part({ ...blank, schedule: "Monday to Friday" }, "pay").empty).toBe(false);
+    expect(part({ ...blank, accommodations: ["Flexible start time"] }, "workplace").empty).toBe(false);
+    expect(part({ ...blank, responseDays: 5 }, "steps").empty).toBe(false);
   });
 
   it("asks for what a stored job post must have, and for what the job needs", () => {
@@ -160,6 +162,7 @@ describe("partStatuses", () => {
     expect(part(vague, "day").left).toBe(2); // the phrase, and fewer than 3 tasks
     expect(part(vague, "needs").left).toBe(1);
     expect(thingsLeft(vague)).toBe(4);
+    expect(part({ ...DEMO_VACANCY, niceToHave: [{ text: "Be a team player" }] }, "needs").left).toBe(1);
   });
 
   it("counts every copy of a phrase, so fixing one leaves the other in the total", () => {

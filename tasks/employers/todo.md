@@ -245,6 +245,69 @@ Plan: [plan.md](plan.md) · Spec: [SPEC-employers.md](../../SPEC-employers.md)
 
 **Estimated scope:** M
 
+## Redesign: direction B, "Todo en su sitio"
+
+The team chose direction B from three proposals. Each task ends with its own commit, after its check passes in Chrome.
+
+## Task R1: Theme, font and side menu
+
+**Acceptance criteria:**
+- [x] Every employer page uses the stone background, one text color and Noto Sans at 20 px, or 18 px on a phone
+- [x] A side menu on a computer; a top bar and a bottom menu on a phone
+- [x] Candidate pages keep their colors, font, size, sky and menu
+- [x] Palettes, fonts, text size and icon settings from Personalize win over the theme
+
+**Files:** `src/app/globals.css`, `src/app/layout.tsx`, `src/app/employers/layout.tsx`, `src/components/employers/employer-nav.tsx`, `src/components/employers/vacancy-fields.tsx`, `src/components/site-nav.tsx`, `src/components/personalization-panel.tsx`, `src/lib/personalization.ts`
+
+## Task R2: Home and seal page
+
+**Acceptance criteria:**
+- [x] "Do this next" gives one step, and a person waiting for an answer comes first
+- [x] Three equal boxes for Jobs, People and the seal follow the data with no reload
+- [x] The seal has its own page and no longer says "0 of 0"
+
+**Files:** `src/lib/employer-home.ts`, `src/lib/vacancy-editor.ts`, `src/lib/seal.ts`, `src/components/employers/employer-home.tsx`, `src/components/employers/seal-panel.tsx`, `src/app/employers/seal/page.tsx`
+
+## Task R3: Jobs as a list of parts, with autosave
+
+**Acceptance criteria:**
+- [x] Six parts, each with Done, how many to fix, or Empty
+- [x] Drafts save themselves; a live job post waits for Save changes
+- [x] Back closes one step at a time, and the menu returns to the list
+- [x] Work that can't be saved yet stays in the list and is never lost by leaving
+- [x] AI suggestions, [bracket] blocks and the no-AI path work as before, with the real AI
+
+**Files:** `src/components/employers/list-detail.tsx`, `src/components/employers/vacancy-editor.tsx`, `src/components/employers/vacancy-workspace.tsx`, `src/components/employers/phrase-help.tsx`
+
+## Task R4: People as a list with its detail
+
+**Acceptance criteria:**
+- [x] The list says "2 of 3 skills, 1 similar", and no score out of 100 shows
+- [x] The ranking doesn't change, and no name reaches the page before a yes
+- [x] Home opens the person who is waiting for an answer
+
+**Files:** `src/lib/work-profile.ts`, `src/components/employers/talent-search.tsx`
+
+## Task R5: Guide as a list of parts
+
+**Acceptance criteria:**
+- [x] Each part of the guide shows on its own, and "I read it" waits at the end
+- [x] Interview questions work with the real AI, the checker and the no-AI path
+- [x] `/invitations` keeps its own look
+
+**Files:** `src/components/employers/interviewer-guide.tsx`, `src/components/employers/interview-questions.tsx`, `src/components/employers/invitation-list.tsx`
+
+## Task R6: Accessibility, rehearsal and documents
+
+**Acceptance criteria:**
+- [x] Every employer screen passes: keyboard, focus, AA contrast in all five palettes, 3:1 outlines, 375 px and the hardest reading settings
+- [x] Delete my data also clears what pages hold in memory
+- [x] The 5-minute script runs end to end with the real AI
+- [ ] Test with 3 to 5 neurodivergent people
+- [ ] A real screen reader reads every screen
+
+**Files:** `src/components/delete-my-data.tsx`, `SPEC-employers.md`, `tasks/employers/plan.md`, `tasks/employers/todo.md`
+
 ## Phase 9 (optional): Extension API
 
 ## Task 13: Public seal and vacancy endpoints

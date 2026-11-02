@@ -36,8 +36,8 @@ function nextStep(data: EmployerData, seal: Seal, now: Date): NextStep | null {
   const waiting = vacancies.find((v) => !permissions.some((p) => p.vacancyId === v.id));
   if (waiting) return { title: "Find people for your job.", detail: waiting.title, action: "Open people", href: PEOPLE };
 
-  const level = nextLevel(seal);
-  const check = seal.checks.find((c) => c.level === level && !c.met && c.href);
+  // Checks run from bronze up, so the first one left belongs to the next level.
+  const check = seal.checks.find((c) => !c.met);
   return check?.href ? { title: check.todo, action: "Go there", href: check.href } : null;
 }
 

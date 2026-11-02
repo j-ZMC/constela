@@ -29,13 +29,27 @@ MVP for the Mexico stage, four features on one demo flow:
 
 ## Decisions
 
-1. **Same app, own section.** `/employers` has its own menu and name ("Constela for Employers") in the shared header, and the candidate menu never shows there. Not a candidate tab: one more tab adds load and can make candidates feel watched. Not a separate site: another origin means separate `localStorage`, which breaks the single-browser demo.
+1. **Same app, own section.** `/employers` has its own side menu and name ("Constela for Employers"), and the candidate menu never shows there. Not a candidate tab: one more tab adds load and can make candidates feel watched. Not a separate site: another origin means separate `localStorage`, which breaks the single-browser demo.
 2. **Storage like the rest of the app.** `localStorage` plus demo fixtures. `shortcut: single-browser demo, move to a database with accounts before any real employer uses it.`
-3. **Rules in code, AI for text.** The clarity score, ranking and seal are pure functions with tests. The AI (Groq through the AI SDK, same pattern as `src/lib/breakdown.ts`) only extracts and rewrites vacancy text and drafts interview questions. The employer reviews every suggestion before saving. Only vacancy text reaches the provider, never candidate data.
+3. **Rules in code, AI for text.** The clarity score, ranking and seal are pure functions with tests. The AI (Groq through the AI SDK, same pattern as `src/lib/breakdown.ts`) only extracts and rewrites vacancy text and drafts interview questions. The employer reviews every suggestion, and candidates see nothing until the employer publishes. Only vacancy text reaches the provider, never candidate data.
 4. **No diagnosis anywhere.** `WorkProfile` is a `.strict()` schema with no field for a diagnosis, age, photo or work-history gap. Barrier ids from the survey start with a diagnosis category (`autism_spectrum:sensory_load`), so they never leave the candidate side: `needsFromBarriers()` turns them into situation-based environment factors.
 5. **The ranking reads essential skills only.** Environment fit is explained but never changes the order. The first draft was `0.6 × skills + 0.4 × environment`; with it, a candidate who shares a need could only move down. That screens people out for needing an adjustment, which the ADA forbids and the EEOC's guidance on AI hiring tools warns about. The CV-pair test checks it.
 6. **The candidate controls their identity.** It shows only after they accept an invitation, for that vacancy only. The latest answer wins, so a later "no" hides it again.
 7. **English UI in Easy Read.** Short sentences, verb first, no exclamation marks. 44 px targets, WCAG AA, reduced motion.
+8. **One interface for every employer screen.** The team chose direction B, "Todo en su sitio", from three proposals. See [Interface](#interface).
+
+## Interface
+
+Direction B: everything stays in the same place. Research behind it: W3C COGA, GOV.UK accessibility posters, National Autistic Society and Hassell (2019), Rello and Bigham (2017).
+
+- **The same layout on every screen.** A fixed side menu with Home, Jobs, People and Guide, then a list and its detail. Phones and tablets show a top bar, the menu at the bottom, and one screen at a time: a row opens its detail.
+- **What is open lives in the URL** (`?post=`, `?part=`, `?person=`, `?job=`), so the Back gesture closes one step at a time and the menu returns to the list. It moves with `history.pushState` and calls no server.
+- **One text color, no grey.** `#232B27` on `#EFEFE8`, 12.6:1. Panels `#FAFAF6`, selected areas `#DCE7E4`, buttons `#2F5F6B` with white text, outlines `#737E76`, which keep 3:1 on every background here. Peach stays for achievements only.
+- **Noto Sans, 20 px on a computer and 18 px on a phone.** The theme lives on `html[data-area="employers"]`, so it reaches the page and dialogs. Colors, fonts and sizes from Personalize win over it, and the text size slider adds to the larger base. Candidate pages don't change, and they never download this font.
+- **No background sky or animation here.**
+- **At most one main action per screen.** Everything else is outlined. Taking or dropping an AI suggestion look the same, so the AI is never the easier path.
+- **Words before numbers.** "3 things left" and "2 of 3 skills" come first. The clarity score stays as one line that says what the number means, because the features document asks for it and every score must be explained. Reduced information hides that line and the point values.
+- **Plain words.** Home, Jobs, People, job post, "checked by Constela", "they say they have it", "a similar tool". Code and URLs keep `vacancy` and `talent`, because those are shared names.
 
 ## Shared objects
 
@@ -122,7 +136,11 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 
 ### Vacancy editor
 
-- **Paste or type.** The AI fills the form, and nothing reaches storage until the employer presses Save draft or Publish. Without AI the same form works by hand, with the score and the phrase hints.
+- **Six parts.** The job, Pay and hours, Typical day, What you need, Workplace, Hiring steps. Each says Done, how many things to fix, or Empty, and `partStatuses()` gives every screen the same count.
+- **Paste or type.** The AI fills the parts. Without AI the same parts work by hand, with the score and the phrase hints.
+- **Drafts save themselves.** As soon as a draft has a title and a company, each change is stored and the page says "Saved". Candidates see nothing until Publish.
+- **A live job post waits for Save changes,** so candidates never read half a sentence.
+- **Nothing is lost by leaving.** Work that can't be saved yet stays in the Jobs list for as long as the tab is open, and a reload warns first.
 - **A [bracket] stops at the suggestion.** "Use this version" stays off until every bracket is filled, so an AI blank never enters the card. Brackets in the employer's own text are left alone.
 - **The score reads the card, not the pasted text.** Vague phrases are marked when the employer pastes. If the AI leaves one out of the card, candidates won't see it, so it doesn't count.
 - **What saving needs.** A draft needs a title and a company, like every stored vacancy. Publishing also needs one hiring step. The clarity score guides and never blocks.
@@ -134,8 +152,8 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 - **Pick a published vacancy.** A draft can't take invitations: there is nothing yet for the candidate to read.
 - **The order comes from `rankCandidates()` and nothing else.** There are no filters, and the page says that needs never change the order. People with none of the skills stay out of the list, and a line says how many. A vacancy with no skill tags asks the employer to add them.
 - **Cards are built from the anonymous view.** `talentRows()` gives a card a name only after a yes, so a card has no name to show by mistake.
-- **Reasons explain the score.** "SQL: verified", or "Excel: via Google Sheets, verified, counts half".
-- **Fit reads as adjustments.** "Already offered" and "You could offer", never as something the person lacks.
+- **Reasons explain the order.** The list says "2 of 3 skills, 1 similar", and the detail says "SQL: they say they have it" or "Excel: they use Google Sheets, a similar tool, checked by Constela". The page says that a checked skill counts more and a similar tool counts half.
+- **Fit reads as adjustments.** "You already offer" and "You could offer", never as something the person lacks.
 - **Invite adds an `invited` permission.** Answers stay in order and the last one wins. After a no there is no way to invite that person again for that vacancy.
 
 ### Structured interview and invitations
@@ -151,7 +169,7 @@ Measured with the real key on the default model: extract takes 2 to 5 seconds, a
 
 | Teammate | What we need |
 | --- | --- |
-| Luis (Profile, My plan) | Review the shared header: on `/employers`, `SiteNav` swaps to the employer menu and name. `DeleteMyData` now removes the `employers` key. Employer flows will call `addStepToPlan()` ("Read your interview questions") and `markEvent()`. |
+| Luis (Profile, My plan) | Review the shared files: `SiteNav` shows nothing on `/employers`, where `EmployerNav` takes over, and sets `data-area` on `<html>`. `DeleteMyData` removes the `employers` key and now reloads the page, so hidden pages lose what they hold in memory. `PersonalizationPanel` takes a `className` and names the employer defaults. Employer flows will call `addStepToPlan()` ("Read your interview questions") and `markEvent()`. |
 | Zahid and Juan (Jobs) | Review `<PublishedVacancies />`, added above `<JobSearch />` in `src/app/jobs/page.tsx`. It shows nothing until a vacancy is published. Agree on wording: their badge stays "Verified company", ours is "Neuroinclusive seal". A new barrier subtype needs a line in `needsFromBarriers()`; a test fails until it has one. |
 | Evy (Interview) | Candidates read the structured questions on `/invitations` for now. Say if they should also appear on `/interview`. |
 | Regina (extension) | `GET /api/public/seal` and `GET /api/public/vacancies/[id]` wait for a database: vacancies live in the browser, so a server has nothing to return yet. |
@@ -179,14 +197,15 @@ src/lib/seal.ts                   → seal levels and checks
 src/lib/employer-ai.ts            → AI tasks: extract, rewrite, interview (Phase 2)
 src/app/api/employer-ai/route.ts  → validated AI boundary (Phase 2)
 src/lib/employer-store.ts         → localStorage for vacancies, permissions, responses, guide (Phase 3)
-src/lib/vacancy-editor.ts         → the editor's rules: form to vacancy, what saving needs, phrase marks (Phase 4)
+src/lib/vacancy-editor.ts         → the editor's rules: form to vacancy, what saving needs, the six parts, phrase marks (Phase 4)
 src/lib/employer-ai-client.ts     → the browser side of the AI route (Phase 4)
 src/lib/interview-questions.ts    → question checker, fixed questions, the 48-hour rule (Phase 6)
 src/lib/invitations.ts            → what an invited candidate sees, and the step in My plan (Phase 6)
+src/lib/employer-home.ts          → what Home shows: the next step and the three boxes (redesign)
 src/app/invitations/              → the candidate's invitation view (Phase 6)
-src/app/employers/                → layout, overview, vacancies, talent, guide (Phases 3 to 7)
-src/components/employers/         → vacancy editor, clarity panel, phrase help, published vacancies, talent search (Phase 4 on)
-src/components/site-nav.tsx       → shared header: swaps to the employer menu on /employers (Phase 3)
+src/app/employers/                → layout, Home, jobs (vacancies), people (talent), guide, seal
+src/components/employers/         → side menu, list and detail, job post editor, people, guide, seal, published vacancies
+src/components/site-nav.tsx       → candidate header: shows nothing on /employers and marks the section on <html>
 ```
 
 ## Code Style
@@ -208,7 +227,7 @@ const ranked = rankCandidates(vacancy, profiles); // [{ id, score, matches: [{ r
 
 ## Boundaries
 
-- **Always:** explain every score; let the employer review AI output before it is saved; send only vacancy text to the AI; show identity only after the candidate accepts.
+- **Always:** explain every score; let the employer review AI output before it is published; send only vacancy text to the AI; show identity only after the candidate accepts.
 - **Ask first:** storing candidate data outside the browser; adding or renaming a skill or environment factor (they are shared contracts); changing ranking weights or seal thresholds.
 - **Never:** a diagnosis field or filter; barrier ids or their categories on the employer side; a ranking that reads needs, names, age or work-history gaps; red or "overdue" anywhere a candidate looks.
 

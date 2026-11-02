@@ -74,6 +74,8 @@ describe("homeSummary", () => {
     expect(summary({ permissions: [yes] }).people[0]).toBe("1 person said yes.");
     expect(summary({ permissions: [yes, no] }).people[0]).toBe("Nobody has said yes yet.");
     expect(summary({ permissions: [yes, { ...yes, candidateId: "c-2187" }] }).people[0]).toBe("2 people said yes.");
+    // By the time of the answer, not its place in the list.
+    expect(summary({ permissions: [no, yes] }).people[0]).toBe("Nobody has said yes yet.");
   });
 
   it("falls back to the seal once the work is done", () => {
@@ -86,5 +88,12 @@ describe("homeSummary", () => {
     const home = summary({ vacancies: [DEMO_VACANCY], permissions: [yes], guideRead: true, responses: [answered] });
     expect(home.seal).toEqual(["You have Silver.", "1 thing to reach Gold."]);
     expect(home.next).toBeNull();
+  });
+
+  it("has nothing further to reach at gold", () => {
+    const answered = { dueAt: friday, answeredAt: lastWeek };
+    const data = { ...empty, vacancies: [DEMO_VACANCY], guideRead: true, responses: [answered] };
+    const seal = computeSeal({ vacancies: data.vacancies, guideRead: true, responses: data.responses, ratings: [5, 5, 5, 5, 5] }, now);
+    expect(homeSummary(data, seal, now).seal).toEqual(["You have Gold."]);
   });
 });

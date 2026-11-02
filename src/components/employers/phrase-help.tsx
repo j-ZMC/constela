@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { action, longControl, note, outlined } from "@/components/employers/vacancy-fields";
+import { longControl, note, outlined } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { rewriteLine } from "@/lib/employer-ai-client";
@@ -95,8 +95,10 @@ function Help({ text, maxLength, onUse, onDone }: HelpProps & { onDone: () => vo
           {blank && <p>Replace each [bracket] with the real fact before you use this version.</p>}
           {tooLong && <p>Make this version shorter: it can have up to {maxLength} characters.</p>}
           <div className="flex flex-wrap gap-2">
+            {/* Both choices look the same: the employer decides, and the AI is never the easier path. */}
             <Button
-              className={action}
+              variant="outline"
+              className={outlined}
               disabled={blank || tooLong || !suggestion.trim()}
               onClick={() => {
                 onUse(suggestion.trim());

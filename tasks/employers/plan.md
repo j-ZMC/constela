@@ -11,7 +11,8 @@ The four MVP features from the features document, built in phases rather than da
 - **Rules as pure functions in `src/lib`.** `vacancy.ts`, `work-profile.ts` and `seal.ts` hold every score and privacy rule, with tests. Components never compute a score.
 - **AI logic separate from the route**, copying `breakdown.ts`: Zod schemas, the prompt and the call in `src/lib/employer-ai.ts`; the route only validates, picks the model and maps errors. Tests use `MockLanguageModelV4`.
 - **One storage module**, `employer-store.ts`, versioned and validated like `src/lib/plan.ts`, so broken JSON never crashes a page.
-- **`/employers` shares the header.** `SiteNav` swaps to the employer menu and name there, so the two menus can never show together. `employers/layout.tsx` sets the section's title and description. No route groups: teammates' pages don't move during the sprint.
+- **`/employers` has its own shell.** `SiteNav` shows nothing there and `employers/layout.tsx` renders `EmployerNav`, so the two menus can never show together. No route groups: teammates' pages don't move during the sprint.
+- **The employer theme lives on `<html>`** through `data-area`, so it reaches the page and dialogs and a palette from Personalize still wins.
 - **Ranking by essential skills only.** Environment fit is shown, never ranked (SPEC decision 5).
 - **Pages read stored data through `useEmployerData()`.** Next keeps visited pages alive and hidden, so data read once on mount would go stale. The hook re-reads when a page comes back.
 
@@ -89,6 +90,24 @@ The four MVP features from the features document, built in phases rather than da
 - [x] The 5-minute demo script runs end to end, with the real AI
 - [ ] Review with the team
 
+### Redesign: direction B, "Todo en su sitio"
+- [x] Three directions proposed on a canvas; the team chose B
+- [x] Task R1: Theme, font and side menu
+- [x] Task R2: Home and seal page
+- [x] Task R3: Jobs as a list of parts, with autosave
+- [x] Task R4: People as a list with its detail
+- [x] Task R5: Guide as a list of parts
+- [x] Task R6: Accessibility, rehearsal and documents
+
+### Checkpoint: Redesign
+- [x] Tests, lint, types and build pass
+- [x] Candidate pages keep their colors, font, size, menu and buttons
+- [x] Every employer screen passes in Chrome at 375 px and desktop, by keyboard, with AA contrast in all five palettes and at the hardest reading settings
+- [x] The 5-minute demo script runs end to end, with the real AI
+- [ ] Test with 3 to 5 neurodivergent people
+- [ ] A real screen reader reads every screen
+- [ ] Luis reviews the shared files: `SiteNav`, `DeleteMyData`, `PersonalizationPanel`, root layout and `globals.css`
+
 ### Phase 9 (optional): Extension API
 - [ ] Task 13: Public seal and vacancy endpoints for Regina's extension. Not built: vacancies live in the browser, so a server has nothing to return until there is a database.
 
@@ -111,6 +130,8 @@ Never cut: the rules and their tests, the CV-pair test, the no-diagnosis rule, t
 | An employer skips someone because of a shared need | High | The order can't change and the page says so; whether needs show before a yes is open question 6 |
 | Barrier categories leaking to employers | High | Only `needsFromBarriers()` reads barrier ids; tests assert no category comes out |
 | Seal thresholds disputed | Low | Constants in one file; the SPEC lists them as proposals |
+| The AI misses a written option in the hiring steps | Low | It happened in 1 of 3 rehearsals. The employer checks Hiring steps before publishing and can pick it by hand |
+| A draft nobody wants stays in the Jobs list | Low | Drafts save themselves and there is no delete yet; candidates never see them |
 
 ## Parallel Work
 
