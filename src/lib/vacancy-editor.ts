@@ -33,7 +33,7 @@ export function emptyForm(id: string): VacancyForm {
 
 export const formFromVacancy = (v: Vacancy): VacancyForm => ({ ...v, salary: v.salary ?? NO_SALARY });
 
-// An AI draft only ever fills the form. It reaches storage when the employer saves it.
+// An AI draft only ever fills a draft: candidates see nothing until the employer checks it and publishes.
 export function formFromDraft(draft: VacancyDraft, id: string): VacancyForm {
   return { ...emptyForm(id), ...draft, id, status: "draft", company: draft.company ?? "", salary: draft.salary ?? NO_SALARY };
 }
