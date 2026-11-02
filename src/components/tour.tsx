@@ -1,7 +1,11 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { createPortal } from "react-dom";
+import { CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useHydrated } from "@/lib/use-hydrated";
+import { cn } from "@/lib/utils";
 
 export type TourStep = { target: string; title: string; text: string };
 
@@ -96,5 +100,23 @@ export function Tour({ name, steps, onClose }: { name: string; steps: TourStep[]
         )}
       </div>
     </div>
+  );
+}
+
+// "How this works" for a page: a button that starts its tour, and the tour opens by itself on the first visit
+// unless firstVisit is false. The room under the page lets the tour lift the last parts above its panel.
+export function HowItWorks({ name, steps, firstVisit = true, className }: { name: string; steps: TourStep[]; firstVisit?: boolean; className?: string }) {
+  const hydrated = useHydrated();
+  const [open, setOpen] = useState<boolean | null>(null);
+  const touring = hydrated && (open ?? (firstVisit && !tourSeen(name)));
+  return (
+    <>
+      <Button variant="ghost" className={cn("h-11 w-fit px-3 text-base", className)} onClick={() => setOpen(true)} aria-label="How this works">
+        <CircleHelp aria-hidden className="size-5" />
+        <span className="max-sm:hidden">How this works</span>
+      </Button>
+      {touring && <Tour name={name} steps={steps} onClose={() => setOpen(false)} />}
+      {touring && createPortal(<div aria-hidden className="h-[50vh]" />, document.body)}
+    </>
   );
 }

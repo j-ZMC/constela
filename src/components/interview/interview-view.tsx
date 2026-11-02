@@ -18,7 +18,7 @@ export function InterviewView() {
     );
   return (
     <Tabs.Root defaultValue="practice" className="flex flex-col gap-6">
-      <Tabs.List aria-label="Interview" className="flex gap-1 rounded-xl border bg-card p-1">
+      <Tabs.List data-tour="interview-tabs" aria-label="Interview" className="flex gap-1 rounded-xl border bg-card p-1">
         <Tabs.Tab value="practice" className={tab}>
           Practice
         </Tabs.Tab>

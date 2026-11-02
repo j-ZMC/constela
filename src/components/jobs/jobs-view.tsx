@@ -25,7 +25,7 @@ function View() {
   const [value, setValue] = useState<string>(() => (loadResumeProfile() ? "for-you" : "search"));
   return (
     <Tabs.Root value={value} onValueChange={(v) => setValue(String(v))} className="flex flex-col gap-6">
-      <Tabs.List aria-label="How to find jobs" className="flex gap-1 rounded-xl border bg-card p-1">
+      <Tabs.List data-tour="jobs-tabs" aria-label="How to find jobs" className="flex gap-1 rounded-xl border bg-card p-1">
         <Tabs.Tab value="for-you" className={tab}>
           For you
         </Tabs.Tab>

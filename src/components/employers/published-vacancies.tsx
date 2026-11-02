@@ -27,7 +27,7 @@ export function PublishedVacancies() {
   const waiting = waitingInvitations(data, DEMO_PROFILES);
 
   return (
-    <section aria-labelledby="clear-vacancies-heading" className="flex flex-col gap-3">
+    <section data-tour="jobs-clear" aria-labelledby="clear-vacancies-heading" className="flex flex-col gap-3">
       {waiting > 0 && (
         <Link href="/invitations" className="flex min-h-11 items-center rounded-lg bg-secondary px-3 font-medium underline underline-offset-4">
           You have {waiting === 1 ? "1 invitation" : `${waiting} invitations`}. See {waiting === 1 ? "it" : "them"}.

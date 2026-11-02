@@ -20,7 +20,7 @@ export function AccountSection() {
   }
 
   return (
-    <section aria-labelledby="details-heading" className="flex flex-col gap-4">
+    <section data-tour="profile-details" aria-labelledby="details-heading" className="flex flex-col gap-4">
       <div className="flex flex-col gap-2">
         <h2 id="details-heading" className="text-xl font-semibold">
           Your details

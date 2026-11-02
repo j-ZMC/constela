@@ -54,7 +54,7 @@ export function QuestionStep({
   );
 
   return (
-    <section aria-labelledby="question-heading" className="flex flex-col gap-6">
+    <section data-tour="profile-questions" aria-labelledby="question-heading" className="flex flex-col gap-6">
       <div className="flex items-center gap-3">
         <div aria-hidden className="flex gap-1.5">
           {QUESTIONS.map((q, i) => (

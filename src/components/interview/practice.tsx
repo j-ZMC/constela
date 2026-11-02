@@ -108,7 +108,7 @@ export function Practice() {
 
   return (
     <div className="flex flex-col gap-6">
-      <section aria-labelledby="question" className="flex flex-col gap-5 rounded-xl border bg-card p-5">
+      <section data-tour="interview-question" aria-labelledby="question" className="flex flex-col gap-5 rounded-xl border bg-card p-5">
         <h2 id="question" ref={heading} tabIndex={-1} className="text-xl font-semibold text-balance outline-none">
           {question.question}
         </h2>
@@ -146,7 +146,7 @@ export function Practice() {
         </div>
 
         <div className="flex flex-wrap gap-3">
-          <Button size="touch" onClick={getFeedback} disabled={!answer.trim() || busy !== null}>
+          <Button data-tour="interview-feedback" size="touch" onClick={getFeedback} disabled={!answer.trim() || busy !== null}>
             Get feedback
           </Button>
           <Button variant="outline" size="touch" onClick={newQuestion} disabled={busy !== null}>

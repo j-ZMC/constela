@@ -32,7 +32,7 @@ export function ProfileSummary({ answers, onEdit }: { answers: Answers; onEdit: 
   );
 
   return (
-    <section aria-labelledby="summary-heading" className="flex flex-col gap-8">
+    <section data-tour="profile-questions" aria-labelledby="summary-heading" className="flex flex-col gap-8">
       <div className="flex flex-col gap-4">
         <Constellation lit={answered} label={`${count} of ${QUESTIONS.length} questions answered`} />
         <div className="flex flex-col gap-2">

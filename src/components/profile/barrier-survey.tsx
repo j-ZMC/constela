@@ -25,7 +25,7 @@ function Survey() {
   }
 
   return (
-    <section aria-labelledby="work-heading" className="flex flex-col gap-5">
+    <section data-tour="profile-work" aria-labelledby="work-heading" className="flex flex-col gap-5">
       <div className="flex flex-col gap-2">
         <h2 id="work-heading" className="text-xl font-semibold">
           Anything at work you want us to point out?

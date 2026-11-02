@@ -38,7 +38,7 @@ function Flow({ after }: { after?: ReactNode }) {
   if (step === -1) {
     return (
       <>
-      <section className="flex flex-col gap-6">
+      <section data-tour="profile-questions" className="flex flex-col gap-6">
         <Constellation lit={QUESTIONS.map(() => false)} label={`${QUESTIONS.length} short questions`} />
         <h1 className="text-3xl font-bold text-balance">Let&apos;s get to know you</h1>
         <p className="text-lg text-muted-foreground">

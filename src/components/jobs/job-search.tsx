@@ -98,7 +98,7 @@ export function JobSearch() {
 
   return (
     <div className="flex flex-col gap-6">
-      <form onSubmit={submit} className="flex flex-col gap-3">
+      <form data-tour="jobs-search" onSubmit={submit} className="flex flex-col gap-3">
         <Label htmlFor="job-query" className="text-base font-semibold">
           What kind of job are you looking for?
         </Label>

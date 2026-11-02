@@ -55,7 +55,7 @@ export function CvSection() {
   }
 
   return (
-    <section id="cv" aria-labelledby="cv-heading" className="flex scroll-mt-24 flex-col gap-4">
+    <section data-tour="profile-cv" id="cv" aria-labelledby="cv-heading" className="flex scroll-mt-24 flex-col gap-4">
       <div className="flex flex-col gap-2">
         <h2 id="cv-heading" className="text-xl font-semibold">
           Your CV
