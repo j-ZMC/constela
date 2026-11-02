@@ -59,8 +59,6 @@ function Search() {
       <div className={`${note} ${row.open ? "hidden lg:flex" : ""}`}>
         <p>We sort people by skills only. What a person needs at work never changes the order.</p>
         <p>Names stay hidden until they say yes.</p>
-        <p data-detail="extra">A skill checked by Constela counts more than one a person says they have. A similar tool counts half.</p>
-        <p>This is a demo: the people are fictional, and the skill checks are simulated.</p>
       </div>
       {!vacancy ? (
         <ToJobs message="Publish a job post to see who fits it." />
@@ -115,6 +113,8 @@ function Results({ vacancy, rows, data, row }: { vacancy: Vacancy; rows: TalentR
                 ))}
               </ol>
               {others > 0 && <p>{others === 1 ? "1 other profile doesn't list" : `${others} other profiles don't list`} these skills.</p>}
+              <p data-detail="extra">A skill checked by Constela counts more than one a person says they have. A similar tool counts half.</p>
+              <p>This is a demo: the people are fictional, and the skill checks are simulated.</p>
             </div>
           }
         >

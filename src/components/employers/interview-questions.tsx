@@ -1,46 +1,55 @@
 "use client";
 
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useRef, useState, type ReactNode, type RefObject } from "react";
 import Link from "next/link";
-import { Field, Section, SelectField, action } from "@/components/employers/vacancy-fields";
+import { Field, SelectField, action, longControl, note, outlined, panel } from "@/components/employers/vacancy-fields";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import type { InterviewQuestion } from "@/lib/employer-ai";
 import { draftInterview } from "@/lib/employer-ai-client";
 import { saveInterview, useEmployerData } from "@/lib/employer-store";
 import { checkQuestion, concreteQuestion, questionProblems, templateQuestions } from "@/lib/interview-questions";
-import { useHydrated } from "@/lib/use-hydrated";
 import { MAX_QUESTION, type Vacancy } from "@/lib/vacancy";
 
-export function InterviewQuestions() {
-  return useHydrated() ? <Questions /> : null;
+type Title = RefObject<HTMLHeadingElement | null>;
+
+function Panel({ title, children }: { title: Title; children: ReactNode }) {
+  return (
+    <section aria-labelledby="questions-title" className={panel}>
+      <h2 id="questions-title" ref={title} tabIndex={-1} className="text-xl font-semibold outline-none">
+        Interview questions
+      </h2>
+      {children}
+    </section>
+  );
 }
 
-function Questions() {
+export function InterviewQuestions({ title }: { title: Title }) {
   const { vacancies, interviews } = useEmployerData();
   const [chosen, setChosen] = useState<string>();
   const published = vacancies.filter((v) => v.status === "published");
-  // Next keeps this page alive while the employer is elsewhere, so the chosen vacancy may have been unpublished since.
+  // Next keeps this page alive while the employer is elsewhere, so the chosen job post may have been unpublished since.
   const vacancy = published.find((v) => v.id === chosen) ?? published[0];
 
   if (!vacancy) {
     return (
-      <Section title="Interview questions">
-        <p>Publish a vacancy to prepare its questions.</p>
-        <Link href="/employers/vacancies" className={buttonVariants({ variant: "outline", className: `${action} w-fit` })}>
-          Go to your vacancies
+      <Panel title={title}>
+        <p>Publish a job post to prepare its questions.</p>
+        <Link href="/employers/vacancies" className={buttonVariants({ variant: "outline", className: `${outlined} w-fit` })}>
+          Go to Jobs
         </Link>
-      </Section>
+      </Panel>
     );
   }
 
   const options = published.map((v) => ({ value: v.id, label: `${v.title} · ${v.company}` }));
   return (
-    <Section title="Interview questions" hint="Every candidate for this vacancy gets these questions and this rubric.">
-      <SelectField label="Vacancy" value={vacancy.id} options={options} onChange={setChosen} />
-      {/* Each vacancy has its own draft. */}
+    <Panel title={title}>
+      <p data-detail="extra">Every candidate for this job gets these questions and this rubric.</p>
+      <SelectField label="Job" value={vacancy.id} options={options} onChange={setChosen} />
+      {/* Each job post has its own draft. */}
       <Editor key={vacancy.id} vacancy={vacancy} saved={interviews.find((i) => i.vacancyId === vacancy.id)?.questions} />
-    </Section>
+    </Panel>
   );
 }
 
@@ -54,7 +63,7 @@ function Editor({ vacancy, saved }: { vacancy: Vacancy; saved?: InterviewQuestio
   useEffect(() => () => request.current?.abort(), []);
 
   const essential = vacancy.essential.map((r) => r.text);
-  if (essential.length === 0) return <p>This vacancy has no essential requirements yet. Add them to prepare its questions.</p>;
+  if (essential.length === 0) return <p>This job post has no essential requirements yet. Add them to prepare its questions.</p>;
 
   function draft() {
     const controller = new AbortController();
@@ -80,7 +89,7 @@ function Editor({ vacancy, saved }: { vacancy: Vacancy; saved?: InterviewQuestio
     const found = questionProblems(questions);
     setProblems(found);
     if (found.length > 0) return;
-    setMessage(saveInterview({ vacancyId: vacancy.id, questions }) ? "Saved. Every candidate for this vacancy gets these questions." : "This browser could not save the questions. Try again.");
+    setMessage(saveInterview({ vacancyId: vacancy.id, questions }) ? "Saved. Every candidate for this job gets these questions." : "This browser could not save the questions. Try again.");
   }
 
   const change = (i: number, next: InterviewQuestion) => {
@@ -91,10 +100,10 @@ function Editor({ vacancy, saved }: { vacancy: Vacancy; saved?: InterviewQuestio
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-3">
-        <Button variant="outline" className={action} disabled={status === "loading"} onClick={draft}>
+        <Button variant="outline" className={outlined} disabled={status === "loading"} onClick={draft}>
           {status === "failed" ? "Try again" : "Draft with AI"}
         </Button>
-        <Button variant="outline" className={action} disabled={status === "loading"} onClick={template}>
+        <Button variant="outline" className={outlined} disabled={status === "loading"} onClick={template}>
           Use simple questions
         </Button>
       </div>
@@ -115,7 +124,7 @@ function Editor({ vacancy, saved }: { vacancy: Vacancy; saved?: InterviewQuestio
             ))}
           </ol>
           {problems.length > 0 && (
-            <ul role="alert" className="list-inside list-disc rounded-lg border border-destructive/30 p-4">
+            <ul role="alert" className={`${note} list-inside list-disc`}>
               {problems.map((p) => (
                 <li key={p}>{p}</li>
               ))}
@@ -133,7 +142,7 @@ function Editor({ vacancy, saved }: { vacancy: Vacancy; saved?: InterviewQuestio
 function RubricField({ label, value, onChange }: { label: string; value: string; onChange: (value: string) => void }) {
   return (
     <Field label={label}>
-      <Textarea value={value} maxLength={MAX_QUESTION} rows={2} onChange={(e) => onChange(e.target.value)} className="min-h-11 bg-card text-base font-normal md:text-base" />
+      <Textarea value={value} maxLength={MAX_QUESTION} rows={2} onChange={(e) => onChange(e.target.value)} className={longControl} />
     </Field>
   );
 }
@@ -141,16 +150,16 @@ function RubricField({ label, value, onChange }: { label: string; value: string;
 function QuestionRow({ number, question: q, onChange }: { number: number; question: InterviewQuestion; onChange: (next: InterviewQuestion) => void }) {
   const flags = checkQuestion(q.question);
   return (
-    <div className="flex flex-col gap-3 rounded-lg border p-4">
-      <p className="text-sm font-medium text-muted-foreground">For: {q.requirement}</p>
+    <div className="flex flex-col gap-3 rounded-lg border-2 p-4">
+      <p className="font-semibold">For: {q.requirement}</p>
       <RubricField label={`Question ${number}`} value={q.question} onChange={(question) => onChange({ ...q, question })} />
       {flags.length > 0 && (
-        <div className="flex flex-col gap-2 rounded-lg bg-secondary p-3 text-sm">
+        <div className={note}>
           {flags.map((f) => (
             <p key={f.id}>{f.problem}</p>
           ))}
           <p>A concrete version: {concreteQuestion(q.requirement)}</p>
-          <Button variant="outline" className={`${action} w-fit`} aria-label={`Use this version for question ${number}`} onClick={() => onChange({ ...q, question: concreteQuestion(q.requirement) })}>
+          <Button variant="outline" className={`${outlined} w-fit`} aria-label={`Use this version for question ${number}`} onClick={() => onChange({ ...q, question: concreteQuestion(q.requirement) })}>
             Use this version
           </Button>
         </div>

@@ -19,18 +19,6 @@ export const pageTitle = "text-[1.7rem] leading-tight font-semibold";
 export const panel = "flex flex-col gap-4 rounded-lg border-2 bg-card p-5";
 export const note = "flex flex-col gap-2 rounded-lg border-2 bg-secondary p-4";
 
-export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
-  return (
-    <section className={panel}>
-      <div className="flex flex-col gap-1">
-        <h2 className="text-xl font-semibold">{title}</h2>
-        {hint && <p data-detail="extra">{hint}</p>}
-      </div>
-      {children}
-    </section>
-  );
-}
-
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
     <label className="flex min-w-0 flex-col gap-1 font-semibold">

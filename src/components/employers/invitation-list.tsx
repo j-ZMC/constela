@@ -1,7 +1,6 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { action } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { answerInvitation, chooseFormat, useEmployerData, type StageChoice } from "@/lib/employer-store";
@@ -10,6 +9,9 @@ import { addInterviewStep, listInvitations, type Invitation } from "@/lib/invita
 import { useHydrated } from "@/lib/use-hydrated";
 import { STAGE_FORMAT_LABELS, type Stage } from "@/lib/vacancy";
 import { DEMO_PROFILES } from "@/lib/work-profile";
+
+// 44px at least, and taller when the text is: at the largest settings a long label wraps instead of leaving the screen.
+const action = "h-auto min-h-11 max-w-full shrink whitespace-normal px-5 py-2 text-base";
 
 const when = (iso: string | Date) => new Date(iso).toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
 
