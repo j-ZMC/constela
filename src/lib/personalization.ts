@@ -73,6 +73,14 @@ export const contrast = (a: string, b: string) => {
 export const mix = (a: string, b: string, t: number) => { const [p, q] = [rgb(a), rgb(b)]; return hex(p.map((v, i) => v + (q[i] - v) * t)); };
 export const readableOn = (bg: string) => (contrast("#ffffff", bg) >= contrast("#111111", bg) ? "#ffffff" : "#111111");
 
+// The night sky (page headers, intro, tour) takes the palette's accent, darkened until white text on it reaches
+// 7:1, so its secondary text (white at 80%) still passes 4.5:1. A navy accent stays as it is.
+export function skyFor(r: Roles): string {
+  let sky = r.accent;
+  for (let t = 0.05; contrast("#ffffff", sky) < 7 && t <= 1; t += 0.05) sky = mix(r.accent, "#000000", t);
+  return sky;
+}
+
 export type ContrastCheck = { label: string; ratio: number; min: number; ok: boolean };
 export function checkContrast(r: Roles): ContrastCheck[] {
   const muted = mix(r.text, r.background, 0.2);
@@ -94,6 +102,7 @@ function roleVars(r: Roles): Record<string, string> {
     "--primary": r.accent, "--primary-foreground": readableOn(r.accent),
     "--secondary": r.soft, "--secondary-foreground": r.text, "--muted": r.soft, "--accent": r.soft, "--accent-foreground": r.text,
     "--muted-foreground": mix(r.text, r.background, 0.2),
+    "--sky": skyFor(r),
   };
 }
 

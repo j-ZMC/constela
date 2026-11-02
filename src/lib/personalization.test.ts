@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { DEFAULT_PREFS, DEFAULT_ROLES, PRESETS, checkContrast, cleanPrefs, compute, contrast, mix, readableOn } from "@/lib/personalization";
+import { DEFAULT_PREFS, DEFAULT_ROLES, PRESETS, checkContrast, cleanPrefs, compute, contrast, mix, readableOn, skyFor } from "@/lib/personalization";
 
 describe("personalization", () => {
   it("applies nothing with the default preferences", () => {
@@ -18,6 +18,11 @@ describe("personalization", () => {
   });
   it("ships presets that all pass the contrast checks", () => {
     for (const p of PRESETS) if (p.colors) expect(checkContrast(p.colors).filter((c) => !c.ok).map((c) => `${p.name}: ${c.label}`)).toEqual([]);
+  });
+  it("gives every palette, even a light accent, a sky white text can sit on", () => {
+    expect(skyFor(DEFAULT_ROLES)).toBe("#243b53");
+    const palettes = [...PRESETS.flatMap((p) => (p.colors ? [p.colors] : [])), { ...DEFAULT_ROLES, accent: "#f2f2f2" }, { ...DEFAULT_ROLES, accent: "#ffcc00" }];
+    for (const r of palettes) expect(contrast("#ffffff", skyFor(r))).toBeGreaterThanOrEqual(7);
   });
   it("keeps only well-formed saved values", () => {
     expect(cleanPrefs({ size: 999, font: "comic", colors: { background: "red" }, focus: "yes", lh: 0 })).toEqual(DEFAULT_PREFS);

@@ -22,7 +22,7 @@ Use the tokens in `src/app/globals.css`, never raw Tailwind colors (`amber-50`, 
 | `bg-secondary` | Soft areas, notes, hover |
 | `border-destructive` (terracotta) | "Check this" notes, as a thin border. Never a filled red block |
 | `--star` (peach `#f2b880`) | Only for achievements: lit stars, the logo spark. Never for text (1.8:1) |
-| `bg-sky` (navy) | The constellation sky and the intro |
+| `bg-sky` (navy) | The constellation sky, page headers and the intro. Personalize palettes replace it with their accent, darkened to 7:1 for white text (`skyFor`) |
 
 Personalize can override these with presets; build with tokens and it just works.
 

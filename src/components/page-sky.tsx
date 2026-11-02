@@ -3,7 +3,7 @@ import { NightSky } from "@/components/night-sky";
 import { cn } from "@/lib/utils";
 
 // The top of every app page: the intro's night sky, still, edge to edge, with the page title in it.
-// The sky stays navy in every palette (--sky), so its text is white and its accents are star gold.
+// The sky (--sky) follows the palette and is always dark enough for white text (skyFor); its accents are star gold.
 export function PageSky({ width = "max-w-xl", className, children }: { width?: string; className?: string; children: ReactNode }) {
   return (
     <div className="relative isolate overflow-hidden bg-sky text-white">

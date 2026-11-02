@@ -74,7 +74,7 @@
   --input: #7f8f9c;
   --ring: #4a6a8a;
   --star: #f2b880;
-  /* The constellation's night sky: Regina's navy, kept fixed so stars stay readable in every palette */
+  /* The constellation's night sky: Regina's navy. Personalize palettes replace it with skyFor(), always dark enough for white text */
   --sky: #243b53;
   --chart-1: oklch(0.87 0 0);
   --chart-2: oklch(0.556 0 0);
