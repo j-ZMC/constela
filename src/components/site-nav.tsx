@@ -1,8 +1,9 @@
 "use client";
 
+import { useLayoutEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, BriefcaseBusiness, FileText, LayoutDashboard, ListChecks, MessagesSquare, Sparkles, UserRound, UsersRound } from "lucide-react";
+import { BriefcaseBusiness, ListChecks, MessagesSquare, Sparkles, UserRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { PersonalizationPanel } from "@/components/personalization-panel";
 import { cn } from "@/lib/utils";
@@ -15,23 +16,23 @@ const links = [
   { href: "/interview", label: "Interview", icon: MessagesSquare },
 ];
 
-// Employers get their own menu: one shared header, so candidates never see these links and employers never see theirs.
-const employerLinks = [
-  { href: "/employers", label: "Overview", icon: LayoutDashboard },
-  { href: "/employers/vacancies", label: "Vacancies", icon: FileText },
-  { href: "/employers/talent", label: "Talent", icon: UsersRound },
-  { href: "/employers/guide", label: "Guide", icon: BookOpen },
-];
-
 export function SiteNav() {
   const pathname = usePathname();
   // The intro asks for one decision only, so the app menu waits until the person starts. Personalize stays.
   const intro = pathname === "/";
   const employers = pathname.startsWith("/employers");
 
-  const items = (employers ? employerLinks : links).map(({ href, label, icon: Icon }) => {
-    // Overview is the section's root: every employer page starts with its href.
-    const active = href === "/employers" ? pathname === href : pathname.startsWith(href);
+  // layout.tsx does the same before first paint; this keeps it right while moving between pages.
+  useLayoutEffect(() => {
+    if (employers) document.documentElement.setAttribute("data-area", "employers");
+    else document.documentElement.removeAttribute("data-area");
+  }, [employers]);
+
+  // Employers have their own side menu (employer-nav.tsx), so the two menus can never show together.
+  if (employers) return null;
+
+  const items = links.map(({ href, label, icon: Icon }) => {
+    const active = pathname.startsWith(href);
     return (
       <Link
         key={href}
@@ -52,9 +53,8 @@ export function SiteNav() {
     <>
       <header className="sticky top-0 z-10 border-b bg-background">
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-          <Link href={employers ? "/employers" : "/"} className="flex min-h-11 flex-1 flex-wrap items-center gap-x-1.5 text-lg lg:flex-none">
+          <Link href="/" className="flex min-h-11 flex-1 flex-wrap items-center gap-x-1.5 text-lg lg:flex-none">
             <Logo />
-            {employers && <span className="text-sm font-semibold whitespace-nowrap">for Employers</span>}
           </Link>
           {!intro && (
             <nav aria-label="Main" className="hidden gap-1 lg:flex">

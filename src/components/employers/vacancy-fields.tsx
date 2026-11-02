@@ -5,23 +5,26 @@ import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 
-// 44px at least, and taller when the text is: at the largest settings a long label wraps instead of leaving the screen.
-export const action = "h-auto min-h-11 max-w-full shrink whitespace-normal px-5 py-2 text-base";
+// Tall targets, and taller when the text is: at the largest settings a long label wraps instead of leaving the screen.
+export const action = "h-auto min-h-12 max-w-full shrink whitespace-normal rounded-lg px-5 py-2 text-base font-semibold";
+// For the other actions on a screen, with variant="outline". One color of text, so the outline carries the color.
+export const outlined = `${action} border-2 border-primary bg-card hover:bg-secondary`;
 
-// 44px targets, and the base font size on every screen so phones don't zoom in.
-const control = "h-11 bg-card font-normal text-base md:text-base";
-const nativeSelect = "h-11 w-full rounded-lg border border-input bg-card px-3 text-base font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+// Tall targets, and the base font size on every screen so phones don't zoom in.
+const control = "h-12 border-2 bg-card font-normal text-base md:text-base";
+export const longControl = "min-h-12 border-2 bg-card text-base font-normal md:text-base";
+const nativeSelect = "h-12 w-full rounded-lg border-2 border-input bg-card px-3 text-base font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
+
+export const pageTitle = "text-[1.7rem] leading-tight font-semibold break-words";
+export const panel = "flex flex-col gap-4 rounded-lg border-2 bg-card p-5";
+export const note = "flex flex-col gap-2 rounded-lg border-2 bg-secondary p-4";
 
 export function Section({ title, hint, children }: { title: string; hint?: string; children: ReactNode }) {
   return (
-    <section className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+    <section className={panel}>
       <div className="flex flex-col gap-1">
-        <h2 className="text-lg font-semibold">{title}</h2>
-        {hint && (
-          <p data-detail="extra" className="text-sm text-muted-foreground">
-            {hint}
-          </p>
-        )}
+        <h2 className="text-xl font-semibold">{title}</h2>
+        {hint && <p data-detail="extra">{hint}</p>}
       </div>
       {children}
     </section>
@@ -30,7 +33,7 @@ export function Section({ title, hint, children }: { title: string; hint?: strin
 
 export function Field({ label, children }: { label: string; children: ReactNode }) {
   return (
-    <label className="flex min-w-0 flex-col gap-1.5 text-sm font-medium">
+    <label className="flex min-w-0 flex-col gap-1 font-semibold">
       {label}
       {children}
     </label>
@@ -50,7 +53,7 @@ export function TextField({ label, value, maxLength, onChange }: TextProps) {
 export function LongTextField({ label, value, maxLength, onChange }: TextProps) {
   return (
     <Field label={label}>
-      <Textarea value={value ?? ""} maxLength={maxLength} rows={3} onChange={(e) => onChange(e.target.value)} className="min-h-11 bg-card text-base font-normal md:text-base" />
+      <Textarea value={value ?? ""} maxLength={maxLength} rows={3} onChange={(e) => onChange(e.target.value)} className={longControl} />
     </Field>
   );
 }
@@ -128,7 +131,7 @@ export function Rows<T>({
             {items.length > 0 && (
               <Button
                 variant="ghost"
-                className={`${action} w-fit`}
+                className={`${action} w-fit font-normal underline underline-offset-4`}
                 aria-label={`Remove ${noun} ${i + 1}`}
                 onClick={() => {
                   onChange(rows.filter((_, at) => at !== i));
@@ -142,7 +145,7 @@ export function Rows<T>({
           </li>
         ))}
       </ol>
-      <Button ref={add} variant="outline" className={`${action} w-fit`} disabled={rows.length >= max} onClick={() => onChange([...rows, blank])}>
+      <Button ref={add} variant="outline" className={`${outlined} w-fit`} disabled={rows.length >= max} onClick={() => onChange([...rows, blank])}>
         {addLabel}
       </Button>
     </div>

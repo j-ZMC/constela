@@ -34,7 +34,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
             Storage can be edited by hand, so only CSS variables and data-pz* attributes are accepted. */}
         <script
           dangerouslySetInnerHTML={{
-            __html: `(function(){try{var p=JSON.parse(localStorage.getItem("a11y")||"{}");for(var k in p)if(p[k])document.documentElement.classList.add(k)}catch(e){}try{var b=JSON.parse(localStorage.getItem("pz-boot")||"{}"),h=document.documentElement;for(var v in b.vars)if(v.indexOf("--")===0)h.style.setProperty(v,String(b.vars[v]));for(var a in b.attrs)if(a.indexOf("data-pz")===0)h.setAttribute(a,String(b.attrs[a]));if(b.focus===true)h.classList.add("focus-strong")}catch(e){}})()`,
+            __html: `(function(){if(location.pathname.indexOf("/employers")===0)document.documentElement.setAttribute("data-area","employers");try{var p=JSON.parse(localStorage.getItem("a11y")||"{}");for(var k in p)if(p[k])document.documentElement.classList.add(k)}catch(e){}try{var b=JSON.parse(localStorage.getItem("pz-boot")||"{}"),h=document.documentElement;for(var v in b.vars)if(v.indexOf("--")===0)h.style.setProperty(v,String(b.vars[v]));for(var a in b.attrs)if(a.indexOf("data-pz")===0)h.setAttribute(a,String(b.attrs[a]));if(b.focus===true)h.classList.add("focus-strong")}catch(e){}})()`,
           }}
         />
       </head>

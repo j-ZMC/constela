@@ -1,11 +1,11 @@
 import type { Metadata } from "next";
 import { TalentSearch } from "@/components/employers/talent-search";
 
-export const metadata: Metadata = { title: "Talent" };
+export const metadata: Metadata = { title: "People" };
 
 export default function TalentPage() {
   return (
-    <main className="mx-auto flex w-full max-w-3xl flex-col gap-6 px-4 py-10">
+    <div className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h1 className="text-3xl font-bold">Find talent</h1>
         <p className="text-muted-foreground">
@@ -15,6 +15,6 @@ export default function TalentPage() {
         <p className="text-sm text-muted-foreground">This is a demo pool: the people are fictional, and verified skills come from a demo check.</p>
       </div>
       <TalentSearch />
-    </main>
+    </div>
   );
 }

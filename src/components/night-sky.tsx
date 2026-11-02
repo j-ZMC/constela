@@ -94,7 +94,7 @@ function Side({ sky, side }: { sky: ReturnType<typeof makeSky>; side: "left" | "
 export function MarginSky() {
   // Only on wide screens, where the content column leaves real empty space on both sides.
   return (
-    <div aria-hidden className="pointer-events-none fixed inset-0 -z-10 hidden lg:block">
+    <div aria-hidden data-margin-sky className="pointer-events-none fixed inset-0 -z-10 hidden lg:block">
       <Side sky={LEFT} side="left" />
       <Side sky={RIGHT} side="right" />
     </div>
