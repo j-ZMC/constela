@@ -72,17 +72,19 @@ export function NightSky({ className, still = false }: { className?: string; sti
 }
 
 // Faint, still constellations for the empty sides of wide screens. No motion: people are working there.
-// Tall and narrow, one constellation per row plus a little star dust, to fill the side margins top to bottom.
-const LEFT = makeSky(21, 5, 30, 300, 1000, 1, 5);
-const RIGHT = makeSky(42, 5, 30, 300, 1000, 1, 5);
+// Two columns of constellations per side, so each side fills its whole margin, from the screen edge to the content.
+const LEFT = makeSky(21, 9, 60, 600, 1000, 2, 5);
+const RIGHT = makeSky(42, 9, 60, 600, 1000, 2, 5);
 
 function Side({ sky, side }: { sky: ReturnType<typeof makeSky>; side: "left" | "right" }) {
   return (
     <svg
       aria-hidden
       viewBox={`0 0 ${sky.w} ${sky.h}`}
-      preserveAspectRatio="xMidYMid slice"
-      className={`absolute top-16 bottom-0 w-[15vw] ${side === "left" ? "left-[2vw]" : "right-[2vw]"}`}
+      // Cropped on the outer side, so the constellations nearest the content always show.
+      preserveAspectRatio={side === "left" ? "xMaxYMid slice" : "xMinYMid slice"}
+      // Up to 1.5rem from the widest content column (max-w-3xl, 48rem), so the sky never runs under the page.
+      className={`absolute top-16 bottom-0 w-[max(0px,calc(50vw-25.5rem))] ${side === "left" ? "left-0" : "right-0"}`}
     >
       {sky.dust.map((s, i) => (
         <circle key={i} cx={s.x} cy={s.y} r={s.r * 1.6} fill="var(--foreground)" opacity="0.12" />
