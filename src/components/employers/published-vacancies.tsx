@@ -6,11 +6,10 @@ import { BadgeCheck } from "lucide-react";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { useEmployerData, useSeal } from "@/lib/employer-store";
 import { waitingInvitations } from "@/lib/invitations";
-import type { SealLevel } from "@/lib/seal";
+import { SEAL_NAMES, type SealLevel } from "@/lib/seal";
 import { ENVIRONMENT, MODALITY_LABELS, STAGE_FORMAT_LABELS, factorNames, salaryText, type EnvironmentFactor, type Stage, type Vacancy } from "@/lib/vacancy";
 import { DEMO_PROFILES, compatibility, fitSummary, needsFromBarriers } from "@/lib/work-profile";
 
-const SEAL_NAMES: Record<SealLevel, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 const noUpdates = () => () => {};
 
 // What the employer published, for candidates on /jobs. Nothing shows until there is something published.

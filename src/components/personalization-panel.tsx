@@ -90,7 +90,7 @@ export function PersonalizationPanel({ className }: { className?: string }) {
       setP({ ...l, font: dys ? "dyslexic" : l.font === "dyslexic" ? "default" : l.font });
     }}>
       <DialogTrigger render={<Button data-tour="personalize" variant="outline" size="sm" className={cn("h-11", className)} />}>
-        <Palette aria-hidden data-pz-icon />
+        <Palette aria-hidden data-pz-icon className={employers ? "size-6" : undefined} />
         <span data-pz-label>Personalize</span>
       </DialogTrigger>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-xl">

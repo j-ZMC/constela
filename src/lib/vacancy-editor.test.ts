@@ -1,16 +1,21 @@
 import { describe, expect, it } from "vitest";
-import { clarityScore, DEMO_VACANCY } from "@/lib/vacancy";
+import { clarityScore, DEMO_VACANCY, type Vacancy } from "@/lib/vacancy";
 import {
   cleanVacancy,
   emptyForm,
   formFromDraft,
   formFromVacancy,
   hasBlank,
+  leftText,
   markPhrases,
+  partStatuses,
   PROCESS_TEMPLATE,
   publishProblems,
   saveProblems,
+  thingsLeft,
   toggleFactor,
+  type PartId,
+  type PartStatus,
   type VacancyForm,
 } from "@/lib/vacancy-editor";
 
@@ -117,6 +122,54 @@ describe("saveProblems and publishProblems", () => {
 describe("PROCESS_TEMPLATE", () => {
   it("leaves every duration to the employer, because a duration is a fact", () => {
     expect(PROCESS_TEMPLATE.every((s) => s.minutes === undefined)).toBe(true);
+  });
+});
+
+describe("partStatuses", () => {
+  const part = (v: Vacancy, id: PartId) => partStatuses(v).find((p) => p.id === id) as PartStatus;
+
+  it("has nothing left on a clear job post", () => {
+    expect(thingsLeft(DEMO_VACANCY)).toBe(0);
+    expect(partStatuses(DEMO_VACANCY).every((p) => p.left === 0 && !p.empty)).toBe(true);
+  });
+
+  it("gives every issue of the clarity score a part, so nothing the score asks for goes missing", () => {
+    const blank = cleanVacancy(emptyForm("v-1"));
+    const fixes = partStatuses(blank).flatMap((p) => p.fixes.map((f) => f.id));
+    expect(clarityScore(blank).issues.map((i) => i.id).every((id) => fixes.includes(id))).toBe(true);
+    const crowded = { ...DEMO_VACANCY, essential: Array.from({ length: 6 }, (_, i) => ({ text: `Skill ${i}` })) };
+    expect(part(crowded, "needs").fixes.map((f) => f.id)).toEqual(["essential"]);
+  });
+
+  it("calls a part empty only when nothing is filled in", () => {
+    const blank = cleanVacancy(emptyForm("v-1"));
+    expect(partStatuses(blank).every((p) => p.empty)).toBe(true);
+    expect(part({ ...blank, summary: "Sales reports" }, "job").empty).toBe(false);
+    expect(part({ ...blank, schedule: "Monday to Friday" }, "pay").empty).toBe(false);
+  });
+
+  it("asks for what a stored job post must have, and for what the job needs", () => {
+    const blank = cleanVacancy(emptyForm("v-1"));
+    expect(part(blank, "job").fixes.map((f) => f.id)).toEqual(["title", "company", "modality"]);
+    expect(part(blank, "needs").fixes.map((f) => f.id)).toEqual(["needs"]);
+  });
+
+  it("counts a vague phrase in the part where it was written", () => {
+    const vague = { ...DEMO_VACANCY, summary: "A dynamic team", tasks: ["Work in a fast-paced environment"], essential: [{ text: "Strong communication skills" }] };
+    expect(part(vague, "job").left).toBe(1);
+    expect(part(vague, "day").left).toBe(2); // the phrase, and fewer than 3 tasks
+    expect(part(vague, "needs").left).toBe(1);
+    expect(thingsLeft(vague)).toBe(4);
+  });
+
+  it("counts every copy of a phrase, so fixing one leaves the other in the total", () => {
+    const twice = { ...DEMO_VACANCY, summary: "Fast-paced work", tasks: ["Fast-paced sales", "Pull data", "Write a report"] };
+    expect(thingsLeft(twice)).toBe(2);
+    expect(clarityScore(twice).issues).toHaveLength(1);
+  });
+
+  it("says how much is left in words", () => {
+    expect([0, 1, 3].map(leftText)).toEqual(["Nothing left to fix.", "1 thing left.", "3 things left."]);
   });
 });
 

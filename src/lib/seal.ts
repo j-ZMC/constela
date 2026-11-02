@@ -5,6 +5,7 @@ import { CLEAR_SCORE, clarityScore, offersAlternativeFormat, type Vacancy } from
 
 export const SEAL_LEVELS = ["bronze", "silver", "gold"] as const;
 export type SealLevel = (typeof SEAL_LEVELS)[number];
+export const SEAL_NAMES: Record<SealLevel, string> = { bronze: "Bronze", silver: "Silver", gold: "Gold" };
 
 // An answer the employer owes a candidate after a hiring step, due on the date they promised.
 export type SealResponse = { dueAt: string; answeredAt?: string; candidateId?: string; vacancyId?: string };
@@ -16,6 +17,7 @@ export type Seal = { level: SealLevel | null; checks: SealCheck[] };
 const SHARE = 0.9; // the target from the features document: 90% of vacancies
 const MIN_RATINGS = 5;
 const MIN_AVERAGE = 4;
+const NOTHING_PUBLISHED = "You have not published a job post yet.";
 
 export function computeSeal(input: SealInput, now: Date): Seal {
   const published = input.vacancies.filter((v) => v.status === "published");
@@ -32,8 +34,8 @@ export function computeSeal(input: SealInput, now: Date): Seal {
       id: "clarity",
       level: "bronze",
       met: share(clear),
-      detail: `${clear} of ${published.length} published vacancies have a clarity score of ${CLEAR_SCORE} or more.`,
-      todo: `Publish vacancies with a clarity score of ${CLEAR_SCORE} or more.`,
+      detail: published.length ? `${clear} of ${published.length} published job posts have a clarity score of ${CLEAR_SCORE} or more.` : NOTHING_PUBLISHED,
+      todo: `Publish job posts with a clarity score of ${CLEAR_SCORE} or more.`,
       href: "/employers/vacancies",
     },
     {
@@ -48,15 +50,15 @@ export function computeSeal(input: SealInput, now: Date): Seal {
       id: "adjustments",
       level: "silver",
       met: share(adjusted),
-      detail: `${adjusted} of ${published.length} published vacancies offer adjustments and another interview format.`,
-      todo: "Offer default adjustments and another interview format in your vacancies.",
+      detail: published.length ? `${adjusted} of ${published.length} published job posts offer adjustments and another interview format.` : NOTHING_PUBLISHED,
+      todo: "Offer default adjustments and another interview format in your job posts.",
       href: "/employers/vacancies",
     },
     {
       id: "response-time",
       level: "silver",
       met: due.length > 0 && onTime === due.length,
-      detail: `${onTime} of ${due.length} answers to candidates were sent by the promised date.`,
+      detail: due.length ? `${onTime} of ${due.length} answers to candidates were sent by the promised date.` : "No answers have come due yet.",
       todo: "Send each candidate your answer by the date you promised.",
       href: "/employers/talent",
     },

@@ -20,7 +20,7 @@ describe("computeSeal", () => {
   it("gives no seal before anything is published", () => {
     const seal = computeSeal(input({ vacancies: [{ ...DEMO_VACANCY, status: "draft" }] }), now);
     expect(seal.level).toBeNull();
-    expect(seal.checks.find((c) => c.id === "clarity")?.detail).toContain("0 of 0");
+    expect(seal.checks.find((c) => c.id === "clarity")?.detail).toBe("You have not published a job post yet.");
   });
 
   it("gives bronze for clear vacancies and the guide read", () => {

@@ -49,7 +49,7 @@ export function EmployerNav() {
         <nav aria-label="Main" className="hidden flex-col gap-2 lg:flex">
           {items("min-h-13 gap-3 px-3")}
         </nav>
-        <PersonalizationPanel className="max-w-full gap-2 border-2 bg-card text-base [&_svg]:size-5 lg:mt-auto lg:h-13 lg:w-full lg:justify-start lg:gap-3 lg:px-3 lg:[&_svg]:size-6" />
+        <PersonalizationPanel className="max-w-full gap-2 border-2 bg-card text-base lg:mt-auto lg:h-13 lg:w-full lg:justify-start lg:gap-3 lg:px-3" />
       </aside>
       {/* It wraps, so the largest text still shows every link. */}
       <nav aria-label="Main" className="fixed inset-x-0 bottom-0 z-10 flex flex-wrap gap-1 border-t-2 bg-card px-2 py-1 pb-[max(0.25rem,env(safe-area-inset-bottom))] lg:hidden">

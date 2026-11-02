@@ -6,7 +6,10 @@ import {
   EXCLUSIONARY_PHRASES,
   MINUTES_RANGE,
   RESPONSE_DAYS_RANGE,
+  clarityScore,
+  findExclusionaryPhrases,
   vacancySchema,
+  type ClarityIssue,
   type EnvironmentFactor,
   type Requirement,
   type Stage,
@@ -80,6 +83,57 @@ export function saveProblems(v: Vacancy): string[] {
 export function publishProblems(v: Vacancy): string[] {
   return [...saveProblems(v), ...(v.process.length === 0 ? ["Add at least one hiring step."] : [])];
 }
+
+// The job post in six parts, in the order the employer fills them in.
+export const PARTS = [
+  { id: "job", name: "The job" },
+  { id: "pay", name: "Pay and hours" },
+  { id: "day", name: "Typical day" },
+  { id: "needs", name: "What you need" },
+  { id: "workplace", name: "Workplace" },
+  { id: "steps", name: "Hiring steps" },
+] as const;
+export type PartId = (typeof PARTS)[number]["id"];
+export type PartStatus = { id: PartId; name: string; fixes: ClarityIssue[]; left: number; empty: boolean };
+
+const ISSUE_PARTS: Record<string, PartId> = {
+  modality: "job",
+  salary: "pay",
+  schedule: "pay",
+  tasks: "day",
+  essential: "needs",
+  environment: "workplace",
+  accommodations: "workplace",
+  process: "steps",
+};
+
+// fixes are what the part still needs. Vague phrases count in left too, but each one shows under its own line.
+export function partStatuses(v: Vacancy): PartStatus[] {
+  const needs = [...v.essential, ...v.niceToHave].map((r) => r.text);
+  const lines: Record<PartId, string[]> = { job: [v.title, v.summary], pay: [], day: v.tasks, needs, workplace: [], steps: [] };
+  const empty: Record<PartId, boolean> = {
+    job: !v.title && !v.company && !v.summary && !v.modality && !v.location,
+    pay: !v.salary && !v.schedule,
+    day: v.tasks.length === 0,
+    needs: needs.length === 0,
+    workplace: !v.environment && v.accommodations.length === 0,
+    steps: v.process.length === 0 && !v.responseDays,
+  };
+  // The score can't ask for these, because a stored vacancy always has them or doesn't need them to be clear.
+  const required: (ClarityIssue & { part: PartId; when: boolean })[] = [
+    { part: "job", when: !v.title, id: "title", points: 0, fix: PROBLEMS.title as string },
+    { part: "job", when: !v.company, id: "company", points: 0, fix: PROBLEMS.company as string },
+    { part: "needs", when: needs.length === 0, id: "needs", points: 0, fix: "List what the job needs." },
+  ];
+  const issues = clarityScore(v).issues.filter((issue) => !issue.id.startsWith("phrase:"));
+  return PARTS.map(({ id, name }) => {
+    const fixes = [...required.filter((r) => r.part === id && r.when), ...issues.filter((issue) => ISSUE_PARTS[issue.id] === id)];
+    return { id, name, fixes, left: fixes.length + lines[id].flatMap(findExclusionaryPhrases).length, empty: empty[id] };
+  });
+}
+
+export const thingsLeft = (v: Vacancy) => partStatuses(v).reduce((sum, part) => sum + part.left, 0);
+export const leftText = (left: number) => (left === 0 ? "Nothing left to fix." : left === 1 ? "1 thing left." : `${left} things left.`);
 
 // Where the AI needs a fact it doesn't have, it leaves a [bracket] for the employer to fill in.
 export const hasBlank = (text: string) => /\[[^\]]*\]/.test(text);
