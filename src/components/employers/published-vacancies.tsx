@@ -27,19 +27,19 @@ export function PublishedVacancies() {
   const waiting = waitingInvitations(data, DEMO_PROFILES);
 
   return (
-    <section aria-labelledby="clear-vacancies-heading" className="mt-8 flex flex-col gap-3">
+    <section aria-labelledby="clear-vacancies-heading" className="flex flex-col gap-3">
       {waiting > 0 && (
         <Link href="/invitations" className="flex min-h-11 items-center rounded-lg bg-secondary px-3 font-medium underline underline-offset-4">
           You have {waiting === 1 ? "1 invitation" : `${waiting} invitations`}. See {waiting === 1 ? "it" : "them"}.
         </Link>
       )}
       <div>
-        <h2 id="clear-vacancies-heading" className="text-lg font-semibold">
+        <h2 id="clear-vacancies-heading" className="text-xl font-semibold">
           Vacancies written for clarity
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">These employers say what the work is, what it pays and every step of hiring.</p>
       </div>
-      <ul className="grid gap-4">
+      <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
         {published.map((v) => (
           <li key={v.id}>
             <VacancyCard vacancy={v} level={level} needs={needs} />
@@ -77,14 +77,14 @@ function VacancyCard({ vacancy: v, level, needs }: { vacancy: Vacancy; level: Se
   const summary = fitSummary(fit);
 
   return (
-    <article className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+    <article className="flex flex-col gap-4 p-5 sm:p-6">
       <div>
         <div className="flex flex-wrap items-center gap-2">
           <p className="text-sm font-medium text-muted-foreground">{v.company}</p>
           {level && (
             <span
               title="Based on how this employer writes vacancies and treats candidates on Constela."
-              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-xs font-semibold text-primary ring-1 ring-inset ring-primary/20"
+              className="inline-flex items-center gap-1 rounded-full bg-primary/10 px-2 py-0.5 text-sm font-semibold text-primary ring-1 ring-inset ring-primary/20"
             >
               <BadgeCheck aria-hidden className="size-3.5" />
               Neuroinclusive seal: {SEAL_NAMES[level]}

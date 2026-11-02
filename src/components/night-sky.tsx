@@ -24,7 +24,14 @@ function makeSky(seed: number, figures: number, specks: number, w = W, h = H, co
   const star = (x: number, y: number, r: number): Star => ({ x, y, r, delay: rand() * 6, duration: 3 + rand() * 4 });
   // One constellation per grid cell, so they spread across the sky instead of clumping.
   const [cw, ch] = [w / cols, h / rows];
-  const cells = Array.from({ length: cols * rows }, (_, i) => i).sort(() => rand() - 0.5).slice(0, figures);
+  // Fisher-Yates, not sort(() => rand() - 0.5): a random comparator orders differently on the server and in the
+  // browser, which made the sky fail to hydrate.
+  const cells = Array.from({ length: cols * rows }, (_, i) => i);
+  for (let i = cells.length - 1; i > 0; i--) {
+    const j = Math.floor(rand() * (i + 1));
+    [cells[i], cells[j]] = [cells[j], cells[i]];
+  }
+  cells.length = Math.min(figures, cells.length);
   const shapes: Figure[] = cells.map((cell, n) => {
     const cx = ((cell % cols) + 0.5) * cw;
     const cy = (Math.floor(cell / cols) + 0.5) * ch;
@@ -38,23 +45,24 @@ function makeSky(seed: number, figures: number, specks: number, w = W, h = H, co
 
 const FULL = makeSky(7, 7, 90);
 
-export function NightSky({ className }: { className?: string }) {
+// still: the same sky without motion, for page headers where people are working (DESIGN.md: motion only on the intro).
+export function NightSky({ className, still = false }: { className?: string; still?: boolean }) {
   return (
     <svg aria-hidden viewBox={`0 0 ${W} ${H}`} preserveAspectRatio="xMidYMid slice" className={className}>
       {FULL.dust.map((s, i) => (
-        <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="white" className="sky-twinkle" style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.duration + 2}s` }} />
+        <circle key={i} cx={s.x} cy={s.y} r={s.r} fill="white" className={still ? undefined : "sky-twinkle"} style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.duration + 2}s` }} />
       ))}
       {FULL.shapes.map((f, n) => {
         const d = f.stars.map((s, i) => `${i ? "L" : "M"}${s.x.toFixed(1)} ${s.y.toFixed(1)}`).join(" ");
         return (
           <g key={n}>
-            <path d={d} pathLength={1} fill="none" stroke="white" strokeOpacity="0.28" strokeWidth="1.2" strokeLinejoin="round" className="sky-draw" style={{ animationDelay: `${n * 0.35}s` }} />
+            <path d={d} pathLength={1} fill="none" stroke="white" strokeOpacity="0.28" strokeWidth="1.2" strokeLinejoin="round" className={still ? undefined : "sky-draw"} style={{ animationDelay: `${n * 0.35}s` }} />
             {/* The trail: a short bright stroke that travels along the line, slowly. */}
-            {f.trail && (
+            {f.trail && !still && (
               <path d={d} pathLength={1} fill="none" stroke="var(--star)" strokeWidth="1.6" strokeLinecap="round" className="sky-trail" style={{ animationDelay: `${3 + n * 1.7}s` }} />
             )}
             {f.stars.map((s, i) => (
-              <circle key={i} cx={s.x} cy={s.y} r={s.r} fill={i === 0 ? "var(--star)" : "white"} className="sky-twinkle" style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s` }} />
+              <circle key={i} cx={s.x} cy={s.y} r={s.r} fill={i === 0 ? "var(--star)" : "white"} className={still ? undefined : "sky-twinkle"} style={{ animationDelay: `${s.delay}s`, animationDuration: `${s.duration}s` }} />
             ))}
           </g>
         );

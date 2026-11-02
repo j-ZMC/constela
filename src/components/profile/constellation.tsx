@@ -21,6 +21,7 @@ export function Constellation({
   onSelect,
   glow,
   current,
+  bare = false,
 }: {
   lit: boolean[];
   label: string;
@@ -30,6 +31,8 @@ export function Constellation({
   glow?: number;
   // The step to do now: a still ring marks "you are here".
   current?: number;
+  // Already inside a sky (PageSky), so no navy box of its own.
+  bare?: boolean;
 }) {
   const gap = lit.length > 1 ? SPAN / (lit.length - 1) : 0;
   const points = lit.map((_, i) => [LEFT + i * gap, HEIGHTS[i % HEIGHTS.length]] as const);
@@ -83,7 +86,7 @@ export function Constellation({
   );
 
   // The sky band: the navy reads as night, and star gold on it is far stronger than on the mint page.
-  const sky = "w-full rounded-2xl bg-sky px-4 py-3 sm:px-6 sm:py-4";
+  const sky = bare ? "w-full" : "w-full rounded-2xl bg-sky px-4 py-3 sm:px-6 sm:py-4";
   if (!onSelect) return <div className={sky}>{picture}</div>;
 
   return (

@@ -45,7 +45,7 @@ export function JobResults({ results }: { results: JobSearchResponse }) {
           : `${count} ${count === 1 ? "job" : "jobs"} found${results.blockedJobs.length ? `, and ${results.blockedJobs.length} to check` : ""}.`}
       </p>
       {count > 0 && (
-        <ul className="flex flex-col gap-4">
+        <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
           {results.jobs.map((job) => (
             <li key={key(job)}>
               <JobCard job={job} />
@@ -59,7 +59,7 @@ export function JobResults({ results }: { results: JobSearchResponse }) {
             Jobs to check first
           </h3>
           <p className="text-muted-foreground">These posts mention something you asked us to point out.</p>
-          <ul className="flex flex-col gap-4">
+          <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
             {results.blockedJobs.map((job) => (
               <li key={key(job)}>
                 <JobCard job={job} flagged />

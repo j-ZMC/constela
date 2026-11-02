@@ -58,7 +58,7 @@ export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean 
   }
 
   return (
-    <article className="flex flex-col gap-4 rounded-xl border bg-card p-5">
+    <article className="flex flex-col gap-4 p-5 sm:p-6">
       <div className="flex flex-col gap-1">
         <p className="flex flex-wrap items-center gap-2 text-muted-foreground">
           {job.company}

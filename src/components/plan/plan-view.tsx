@@ -5,6 +5,7 @@ import Link from "next/link";
 import { Check, ChevronRight, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
+import { PageSky, onSky } from "@/components/page-sky";
 import { AddStep } from "@/components/plan/add-step";
 import { BreakdownDialog } from "@/components/plan/breakdown-dialog";
 import { CheckInReply, EnergyCheckIn } from "@/components/plan/energy-check-in";
@@ -58,7 +59,13 @@ function throughPath(plan: Plan): Plan {
 
 // Plan and profile live in localStorage, so render only after hydration (same as the Profile flow).
 export function PlanView() {
-  return useHydrated() ? <View /> : null;
+  return useHydrated() ? (
+    <View />
+  ) : (
+    <PageSky>
+      <h1 className="text-3xl font-bold sm:text-4xl">Today</h1>
+    </PageSky>
+  );
 }
 
 function View() {
@@ -191,22 +198,23 @@ function View() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Kept compact so the current step is on the first screen of a phone. */}
-      <header className="flex flex-col gap-2 sm:gap-3">
+    <>
+      {/* Kept compact so the current step is on the first screen of a phone. The sky leaves room at the bottom for
+          the current step, which rises into it: the one thing to do now sits on the horizon. */}
+      <PageSky className="gap-2 pb-14 sm:gap-3 sm:pb-16">
         <div className="flex flex-wrap items-center justify-between gap-x-3">
-          <h1 className="text-2xl font-bold sm:text-3xl">Today</h1>
+          <h1 className="text-3xl font-bold sm:text-4xl">Today</h1>
           <div className="flex items-center">
-            <Button variant="ghost" className="h-11 px-3 text-base" onClick={() => setTouring(true)} aria-label="How this works">
+            <Button variant="ghost" className={`h-11 px-3 text-base ${onSky}`} onClick={() => setTouring(true)} aria-label="How this works">
               <CircleHelp aria-hidden className="size-5" />
               <span className="max-sm:hidden">How this works</span>
             </Button>
-            <Button data-tour="path" variant="ghost" className="h-11 px-3 text-base underline underline-offset-4" onClick={() => setPathOpen(true)}>
+            <Button data-tour="path" variant="ghost" className={`h-11 px-3 text-base underline underline-offset-4 ${onSky}`} onClick={() => setPathOpen(true)}>
               Your path
             </Button>
           </div>
         </div>
-        <p className="font-medium">
+        <p className="font-medium text-white/80">
           Stage {STAGES.indexOf(stage) + 1} of {STAGES.length}: {STAGE_NAMES[stage]}
         </p>
         {!stageDone && (
@@ -218,6 +226,7 @@ function View() {
           onSelect={(i) => setSelected(stars[i].id)}
           glow={stars.findIndex((s) => s.id === justDone && s.done)}
           current={current ? stars.indexOf(current) : undefined}
+          bare
         />
         </div>
         )}
@@ -225,32 +234,33 @@ function View() {
             ends unmet, a new week simply brings a new goal. */}
         {!stageDone && (
         <div className="flex flex-col gap-1">
-          <p className="text-muted-foreground">
+          <p className="text-white/80">
             {done} of {stars.length} steps done.{" "}
             <span data-detail="extra" className="text-sm max-sm:hidden">
               Tap a star to see a step.
             </span>
           </p>
           <p className="flex items-center gap-2">
-            {goal.met && <Check className="size-5 shrink-0 text-primary" aria-hidden />}
+            {goal.met && <Check className="size-5 shrink-0 text-star" aria-hidden />}
             <span>
               {goal.text}
-              {goal.met && <span className="text-muted-foreground"> (done)</span>}
+              {goal.met && <span className="text-white/80"> (done)</span>}
             </span>
           </p>
         </div>
         )}
         {!profile && (
-          <p className="text-sm text-muted-foreground">
+          <p className="text-sm text-white/80">
             These are the standard settings.{" "}
-            <Link href="/profile" className="font-medium text-foreground underline underline-offset-4">
+            <Link href="/profile" className="font-medium text-white underline underline-offset-4 focus-visible:ring-star">
               Set up your profile
             </Link>{" "}
             to fit the plan to you.
           </p>
         )}
-      </header>
+      </PageSky>
 
+      <div className="relative mx-auto -mt-8 flex w-full max-w-xl flex-col gap-8 px-4 pb-10">
       <p aria-live="polite" className="sr-only">
         {announcement}
       </p>
@@ -392,6 +402,7 @@ function View() {
           onClose={() => setRequest(null)}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }

@@ -35,7 +35,9 @@ Personalize can override these with presets; build with tokens and it just works
 | Header and shell | `max-w-5xl` | `site-nav.tsx` |
 | Intro card | `max-w-md` | `/` |
 
-Never wider than the header. Pages use `mx-auto w-full px-4 py-10`. Wide screens show faint, still constellations in the margins; content must not cover them.
+Never wider than the header. Pages use `mx-auto w-full px-4 py-10`.
+
+**The page sky.** App pages open with `PageSky` (`src/components/page-sky.tsx`): the intro's night sky, still, edge to edge, with the `h1` and one line of text in it. Text on it is white (`text-white/80` for secondary), buttons on it add `onSky`, and the content below starts with `py-8`. My plan lets the current step rise into the sky (`-mt-8`). The intro keeps its full-screen sky. Wide screens show faint, still constellations in the margins; content must not cover them.
 
 Spacing: `gap-8` between sections, `gap-5` inside a card, `gap-3` between related controls.
 
@@ -45,7 +47,7 @@ Atkinson Hyperlegible for everything (OpenDyslexic and others via Personalize).
 
 | Role | Class |
 |---|---|
-| Page title (exactly one `h1` per screen) | `text-2xl font-bold sm:text-3xl` |
+| Page title (exactly one `h1` per screen, in the page sky) | `text-3xl font-bold sm:text-4xl` |
 | Section (`h2`) | `text-xl font-semibold` |
 | Card or sub-section (`h3`) | `text-lg font-semibold` |
 | Body | `text-base` |
@@ -69,6 +71,8 @@ Two kinds of card only:
 
 - **The "now" card:** `rounded-2xl border border-primary/15 bg-card p-5 sm:p-7` plus the soft navy shadow. At most one per screen: the thing to do now (My plan's current step, stage complete, rest).
 - **Quiet card:** `rounded-xl border bg-card p-5`. Everything else.
+
+**Lists** (jobs, vacancies) are one quiet card with rows split by a line (`divide-y`), never a stack of separate boxes.
 
 Notes use `bg-secondary`; things to check use a thin `border-destructive/40`. No stat tiles, no colored left borders, no cards inside cards.
 
