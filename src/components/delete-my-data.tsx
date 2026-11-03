@@ -12,6 +12,7 @@ export const DELETED_KEYS = [
   "resume-profile",
   "recommended-jobs-cache",
   "saved-jobs",
+  "job-wants",
   "plan",
   "tour",
   "a11y",

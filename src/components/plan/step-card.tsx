@@ -17,7 +17,8 @@ import {
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
 import { ListenButton } from "@/components/listen-button";
-import { completesItself, type PlanStep, type StepIcon } from "@/lib/plan";
+import { WantsPicker } from "@/components/plan/wants-picker";
+import { completesItself, stepKey, type PlanStep, type StepIcon } from "@/lib/plan";
 import { cn } from "@/lib/utils";
 
 export const ICONS: Record<StepIcon, LucideIcon> = {
@@ -66,6 +67,8 @@ export function CurrentStep({
 }) {
   const Icon = ICONS[step.icon];
   const selfDone = completesItself(step.id);
+  // This step is done right here: choosing and saving is the whole step.
+  const picker = stepKey(step.id) === "path-wants";
   const heading = useRef<HTMLHeadingElement>(null);
   // After Done, the button is gone; land keyboard and screen-reader users on the new step.
   useEffect(() => {
@@ -95,6 +98,9 @@ export function CurrentStep({
       </div>
       {/* The actions come right after the step, so they stay on the first screen of a phone. Same order every time:
           go do it, mark it done, or make it smaller. Only one is filled: breaking down when the profile asks for it. */}
+      {picker ? (
+        <WantsPicker onSave={onDone} />
+      ) : (
       <div className="flex flex-wrap gap-3">
         {step.href && (
           <Link href={step.href} className={buttonVariants({ variant: breakdownFirst ? "outline" : "default", className: action })}>
@@ -112,6 +118,7 @@ export function CurrentStep({
           </Button>
         )}
       </div>
+      )}
       {selfDone ? (
         <p className="text-muted-foreground">This step is done by itself when you finish your profile.</p>
       ) : (
