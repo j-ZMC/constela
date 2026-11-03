@@ -1,118 +1,164 @@
 "use client";
 
-import { useState, type FormEvent } from "react";
+import { useEffect, useState, type FormEvent, type ReactNode } from "react";
 import Link from "next/link";
+import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { JobCard } from "@/components/jobs/job-card";
-import { loadBarrierPreferences } from "@/lib/barrier-preferences";
+import { JobResults } from "@/components/jobs/job-results";
+import { loadBarrierPreferences, loadCustomBlockers } from "@/lib/barrier-preferences";
 import { JobSearchError, searchJobs, type JobSearchResponse } from "@/lib/jobs";
+import { useSingleFlight } from "@/lib/use-single-flight";
 
-export function JobSearch() {
-  return <SearchForm />;
+// With no words typed, the internships browser still needs a search to order them by.
+const ANY_INTERNSHIP = "internship";
+
+function search(query: string, internships: boolean) {
+  const request = { query, userBlockers: loadBarrierPreferences() ?? [], customBlockers: loadCustomBlockers() };
+  return searchJobs(internships ? { ...request, internships: true } : request);
 }
 
-function SearchForm() {
-  const [query, setQuery] = useState("");
-  const [results, setResults] = useState<JobSearchResponse | null>(null);
-  const [error, setError] = useState("");
-  const [loading, setLoading] = useState(false);
+const failure = (cause: unknown) =>
+  cause instanceof JobSearchError ? cause.message : "Could not reach Constela. Check your connection and try again.";
 
-  async function submit(event: FormEvent<HTMLFormElement>) {
+type Page = { query: string; results: JobSearchResponse };
+
+// Search finds the closest jobs to what you type; `home` (the jobs picked for you) shows until the first search.
+// With `internships` it is a browser instead: it opens with every internship, and typing only puts the closest first.
+// Every search adds a page, and Back returns to the one before, down to `home` or all internships.
+export function JobSearch({ internships = false, home }: { internships?: boolean; home?: ReactNode }) {
+  const [query, setQuery] = useState("");
+  const [pages, setPages] = useState<Page[]>([]);
+  const [error, setError] = useState("");
+  const [loading, setLoading] = useState(internships);
+  const noun = internships ? "internship" : "job";
+  const once = useSingleFlight();
+  const current = pages.at(-1);
+  // The internships browser keeps its first page (all of them): there is nothing before it.
+  const canGoBack = pages.length > (internships ? 1 : 0);
+  const before = pages.at(-2);
+  const backTo = !before ? "jobs for you" : before.query === ANY_INTERNSHIP ? "all internships" : `“${before.query}”`;
+
+  useEffect(() => {
+    if (!internships) return;
+    let active = true;
+    search(ANY_INTERNSHIP, true)
+      .then((results) => { if (active) setPages([{ query: ANY_INTERNSHIP, results }]); })
+      .catch((cause) => { if (active) setError(failure(cause)); })
+      .finally(() => { if (active) setLoading(false); });
+    return () => { active = false; };
+  }, [internships]);
+
+  function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!query.trim()) return;
-    setLoading(true);
+    const words = query.trim() || (internships ? ANY_INTERNSHIP : "");
+    if (!words) return;
+    // A double tap would add the same search twice to Back's history.
+    void once(async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const results = await search(words, internships);
+        setPages((list) => [...list, { query: words, results }]);
+      } catch (cause) {
+        setError(failure(cause));
+      } finally {
+        setLoading(false);
+      }
+    });
+  }
+
+  function back() {
     setError("");
-    setResults(null);
-    try {
-      const userBlockers = loadBarrierPreferences() ?? [];
-      setResults(await searchJobs({ query, userBlockers }));
-    } catch (cause) {
-      setError(cause instanceof JobSearchError ? cause.message : "Could not reach the jobs service. Try again.");
-    } finally {
-      setLoading(false);
-    }
+    setPages((list) => list.slice(0, -1));
+    setQuery(before && before.query !== ANY_INTERNSHIP ? before.query : "");
   }
 
   return (
-    <section className="mt-8 flex flex-col gap-6" aria-labelledby="job-search-heading">
+    <div className="flex flex-col gap-6">
       <div className="rounded-xl border bg-card p-5 sm:p-6">
-        <h2 id="job-search-heading" className="text-xl font-semibold">Search current openings</h2>
-        <p className="mt-2 text-sm text-muted-foreground">
-          Search by role, skill, or work arrangement. Your search phrase is sent to OpenAI to find relevant jobs; your profile selections are not.
-        </p>
-        <form onSubmit={submit} className="mt-5 flex flex-col gap-3 sm:flex-row">
-          <label className="flex-1">
-            <span className="sr-only">Job title, skill, or search phrase</span>
+        {internships && (
+          <p className="mb-4">
+            An internship is a short job where you learn at work. Many are for students or people looking for their
+            first job. These come from companies with inclusion data, such as B Corps and Equidad MX.
+          </p>
+        )}
+        <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
+          <label className="flex flex-1 flex-col gap-2 font-medium">
+            {internships ? "What would you like to learn? (optional)" : "What job are you looking for?"}
             <input
               type="search"
-              required
+              required={!internships}
               maxLength={200}
               value={query}
               onChange={(event) => setQuery(event.target.value)}
-              placeholder="For example, remote data analyst"
-              className="h-11 w-full rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring"
+              placeholder={internships ? "For example, marketing or software" : "For example, remote data analyst"}
+              className="h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring"
             />
           </label>
-          <Button type="submit" disabled={loading || !query.trim()} className="h-11 px-5 text-base">
-            {loading ? "Searching…" : "Find jobs"}
+          <Button type="submit" disabled={loading || (!internships && !query.trim())} className="h-11 px-5 text-base">
+            {loading ? "Searching…" : internships ? "Show internships" : "Find jobs"}
           </Button>
         </form>
         <p className="mt-3 text-sm text-muted-foreground">
-          Saved profile conditions are used when you search and are not sent to OpenAI.{" "}
-          <Link href="/profile" className="font-medium underline underline-offset-4">Update profile</Link>
+          We point out what you asked us to watch for, and never hide a {noun}.{" "}
+          <Link href="/profile" className="font-medium underline underline-offset-4">Change what to watch for</Link>
+          {" · "}
+          <Link href="/privacy" className="font-medium underline underline-offset-4">How we keep your data private</Link>
         </p>
       </div>
 
+      {canGoBack && !loading && (
+        <Button type="button" variant="outline" onClick={back} className="h-11 w-fit gap-2 px-4 text-base">
+          <ArrowLeft aria-hidden className="size-4" /> Back to {backTo}
+        </Button>
+      )}
+
       {loading && (
-        <div role="status" aria-busy="true" className="flex flex-col gap-3" aria-label="Searching jobs">
-          <p className="text-sm text-muted-foreground">Searching the pre-vectorized job index. Only this query is embedded.</p>
-          {[0, 1, 2].map((item) => <div key={item} className="h-36 animate-pulse rounded-xl border bg-card" />)}
+        <div role="status" aria-busy="true" className="flex flex-col gap-3" aria-label={`Searching ${noun}s`}>
+          <p className="text-sm text-muted-foreground">Looking for {noun}s…</p>
+          {/* The shape of the list that is coming, so nothing jumps when it arrives. */}
+          <div aria-hidden className="divide-y rounded-2xl border bg-card">
+            {[0, 1, 2].map((item) => (
+              <div key={item} className="flex flex-col gap-2 p-5 sm:p-6">
+                <div className="h-4 w-1/4 animate-pulse rounded bg-secondary" />
+                <div className="h-5 w-2/3 animate-pulse rounded bg-secondary" />
+                <div className="h-4 w-full animate-pulse rounded bg-secondary" />
+              </div>
+            ))}
+          </div>
         </div>
       )}
 
       {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-card p-4 text-sm">{error}</p>}
 
-      {results && (
+      {current && !loading && (
         <div className="flex flex-col gap-6" aria-live="polite">
           <p className="text-sm text-muted-foreground">
-            {results.summary.visibleMatches} {results.summary.visibleMatches === 1 ? "match" : "matches"} · {results.summary.blockedMatches} flagged for review · {results.summary.jobsExcludedByCompany} excluded by current company data
+            {current.results.summary.visibleMatches} {current.results.summary.visibleMatches === 1 ? noun : `${noun}s`} found
+            {current.query !== ANY_INTERNSHIP && ` for “${current.query}”`}
+            {internships && current.query !== ANY_INTERNSHIP && ", closest first"}
+            {current.results.summary.blockedMatches > 0 && ` · ${current.results.summary.blockedMatches} to review`}
+            {current.results.summary.jobsExcludedByCompany > 0 && ` · ${current.results.summary.jobsExcludedByCompany} left out by company data`}
           </p>
-          {results.summary.modalityFilterApplied && (
+          {current.results.summary.modalityFilterApplied && (
             <p role="status" className="text-sm text-muted-foreground">
-              Work-mode filter: {results.summary.requestedModalities.map((mode) => mode === "on_site" ? "on-site" : mode).join(", ")}. {results.summary.modalityExcludedMatches} similar jobs excluded by the mode filter.
+              Showing {current.results.summary.requestedModalities.map((mode) => mode === "on_site" ? "on-site" : mode).join(", ")} jobs only. {current.results.summary.modalityExcludedMatches} other similar jobs left out.
             </p>
           )}
 
-          {results.jobs.length > 0 ? (
-            <section aria-labelledby="matches-heading" className="flex flex-col gap-3">
-              <h2 id="matches-heading" className="text-lg font-semibold">Job matches</h2>
-              <ul className="grid gap-4">
-                {results.jobs.map((job) => <li key={job.url ?? `${job.company}:${job.similarity_rank}`}><JobCard job={job} /></li>)}
-              </ul>
-            </section>
-          ) : results.blockedJobs.length > 0 ? (
-            <p className="text-sm text-muted-foreground">No other matches were found. Review the flagged postings below if you want to.</p>
-          ) : (
-            <p role="status" className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
-              No matching jobs found. Try a different role, skill, or phrase.
-            </p>
-          )}
-
-          {results.blockedJobs.length > 0 && (
-            <section aria-labelledby="review-heading" className="flex flex-col gap-3">
-              <div>
-                <h2 id="review-heading" className="text-lg font-semibold">Possible conditions to review</h2>
-                <p className="mt-1 text-sm text-muted-foreground">
-                  These matches are shown separately, not hidden. Review the posting and decide what works for you.
-                </p>
-              </div>
-              <ul className="grid gap-4">
-                {results.blockedJobs.map((job) => <li key={job.url ?? `${job.company}:${job.similarity_rank}`}><JobCard job={job} flagged /></li>)}
-              </ul>
-            </section>
-          )}
+          {/* key: a new page starts on its first page of results; the filters are kept (job-filters.ts). */}
+          <JobResults
+            key={pages.length}
+            results={current.results}
+            label={internships ? "Internships" : "Job matches"}
+            filterList={internships ? "internships" : "jobs"}
+            emptyText={internships ? "No internships right now. Companies post new ones each season; check again soon." : "No matching jobs found. Try a different role, skill, or phrase."}
+          />
         </div>
       )}
-    </section>
+
+      {/* Kept mounted under the searches, so Back shows the jobs for you at once, without loading them again. */}
+      {home && <div hidden={Boolean(current) || loading}>{home}</div>}
+    </div>
   );
 }

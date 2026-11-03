@@ -1,5 +1,14 @@
 import { describe, expect, it, vi } from "vitest";
-import { parseJobSearchRequest, parseJobSearchResponse, parseWorkerResult, searchJobs } from "@/lib/jobs";
+import { formatPay, parseJobSearchRequest, parseJobSearchResponse, parseWorkerResult, searchJobs } from "@/lib/jobs";
+
+describe("formatPay", () => {
+  it("writes the range, the currency and the period plainly", () => {
+    expect(formatPay({ salary_min: 54, salary_max: 60, currency: "USD", salary_period: "hour" })).toBe("USD 54 – 60 per hour");
+    expect(formatPay({ salary_min: 18, salary_max: 24.95, currency: "$" })).toBe("$18 – $24.95");
+    expect(formatPay({ salary_min: 800, salary_max: 800, currency: "USD", salary_period: "month" })).toBe("USD 800 per month");
+    expect(formatPay({ salary_min: null, salary_max: null, currency: "" })).toBeNull();
+  });
+});
 
 const job = {
   title: "Remote analyst",
@@ -49,7 +58,17 @@ describe("jobs API contracts", () => {
     expect(parseJobSearchRequest({ query: "  remote analyst  " })).toEqual({
       query: "remote analyst",
       userBlockers: [],
+      customBlockers: [],
     });
+  });
+
+  it("accepts the person's own words and rejects unsafe ones", () => {
+    expect(parseJobSearchRequest({ query: "remote", customBlockers: ["night shift", "24/7"] })?.customBlockers).toEqual([
+      "night shift",
+      "24/7",
+    ]);
+    expect(parseJobSearchRequest({ query: "remote", customBlockers: ['say "hi"'] })).toBeNull();
+    expect(parseJobSearchRequest({ query: "remote", customBlockers: Array(21).fill("noise") })).toBeNull();
   });
 
   it("rejects blank, oversized, or unknown-blocker requests", () => {
@@ -71,6 +90,24 @@ describe("jobs API contracts", () => {
     expect(result?.blockedJobs).toHaveLength(1);
     expect(result?.summary.visibleMatches).toBe(3);
     expect(result?.summary.jobsExcludedByCompany).toBe(2);
+  });
+
+  it("supports worker results without modality classifications or filters", () => {
+    const result = parseWorkerResult({
+      jobs: [{ ...job, modality_classification: undefined }],
+      blocked_jobs: [],
+      summary: {
+        ...summary,
+        requested_modalities: undefined,
+        modality_filter_applied: undefined,
+        modality_excluded_matches: undefined,
+      },
+    });
+
+    expect(result?.jobs[0].modality_classification).toBe("remote");
+    expect(result?.summary.requestedModalities).toEqual([]);
+    expect(result?.summary.modalityFilterApplied).toBe(false);
+    expect(result?.summary.modalityExcludedMatches).toBe(0);
   });
 
   it("parses the public API response contract", () => {
@@ -119,7 +156,7 @@ describe("jobs API contracts", () => {
       },
     };
     vi.stubGlobal("fetch", vi.fn().mockResolvedValue(new Response(JSON.stringify(response))));
-    await expect(searchJobs({ query: "remote analyst", userBlockers: [] })).resolves.toEqual(response);
+    await expect(searchJobs({ query: "remote analyst", userBlockers: [], customBlockers: [] })).resolves.toEqual(response);
   });
 
   it("rejects malformed worker responses", () => {

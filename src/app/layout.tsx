@@ -1,9 +1,9 @@
-import type { Metadata } from "next";
+import type { Metadata, Viewport } from "next";
 import { Atkinson_Hyperlegible_Next, Geist_Mono } from "next/font/google";
 import "@fontsource/opendyslexic/400.css";
 import "@fontsource/opendyslexic/700.css";
 import "./globals.css";
-import { MarginSky } from "@/components/night-sky";
+import { BackgroundSky } from "@/components/night-sky";
 import { SiteNav } from "@/components/site-nav";
 
 // Designed by the Braille Institute for maximum legibility.
@@ -19,7 +19,17 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Constela · by Astralis",
-  description: "A step-by-step job search for neurodivergent people",
+  description: "A step-by-step job search for neurodivergent people and for Gen Z",
+};
+
+// resizes-content: on phones the open keyboard shrinks the page instead of covering it, so the field being typed in
+// stays in view. Zoom stays allowed. The app is light unless a Personalize palette says dark (data-pz-scheme).
+export const viewport: Viewport = {
+  width: "device-width",
+  initialScale: 1,
+  interactiveWidget: "resizes-content",
+  colorScheme: "light",
+  themeColor: "#e7f0ed",
 };
 
 export default function RootLayout({ children }: LayoutProps<"/">) {
@@ -39,7 +49,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         />
       </head>
       <body className="min-h-full flex flex-col">
-        <MarginSky />
+        <BackgroundSky />
         <SiteNav />
         <div className="flex flex-1 flex-col pb-24 lg:pb-0">{children}</div>
       </body>

@@ -38,6 +38,8 @@ Pipeline: `[sources] -> [collect_bulk.py] -> [jobs_*.json] -> [pretokenize.py or
 | `02_test.ipynb` | Original exploratory inclusion-score notebook; retained as a reference. |
 | `company_inclusion.py` | Reproducible company-matching pipeline; compares both Glassdoor datasets and writes source-specific company scores to `data/processed/company_inclusion.sqlite` (`matched_companies` table). |
 | `select_qualified_companies.py` | Exports employers meeting the Glassdoor threshold or matching another inclusion source, plus related jobs, to `data/processed/qualified_company_jobs.sqlite` (`selected_companies` and `related_jobs` tables). |
+| `collect_internships.py` | Finds which inclusion-verified companies (same sources as `company_inclusion.py`) publish a Greenhouse, Lever or Ashby board, caches them in `data/reference/company_data/ats_boards.json`, and writes only their internships to `data/raw/jobs/internships.json`. |
+| `company_sizes.py` | Writes `data/reference/company_data/company_sizes.json` (small / medium / large per company) for the app's size filter. Sources, best first: B Corp's size band, Y Combinator's `team_size` (yc-oss), the size a company's own posting states, a `gpt-5-mini` estimate, and with `--web N` a web search for the N unknown companies with most jobs. Model answers are cached; `--redo` asks again. |
 | `requirements.txt` | Direct third-party Python dependencies used by the project scripts. |
 | `config/neurodivergence_job_barriers.json` | User-selected job-environment barrier terms and subtypes. |
 | `data/raw/jobs/` | USA and Mexico job datasets. |
@@ -65,6 +67,7 @@ Pipeline: `[sources] -> [collect_bulk.py] -> [jobs_*.json] -> [pretokenize.py or
 {
   "title": str, "company": str, "location": str, "modality": str,
   "salary_min": number|null, "salary_max": number|null, "currency": str,
+  "salary_period": "hour"|"month"|"year"|null,  // collect_bulk.pay_from_text fills pay from the full text when a source has no salary fields; "$" currency = no code given
   "description": str (<=4000 chars, HTML-cleaned),
   "url": str, "date": str, "source": str, "tags": [str]
 }
@@ -136,7 +139,8 @@ Known bugs already fixed (do NOT reintroduce):
 - Its `filter_jobs()` function returns a JSON-ready dictionary with unblocked
   `jobs`, separate `blocked_jobs` (including selected barrier reasons), and a
   `summary` for web-backend integration. The CLI prints only unblocked jobs and
-  reports the number of blocked similar jobs. Each job has `company_verified`
+reports the number of blocked similar jobs. Use `--json` to print the full
+result as JSON for integrations. Each job has `company_verified`
   (`true` only when its normalized company key is in `selected_companies`) and
   `company_verification_status` (`qualified`, `not_qualified`, or `unknown`).
   By default, known non-qualified companies are excluded before results are
@@ -210,6 +214,11 @@ Known bugs already fixed (do NOT reintroduce):
 Run these commands in PowerShell from the project root. Activate the Python
 environment you use for this project first.
 
+The Next.js `/api/jobs` route starts `filter_jobs_openai.py` for each search.
+It uses `.venv/Scripts/python.exe` on Windows or `.venv/bin/python` elsewhere;
+set `PYTHON_EXECUTABLE` if the environment is in another location. The worker
+inherits `OPENAI_API_KEY` from the Next.js process.
+
 ### Install dependencies and set the OpenAI key
 
 ```powershell
@@ -243,6 +252,18 @@ The OpenAI scripts still use `jobs_usa_full_backup_cleaned.json` by default;
 pass `--jobs data/raw/jobs/jobs_bulk.json` to both OpenAI commands if you want
 to use the file produced by this collector. Use dedicated `--emb` and `--ids`
 paths for a separate job-embedding cache.
+
+### Collect internships from inclusion-verified companies
+
+Needs the company databases below. The first run looks for every company's board (a few minutes; cached
+afterwards, `--rediscover` looks again); later runs only download the boards it found.
+
+```powershell
+python collect_internships.py
+python pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_openai_embeddings.npy --ids data/processed/embeddings/internships_openai_ids.json
+```
+
+Only public board APIs are used. Companies on Workday or their own career sites are not covered yet.
 
 ### Prepare company databases
 

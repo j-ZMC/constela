@@ -10,8 +10,9 @@ import { cn } from "@/lib/utils";
 
 type Question = (typeof QUESTIONS)[number];
 
-const optionRow =
-  "flex min-h-12 cursor-pointer items-center gap-3 rounded-lg border bg-card px-4 py-3 text-base has-data-checked:border-primary has-data-checked:bg-secondary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background";
+// Also used by the Interview start screen, so every choice in the app looks and works the same.
+export const optionRow =
+  "press flex min-h-12 cursor-pointer items-center gap-3 rounded-xl border bg-card px-4 py-3 text-base hover:border-primary/40 has-data-checked:border-primary has-data-checked:bg-secondary has-[:focus-visible]:ring-2 has-[:focus-visible]:ring-ring has-[:focus-visible]:ring-offset-2 has-[:focus-visible]:ring-offset-background";
 // The flow's buttons meet the 44px touch target from the spec.
 const action = "h-11 px-5 text-base";
 const EXCLUSIVE = ["none", "not-sure"];
@@ -73,7 +74,7 @@ export function QuestionStep({
       </div>
 
       <div className="flex flex-col gap-2">
-        <h1
+        <h2
           id="question-heading"
           ref={heading}
           tabIndex={-1}
@@ -81,7 +82,7 @@ export function QuestionStep({
           className="text-2xl font-semibold text-balance outline-none"
         >
           {question.text}
-        </h1>
+        </h2>
         <p id="question-hint" className="text-sm text-muted-foreground">
           {question.kind === "multi" ? "Choose any that apply, or skip. " : "Choose one, or skip. "}
           You can change this anytime.

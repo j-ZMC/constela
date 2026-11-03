@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { Plus } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -25,9 +25,11 @@ export function AddStep({
   const task = value.trim();
   // Closed by default: an open "add more" form is the kind of distraction Kairos warned about.
   const [open, setOpen] = useState(value !== "");
+  // A double tap on Add would add the same step twice before the form closes.
+  const sent = useRef(false);
   if (!open) {
     return (
-      <Button data-tour="add" variant="ghost" className={`${action} w-fit text-muted-foreground`} onClick={() => setOpen(true)}>
+      <Button variant="ghost" className={`${action} w-fit text-muted-foreground`} onClick={() => { sent.current = false; setOpen(true); }}>
         <Plus aria-hidden />
         Add a step
       </Button>
@@ -41,6 +43,8 @@ export function AddStep({
         if (!task) return;
         // Enter does whatever the filled-in button does.
         if (breakdownFirst) return onBreakdown(task);
+        if (sent.current) return;
+        sent.current = true;
         onAdd(task);
         setOpen(false);
       }}
@@ -75,6 +79,8 @@ export function AddStep({
           onClick={
             breakdownFirst
               ? () => {
+                  if (sent.current) return;
+                  sent.current = true;
                   onAdd(task);
                   setOpen(false);
                 }

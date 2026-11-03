@@ -13,9 +13,16 @@ export function gentleTone(energy?: Energy): boolean {
   return energy === "low" || energy === "stressed";
 }
 
-// The job search path (SPEC-path.md). Follow up loops back to Look for jobs.
-export const STAGES = ["ready", "search", "apply", "interview", "follow-up"] as const;
-export type Stage = (typeof STAGES)[number];
+// The branches of the job search map (src/lib/path.ts). All are open at once, each with its own steps; the person
+// chooses which to work on. Plans saved before the branches name five stages; toBranch maps them, so stars stay.
+export const BRANCHES = ["setup", "search", "apply", "interview", "documents", "learn", "experience"] as const;
+export type Branch = (typeof BRANCHES)[number];
+const LEGACY_STAGES: Record<string, Branch> = { ready: "setup", search: "search", apply: "apply", interview: "interview", "follow-up": "apply" };
+
+export function toBranch(value: unknown): Branch | undefined {
+  if ((BRANCHES as readonly unknown[]).includes(value)) return value as Branch;
+  return typeof value === "string" ? LEGACY_STAGES[value] : undefined;
+}
 
 // Things other modules report, which can complete a stage ("Save one job" also counts when Jobs says so).
 export const PLAN_EVENTS = ["job-saved", "application-sent", "practice-done"] as const;
@@ -32,8 +39,8 @@ export type PlanStep = {
   done: boolean;
   doneAt?: string;
   source: (typeof SOURCES)[number];
-  // Missing on steps that belong to no stage (the person's own, AI, habits).
-  stage?: Stage;
+  // The branch it belongs to. Missing on the person's own steps. (Named stage because saved plans use that name.)
+  stage?: Branch;
 };
 
 // checkInSkipped: the local date the person skipped the check-in, so it stays hidden that day.
@@ -43,21 +50,27 @@ export type Plan = {
   steps: PlanStep[];
   energy?: { level: Energy; date: string };
   checkInSkipped?: string;
-  stage?: Stage;
-  stageOpenedAt?: string; // ISO time; missing means "count everything", for plans that predate the path
+  // The branch the person chose to work on; "own" is their own steps. Missing: Constela picks (path.ts PRIORITY).
+  focus?: Branch | "own";
+  // Step kinds already added once, so a step the person removed is not added back.
+  opened?: string[];
   events?: { type: PlanEvent; at: string }[];
-  weekGoal?: { stage: Stage; week: string }; // week as YYYY-Www
+  // The time of the last event that already lit its step.
+  eventsSeen?: string;
+  // When the last round of Find jobs and Applications was opened (path.ts nextRound).
+  roundAt?: string;
+  weekGoal?: { branch: Branch; week: string }; // week as YYYY-Www
   lastHabit?: string; // local date a habit step was last added
   restingOn?: string; // local date the person chose "Stop for today"; the rest screen stays until the next day
 };
 
-export type NewStep = { title: string; minutes: number; icon?: StepIcon; href?: string; stage?: Stage };
+export type NewStep = { title: string; minutes: number; icon?: StepIcon; href?: string; stage?: Branch };
 
 export const STARTER_STEPS: readonly Omit<PlanStep, "done" | "source">[] = [
-  { id: "starter-profile", title: "Finish your profile", minutes: 3, icon: "user", href: "/profile", stage: "ready" },
+  { id: "starter-profile", title: "Finish your profile", minutes: 3, icon: "user", href: "/profile", stage: "setup" },
   { id: "starter-jobs", title: "Look at 3 jobs picked for you", minutes: 10, icon: "briefcase", href: "/jobs", stage: "search" },
   { id: "starter-save", title: "Save one job you like", minutes: 2, icon: "bookmark", href: "/jobs", stage: "search" },
-  { id: "starter-company", title: "Read “Get to know the company” for that job", minutes: 5, icon: "building", href: "/jobs", stage: "apply" },
+  { id: "starter-company", title: "Read “Get to know the company” for that job", minutes: 5, icon: "building", href: "/jobs?tab=saved", stage: "apply" },
   { id: "starter-practice", title: "Practice one interview question", minutes: 5, icon: "message", href: "/interview", stage: "interview" },
   { id: "starter-expect", title: "Read “What to expect” for an interview", minutes: 5, icon: "calendar", href: "/interview", stage: "interview" },
 ];
@@ -189,7 +202,7 @@ function validStep(raw: unknown): raw is PlanStep {
     typeof s.done === "boolean" &&
     (s.doneAt === undefined || typeof s.doneAt === "string") &&
     (SOURCES as readonly unknown[]).includes(s.source) &&
-    (s.stage === undefined || (STAGES as readonly unknown[]).includes(s.stage))
+    (s.stage === undefined || toBranch(s.stage) !== undefined)
   );
 }
 
@@ -201,17 +214,28 @@ function validEnergy(raw: unknown): raw is Plan["energy"] {
   return (ENERGY_LEVELS as readonly unknown[]).includes(e.level) && typeof e.date === "string" && DATE.test(e.date);
 }
 
+// A step saved before the branches: its stage becomes a branch. The resume moves to Documents, and steps Learn
+// added (they link to /learn) to Learn.
+function branchOf(step: PlanStep): PlanStep {
+  const legacy = step.stage as unknown;
+  const kind = stepKey(step.id);
+  const stage = kind === "path-resume" ? "documents" : step.href === "/learn" ? "learn" : toBranch(legacy);
+  return { ...step, stage };
+}
+
 export function loadPlan(): Plan {
   try {
     const raw = localStorage.getItem(STORAGE_KEY);
     if (!raw) return starterPlan();
     const data = JSON.parse(raw);
     if (data?.version !== 1 || !Array.isArray(data.steps)) return starterPlan();
-    const plan: Plan = { version: 1, steps: data.steps.filter(validStep) };
+    const plan: Plan = { version: 1, steps: data.steps.filter(validStep).map(branchOf) };
     if (validEnergy(data.energy)) plan.energy = data.energy;
     if (typeof data.checkInSkipped === "string" && DATE.test(data.checkInSkipped)) plan.checkInSkipped = data.checkInSkipped;
-    if ((STAGES as readonly unknown[]).includes(data.stage)) plan.stage = data.stage;
-    if (typeof data.stageOpenedAt === "string" && !Number.isNaN(Date.parse(data.stageOpenedAt))) plan.stageOpenedAt = data.stageOpenedAt;
+    if (toBranch(data.focus) || data.focus === "own") plan.focus = data.focus === "own" ? "own" : toBranch(data.focus);
+    if (Array.isArray(data.opened)) plan.opened = data.opened.filter((k: unknown): k is string => typeof k === "string").slice(0, 500);
+    if (typeof data.eventsSeen === "string" && !Number.isNaN(Date.parse(data.eventsSeen))) plan.eventsSeen = data.eventsSeen;
+    if (typeof data.roundAt === "string" && !Number.isNaN(Date.parse(data.roundAt))) plan.roundAt = data.roundAt;
     if (Array.isArray(data.events)) {
       plan.events = data.events.filter(
         (e: unknown) =>
@@ -220,7 +244,8 @@ export function loadPlan(): Plan {
       );
     }
     const g = data.weekGoal;
-    if (g && (STAGES as readonly unknown[]).includes(g.stage) && typeof g.week === "string" && /^\d{4}-W\d{2}$/.test(g.week)) plan.weekGoal = { stage: g.stage, week: g.week };
+    const goalBranch = toBranch(g?.branch ?? g?.stage);
+    if (goalBranch && typeof g.week === "string" && /^\d{4}-W\d{2}$/.test(g.week)) plan.weekGoal = { branch: goalBranch, week: g.week };
     if (typeof data.lastHabit === "string" && DATE.test(data.lastHabit)) plan.lastHabit = data.lastHabit;
     if (typeof data.restingOn === "string" && DATE.test(data.restingOn)) plan.restingOn = data.restingOn;
     return plan;
@@ -237,15 +262,15 @@ export function savePlan(plan: Plan): void {
   }
 }
 
-// For teammates: add a step from another module, e.g. Jobs adding "Read the job at Acme" to the Apply stage.
-// Module steps show first in My plan. A stage that is not one of STAGES is ignored, so the step still lands.
+// For teammates: add a step from another module, e.g. Jobs adding "Read the job at Acme" to the Apply branch.
+// Module steps show first in My plan. A branch that is not one of BRANCHES is ignored, so the step still lands.
 export function addStepToPlan(step: NewStep): void {
-  const stage = (STAGES as readonly unknown[]).includes(step.stage) ? step.stage : undefined;
+  const stage = toBranch(step.stage);
   savePlan(addSteps(loadPlan(), [{ ...step, stage }], "module"));
 }
 
 // For teammates: tell My plan that something happened, e.g. markEvent("job-saved") when a job is saved.
-// My plan moves the person to the next stage the next time it opens. Unknown events are ignored.
+// My plan lights the matching step the next time it opens (path.ts). Unknown events are ignored.
 export function markEvent(type: PlanEvent): void {
   if (!(PLAN_EVENTS as readonly unknown[]).includes(type)) return;
   const plan = loadPlan();

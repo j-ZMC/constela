@@ -4,7 +4,11 @@ const STORAGE_KEY = "recommended-jobs-cache";
 const VERSION = 1;
 
 export function recommendedCacheKey(request: JobSearchRequest): string {
-  return JSON.stringify({ query: request.query.trim(), userBlockers: [...request.userBlockers].sort() });
+  return JSON.stringify({
+    query: request.query.trim(),
+    userBlockers: [...request.userBlockers].sort(),
+    customBlockers: [...request.customBlockers].sort(),
+  });
 }
 
 export function loadRecommendedCache(request: JobSearchRequest): JobSearchResponse | null {

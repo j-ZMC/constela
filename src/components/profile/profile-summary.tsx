@@ -14,7 +14,7 @@ import { setReadingOption } from "@/lib/reading";
 const UP_FRONT = 3;
 const action = "h-11 px-5 text-base";
 
-export function ProfileSummary({ answers, onEdit }: { answers: Answers; onEdit: (index: number) => void }) {
+export function ProfileSummary({ answers, onEdit, onNext }: { answers: Answers; onEdit: (index: number) => void; onNext: () => void }) {
   const heading = useRef<HTMLHeadingElement>(null);
   const [aidsOn, setAidsOn] = useState(false);
   useEffect(() => heading.current?.focus(), []);
@@ -36,9 +36,9 @@ export function ProfileSummary({ answers, onEdit }: { answers: Answers; onEdit: 
       <div className="flex flex-col gap-4">
         <Constellation lit={answered} label={`${count} of ${QUESTIONS.length} questions answered`} />
         <div className="flex flex-col gap-2">
-          <h1 id="summary-heading" ref={heading} tabIndex={-1} className="text-3xl font-bold outline-none">
-            Your profile is ready
-          </h1>
+          <h2 id="summary-heading" ref={heading} tabIndex={-1} className="text-2xl font-semibold outline-none">
+            Your needs are saved
+          </h2>
           <p className="text-muted-foreground">
             You answered {count} of {QUESTIONS.length}. It stays on this device, and you can change it anytime.
           </p>
@@ -83,9 +83,14 @@ export function ProfileSummary({ answers, onEdit }: { answers: Answers; onEdit: 
         )}
       </div>
 
-      <Link href="/plan" className={buttonVariants({ className: `${action} w-fit` })}>
-        Go to my plan
-      </Link>
+      <div className="flex flex-wrap gap-3">
+        <Button className={action} onClick={onNext}>
+          Next: job conditions
+        </Button>
+        <Link href="/plan" className={buttonVariants({ variant: "outline", className: action })}>
+          Go to my plan
+        </Link>
+      </div>
 
       <details className="rounded-xl border bg-card">
         <summary className="cursor-pointer p-4 font-medium">See or change your answers</summary>

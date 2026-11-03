@@ -81,16 +81,62 @@ def clean_html(raw_html: str) -> str:
     return re.sub(r"\s+", " ", text).strip()
 
 
+# Most postings have no salary fields, but many write the range in the text: "$54 — $60 USD per hour".
+_MONEY = r"(?:USD|CAD|MXN)?\s?\$\s?(\d[\d,]*(?:\.\d+)?)\s?([kK])?"
+PAY_RANGE = re.compile(
+    _MONEY + r"\s*(?:-|–|—|to)\s*(?:USD|CAD|MXN)?\s?\$?\s?(\d[\d,]*(?:\.\d+)?)\s?([kK])?"
+    r"(?P<after>[^.\n]{0,40})",
+    re.IGNORECASE,
+)
+PAY_WORDS = re.compile(r"salary|pay|compensation|wage|range|rate|base|earn|hourly|stipend", re.IGNORECASE)
+PERIODS = (("hour", r"\b(hour|hr|hourly)\b"), ("month", r"\b(month|monthly)\b"), ("year", r"\b(year|yr|annum|annual|annually)\b"))
+
+
+def pay_from_text(text: str) -> dict | None:
+    """The first pay range a posting writes near a pay word, or None. Skips amounts like "$5 - $10 million"."""
+    for match in PAY_RANGE.finditer(text or ""):
+        after = match.group("after")
+        if re.match(r"\s*(million|billion|m\b|bn\b|b\b)", after, re.IGNORECASE):
+            continue
+        before = text[max(0, match.start() - 100):match.start()]
+        # The period is usually after the range ("per hour"), sometimes just before ("$800 USD monthly. Pay Range ...").
+        period = next((name for name, words in PERIODS if re.search(words, after, re.IGNORECASE)), None) or next(
+            (name for name, words in PERIODS if re.search(words, before[-60:], re.IGNORECASE)), None
+        )
+        if not PAY_WORDS.search(before + after) and not period:
+            continue
+        low, high = (
+            float(number.replace(",", "")) * (1000 if k else 1)
+            for number, k in ((match.group(1), match.group(2)), (match.group(3), match.group(4)))
+        )
+        if not 0 < low <= high or high > 10 * low:
+            continue
+        # Without a stated period, the size says it: under 200 is per hour, over 10,000 per year.
+        period = period or ("hour" if high < 200 else "year" if high > 10_000 else None)
+        code = re.search(r"\b(USD|CAD|MXN)\b", match.group(0), re.IGNORECASE)  # group(0) already holds `after`
+        return {
+            "salary_min": low,
+            "salary_max": high,
+            "currency": code.group(1).upper() if code else "$",
+            "salary_period": period,
+        }
+    return None
+
+
 def normalize(job: dict) -> dict:
+    description = clean_html(str(job.get("description", "") or ""))
+    # Read before the cut below: many boards put the pay range at the end of the posting.
+    pay = pay_from_text(description) if job.get("salary_min") is None and job.get("salary_max") is None else None
     return {
         "title": job.get("title", ""),
         "company": job.get("company", ""),
         "location": job.get("location", ""),
         "modality": job.get("modality", ""),
-        "salary_min": job.get("salary_min"),
-        "salary_max": job.get("salary_max"),
-        "currency": job.get("currency", ""),
-        "description": clean_html(str(job.get("description", "") or ""))[:4000],
+        "salary_min": pay["salary_min"] if pay else job.get("salary_min"),
+        "salary_max": pay["salary_max"] if pay else job.get("salary_max"),
+        "currency": pay["currency"] if pay else job.get("currency", ""),
+        "salary_period": pay["salary_period"] if pay else job.get("salary_period"),
+        "description": description[:4000],
         "url": job.get("url", ""),
         "date": job.get("date", ""),
         "source": job.get("source", ""),

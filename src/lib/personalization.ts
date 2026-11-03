@@ -81,6 +81,17 @@ export function checkContrast(r: Roles): ContrastCheck[] {
   return rows.map(([label, ratio, min]) => ({ label, ratio, min, ok: ratio >= min }));
 }
 
+// The night sky (page headers, intro, tour) takes the palette's accent, darkened until white text on it reaches
+// 7:1, so its secondary text (white at 80%) still passes 4.5:1. A navy accent stays as it is.
+export function skyFor(r: Roles): string {
+  let sky = r.accent;
+  for (let t = 0.05; contrast("#ffffff", sky) < 7 && t <= 1; t += 0.05) sky = mix(r.accent, "#000000", t);
+  return sky;
+}
+
+// A dark page background asks the browser for dark scrollbars, selects and date pickers too.
+export const isDark = (r: Roles) => lum(r.background) < 0.2;
+
 function roleVars(r: Roles): Record<string, string> {
   return {
     "--background": r.background, "--foreground": r.text,
@@ -89,6 +100,7 @@ function roleVars(r: Roles): Record<string, string> {
     "--primary": r.accent, "--primary-foreground": readableOn(r.accent),
     "--secondary": r.soft, "--secondary-foreground": r.text, "--muted": r.soft, "--accent": r.soft, "--accent-foreground": r.text,
     "--muted-foreground": mix(r.text, r.background, 0.2),
+    "--sky": skyFor(r),
   };
 }
 
@@ -117,11 +129,12 @@ export function compute(p: Prefs): Boot {
   if (on.length) attrs["data-pz"] = on.join(" ");
   if (p.icons !== "both") attrs["data-pz-icons"] = p.icons;
   if (p.detail !== "comfortable") attrs["data-pz-detail"] = p.detail;
+  if (p.colors && isDark(p.colors)) attrs["data-pz-scheme"] = "dark";
   return { vars, attrs, focus: p.focus };
 }
 
 const ALL_VARS = [...Object.keys(roleVars(DEFAULT_ROLES)), "--pz-font", "--pz-size", "--pz-lh", "--pz-ls", "--pz-w", "--pz-cursor", "--pz-icon", "--pz-ctl"];
-const ALL_ATTRS = ["data-pz", "data-pz-icons", "data-pz-detail"];
+const ALL_ATTRS = ["data-pz", "data-pz-icons", "data-pz-detail", "data-pz-scheme"];
 
 export function applyPrefs(p: Prefs): void {
   const root = document.documentElement;

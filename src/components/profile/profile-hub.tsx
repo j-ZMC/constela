@@ -1,56 +1,63 @@
 "use client";
 
 import { useState } from "react";
+import { Check } from "lucide-react";
 import { AccountSection } from "@/components/profile/account-section";
 import { BarrierSurvey } from "@/components/profile/barrier-survey";
 import { CvSection } from "@/components/profile/cv-section";
 import { ProfileFlow } from "@/components/profile/profile-flow";
+import { Tabs, TabsList, TabsPanel, TabsTrigger } from "@/components/ui/tabs";
+import { loadBarrierPreferences } from "@/lib/barrier-preferences";
+import { loadResumeProfile } from "@/lib/local-profile";
+import { QUESTIONS, loadStep } from "@/lib/profile";
 import { useHydrated } from "@/lib/use-hydrated";
-import { cn } from "@/lib/utils";
+import { Loading } from "@/components/loading";
 
-type Section = "account" | "questionnaire" | "cv";
+type Section = "needs" | "conditions" | "cv" | "contact";
 const sections: Array<{ id: Section; label: string }> = [
-  { id: "account", label: "Account" },
-  { id: "questionnaire", label: "Questionnaire" },
+  { id: "needs", label: "Your needs" },
+  { id: "conditions", label: "Job conditions" },
   { id: "cv", label: "CV" },
+  { id: "contact", label: "Contact details" },
 ];
 
-export function ProfileHub() {
-  const hydrated = useHydrated();
-  const [section, setSection] = useState<Section>("account");
+// Contact details are optional and nothing depends on them, so they never count as unfinished.
+const progress = (): Partial<Record<Section, boolean>> => ({
+  needs: loadStep() >= QUESTIONS.length,
+  conditions: loadBarrierPreferences() !== null,
+  cv: loadResumeProfile() !== null,
+});
 
-  if (!hydrated) return null;
+// Saved progress lives in localStorage, so render only after hydration.
+export function ProfileHub() {
+  return useHydrated() ? <Hub /> : <Loading />;
+}
+
+function Hub() {
+  // Open where the person left off, so "Get started" and "Finish your profile" land on the next real task.
+  const [section, setSection] = useState<Section>(() => {
+    const done = progress();
+    return sections.find(({ id }) => done[id] === false)?.id ?? "needs";
+  });
+  const done = progress();
 
   return (
     <section aria-labelledby="profile-heading" className="flex flex-col gap-6">
-      <div>
-        <h1 id="profile-heading" className="text-3xl font-bold">Your profile</h1>
-        <p className="mt-2 text-muted-foreground">Manage your local account details, questionnaire answers, and CV.</p>
-      </div>
-      <div role="tablist" aria-label="Profile sections" className="grid grid-cols-3 rounded-lg border bg-card p-1">
-        {sections.map((item) => (
-          <button
-            key={item.id}
-            type="button"
-            role="tab"
-            aria-selected={section === item.id}
-            className={cn("min-h-11 rounded-md px-3 text-sm font-medium", section === item.id ? "bg-secondary text-foreground" : "text-muted-foreground hover:text-foreground")}
-            onClick={() => setSection(item.id)}
-          >
-            {item.label}
-          </button>
-        ))}
-      </div>
-      <div role="tabpanel" aria-label={sections.find((item) => item.id === section)?.label}>
-        {section === "account" && <AccountSection />}
-        {section === "questionnaire" && (
-          <div className="flex flex-col gap-12">
-            <ProfileFlow />
-            <BarrierSurvey />
-          </div>
-        )}
-        {section === "cv" && <CvSection />}
-      </div>
+      <Tabs value={section} onValueChange={(value) => setSection(value as Section)}>
+        <TabsList aria-label="Profile sections" className="grid grid-cols-2 sm:grid-cols-4">
+          {sections.map(({ id, label }) => (
+            <TabsTrigger key={id} value={id}>
+              {done[id] && <Check aria-hidden className="size-4" />}
+              {label}
+              {done[id] && <span className="sr-only">, done</span>}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        <TabsPanel value="needs"><ProfileFlow onNext={() => setSection("conditions")} /></TabsPanel>
+        <TabsPanel value="conditions"><BarrierSurvey onNext={() => setSection("cv")} /></TabsPanel>
+        <TabsPanel value="cv"><CvSection /></TabsPanel>
+        <TabsPanel value="contact"><AccountSection /></TabsPanel>
+      </Tabs>
     </section>
   );
 }

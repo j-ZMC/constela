@@ -6,9 +6,10 @@ export function buildRecommendedJobsRequest(
   profile: ResumeProfile,
   answers: Partial<Answers>,
   userBlockers: string[],
+  customBlockers: string[] = [],
 ): JobSearchRequest {
   const workplace = Array.isArray(answers.workplace) ? answers.workplace.filter((value) => value !== "not-sure") : [];
   const preference = workplace.length ? `Preferred work arrangement: ${workplace.join(", ")}.` : "";
   const query = `${buildResumeRecommendationText(profile)} ${preference}`.trim().slice(0, 200);
-  return { query: query || "jobs matching this profile", userBlockers };
+  return { query: query || "jobs matching this profile", userBlockers, customBlockers };
 }

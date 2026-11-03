@@ -6,11 +6,11 @@ import { z } from "zod";
 
 // What each starter step means inside Constela, so the AI breaks it into steps the app really has.
 const STARTER_CONTEXT = {
-  "starter-jobs": "In Constela's Jobs page the person sees 3 jobs picked for them and can open each one to read it.",
-  "starter-save": "In Constela's Jobs page every job has a Save button.",
-  "starter-company": "Each job in Constela has a short 'Get to know the company' page with key facts and questions to ask.",
-  "starter-practice": "Constela's Interview page shows one practice question; the person answers it out loud or in writing.",
-  "starter-expect": "Constela's Interview page has a short 'What to expect' guide about the steps of an interview.",
+  "starter-jobs": "In Constela's Jobs page, the Jobs tab shows jobs picked from the person's CV and has a search box with filters for pay, company size and work mode; the Internships tab has internships. Each job can be opened to read it.",
+  "starter-save": "In Constela's Jobs page every job has a Save button, and saved jobs are in the Saved tab.",
+  "starter-company": "In the Saved tab of Constela's Jobs page, each saved job has 'Get to know the company': what Constela knows about the company's inclusion, and a button to look the company up online (what it does, pay, inclusion, interviews).",
+  "starter-practice": "Constela's Interview page has a practice chat: the person chooses 'Practice an interview' or 'Common questions' and answers by writing or talking.",
+  "starter-expect": "Constela's Interview page has a 'What to expect' activity that explains the steps of an interview.",
 } as const;
 
 export const breakdownRequest = z

@@ -238,10 +238,10 @@ export function StageDone({
       </h2>
       <Constellation lit={Array(stars).fill(true)} label={`${finished}: every star is lit`} glow={stars - 1} />
       <div className="flex flex-col gap-1">
-        <p className="font-medium">Next stage: {next}</p>
-        <p className="text-pretty text-muted-foreground">{preview} Its first step is ready when you are.</p>
+        <p className="font-medium">Next: {next}</p>
+        {preview && <p className="text-pretty text-muted-foreground">{preview} Its next step is ready when you are.</p>}
       </div>
-      {listen && <ListenButton text={`You finished ${finished}. Next stage: ${next}. ${preview}`} />}
+      {listen && <ListenButton text={`You finished ${finished}. Next: ${next}. ${preview}`} />}
       <Button className={`${action} w-fit`} onClick={onContinue}>
         See my next step
       </Button>

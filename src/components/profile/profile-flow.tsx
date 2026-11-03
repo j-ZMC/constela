@@ -8,14 +8,15 @@ import { ProfileSummary } from "@/components/profile/profile-summary";
 import { QuestionStep } from "@/components/profile/question-step";
 import { QUESTIONS, type Answers, loadProfile, loadStep, saveProfile, saveStep } from "@/lib/profile";
 import { useHydrated } from "@/lib/use-hydrated";
+import { Loading } from "@/components/loading";
 
 // Saved answers live in localStorage, which the server can't see. Render the flow only after
 // hydration so its lazy state reads storage without a server/client mismatch.
-export function ProfileFlow() {
-  return useHydrated() ? <Flow /> : null;
+export function ProfileFlow({ onNext }: { onNext: () => void }) {
+  return useHydrated() ? <Flow onNext={onNext} /> : <Loading />;
 }
 
-function Flow() {
+function Flow({ onNext }: { onNext: () => void }) {
   const router = useRouter();
   const [answers, setAnswers] = useState<Answers>(() => loadProfile() ?? {});
   const [step, setStep] = useState(loadStep);
@@ -38,10 +39,9 @@ function Flow() {
     return (
       <section className="flex flex-col gap-6">
         <Constellation lit={QUESTIONS.map(() => false)} label={`${QUESTIONS.length} short questions`} />
-        <h1 className="text-3xl font-bold text-balance">Let&apos;s get to know you</h1>
-        <p className="text-lg text-muted-foreground">
-          {QUESTIONS.length} short questions help Constela fit the way you work best. Each answer lights up a star.
-          It takes about 3 minutes, and you can skip any question or change your answers anytime.
+        <h2 className="text-2xl font-semibold text-balance">Let&apos;s get to know you</h2>
+        <p className="text-muted-foreground">
+          {QUESTIONS.length} short questions. About 3 minutes. Each answer lights a star, and you can skip any question.
         </p>
         <div className="flex flex-wrap gap-3">
           <Button className="h-11 px-5 text-base" onClick={() => go(0)}>
@@ -59,6 +59,7 @@ function Flow() {
     return (
       <ProfileSummary
         answers={answers}
+        onNext={onNext}
         onEdit={(i) => {
           setDraft(answers[QUESTIONS[i].id]);
           setEditing(true);

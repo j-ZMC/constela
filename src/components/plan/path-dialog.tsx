@@ -4,48 +4,59 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Constellation } from "@/components/profile/constellation";
 import { useSummaryMode } from "@/components/summary";
-import { STAGE_NAMES, STAGE_STEPS, stageOf } from "@/lib/path";
-import { STAGES, stepKey, type Plan, type Stage } from "@/lib/plan";
+import { BRANCH_NAMES, BRANCH_PREVIEW, OWN_NAME, PRIORITY, branchProgress, currentBranch } from "@/lib/path";
+import { stepKey, type Branch, type Plan } from "@/lib/plan";
 
-// The whole job search at a glance: five small constellations, and a way back to an earlier stage.
-export function PathDialog({ plan, onBack, onClose }: { plan: Plan; onBack: (stage: Stage) => void; onClose: () => void }) {
-  const at = STAGES.indexOf(stageOf(plan));
+// Every branch at a glance: how far along it is, what it is for, and a way to work on it next.
+export function PathDialog({ plan, onChoose, onClose }: { plan: Plan; onChoose: (branch: Branch | "own" | undefined) => void; onClose: () => void }) {
   const short = useSummaryMode();
+  const working = currentBranch(plan);
+  const own = plan.steps.filter((s) => !s.stage);
+  const branches: Array<Branch | "own"> = [...PRIORITY, ...(own.length ? (["own"] as const) : [])];
   return (
     <Dialog open onOpenChange={(open) => !open && onClose()}>
-      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)] gap-5 p-5 text-base sm:max-w-lg">
+      <DialogContent className="max-h-[calc(100dvh-2rem)] grid-rows-[auto_minmax(0,1fr)_auto] gap-5 p-5 text-base sm:max-w-lg">
         <DialogHeader>
-          <DialogTitle className="text-xl leading-tight font-semibold">Your path</DialogTitle>
+          <DialogTitle className="text-xl leading-tight font-semibold">All branches</DialogTitle>
           <DialogDescription className="text-base">
             {short
-              ? "Five stages to your first reply."
-              : "Five stages from getting ready to your first reply. After Follow up, you look for the next job."}
+              ? "Work on any branch, in any order."
+              : "Your job search has branches you can work on in any order. Today shows one step at a time from the branch you choose."}
           </DialogDescription>
         </DialogHeader>
-        <ol className="-mx-5 flex min-h-0 flex-col gap-4 overflow-y-auto px-5 py-1">
-          {STAGES.map((stage, i) => {
-            const defs = STAGE_STEPS[stage];
-            const lit = defs.map((d) => plan.steps.some((s) => s.done && stepKey(s.id) === d.id));
-            const status = i < at ? "Done" : i === at ? "Now" : "Coming up";
+        <ul className="-mx-5 flex min-h-0 flex-col divide-y overflow-y-auto px-5">
+          {branches.map((b) => {
+            const { done, total } =
+              b === "own" ? { done: own.filter((s) => s.done).length, total: own.length } : branchProgress(plan, b);
+            const lit = b === "own" ? own.map((s) => s.done) : Array.from({ length: total }, (_, i) => i < done);
+            const name = b === "own" ? OWN_NAME : BRANCH_NAMES[b];
+            const now = working === b;
+            const waiting = b === "own" ? own.some((s) => !s.done) : plan.steps.some((s) => !s.done && s.stage === b && stepKey(s.id) !== "habit-jobs");
             return (
-              <li key={stage} className="flex flex-col gap-2">
+              <li key={b} className="flex flex-col gap-2 py-4">
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3">
-                  <h3 className="font-semibold">
-                    {i + 1}. {STAGE_NAMES[stage]}
-                  </h3>
-                  <span className="text-sm text-muted-foreground">{status}</span>
+                  <h3 className="font-semibold">{name}</h3>
+                  <span className="text-sm text-muted-foreground">
+                    {done === total ? "Every step done" : `${done} of ${total} done`}
+                    {now && " · Working on this now"}
+                  </span>
                 </div>
-                <Constellation lit={lit} label={`${STAGE_NAMES[stage]}: ${lit.filter(Boolean).length} of ${lit.length} steps done`} />
-                {i < at && (
-                  <Button variant="outline" className="h-11 w-fit px-4 text-base" onClick={() => onBack(stage)}>
-                    Go back to {STAGE_NAMES[stage]}
+                <Constellation lit={lit} label={`${name}: ${done} of ${total} steps done`} />
+                {!short && b !== "own" && <p className="text-pretty text-muted-foreground">{BRANCH_PREVIEW[b]}</p>}
+                {!now && waiting && (
+                  <Button variant="outline" className="w-fit" onClick={() => onChoose(b)}>
+                    Work on this next
                   </Button>
                 )}
               </li>
             );
           })}
-        </ol>
-        {!short && <p className="text-sm text-muted-foreground">Going back adds that stage&apos;s steps again. Your stars stay.</p>}
+        </ul>
+        {plan.focus && (
+          <Button variant="ghost" className="w-fit" onClick={() => onChoose(undefined)}>
+            Let Constela choose the next step
+          </Button>
+        )}
       </DialogContent>
     </Dialog>
   );

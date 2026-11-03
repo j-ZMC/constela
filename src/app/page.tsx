@@ -10,8 +10,8 @@ export default function Home() {
       <section className="flex w-full max-w-md flex-col gap-5 rounded-2xl bg-card p-6 shadow-[0_20px_60px_-20px_rgb(0_0_0/0.6)] sm:p-8">
         <h1 className="text-3xl font-bold text-balance sm:text-4xl">Find a job, one step at a time</h1>
         <p className="text-pretty text-muted-foreground">
-          Constela turns the job search into small, clear steps that fit how you work. Every step you finish lights a
-          star.
+          For neurodivergent people and for Gen Z looking for work. Constela turns the job search into small, clear steps
+          that fit how you work. Every step you finish lights a star.
         </p>
         <IntroActions />
       </section>

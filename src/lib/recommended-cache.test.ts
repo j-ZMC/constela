@@ -33,13 +33,15 @@ describe("recommended result cache", () => {
   });
 
   it("returns saved results for the same request", () => {
-    const request = { query: "Python analyst", userBlockers: [] };
+    const request = { query: "Python analyst", userBlockers: [], customBlockers: [] };
     saveRecommendedCache(request, response);
     expect(loadRecommendedCache(request)).toEqual(response);
   });
 
   it("uses a different cache key when the profile request changes", () => {
-    expect(recommendedCacheKey({ query: "Python analyst", userBlockers: [] }))
-      .not.toBe(recommendedCacheKey({ query: "Python analyst", userBlockers: ["adhd:distraction_and_interruptions"] }));
+    const base = { query: "Python analyst", userBlockers: [], customBlockers: [] };
+    const key = recommendedCacheKey(base);
+    expect(recommendedCacheKey({ ...base, userBlockers: ["adhd:distraction_and_interruptions"] })).not.toBe(key);
+    expect(recommendedCacheKey({ ...base, customBlockers: ["night shift"] })).not.toBe(key);
   });
 });

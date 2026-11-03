@@ -11,6 +11,7 @@ from __future__ import annotations
 import argparse
 import json
 import os
+import sys
 from pathlib import Path
 from typing import Any
 
@@ -100,11 +101,12 @@ def clean_jobs(jobs: pd.DataFrame) -> pd.DataFrame:
     )
     empty = jobs["description"].str.strip().eq("")
     if empty.any():
+        # stderr: filter_jobs_openai.py --json shares this, and its stdout must be only the JSON result.
         if "source" in jobs.columns:
-            print(f"Skipping {int(empty.sum())} jobs with empty descriptions:")
-            print(jobs.loc[empty].groupby("source").size().to_string())
+            print(f"Skipping {int(empty.sum())} jobs with empty descriptions:", file=sys.stderr)
+            print(jobs.loc[empty].groupby("source").size().to_string(), file=sys.stderr)
         else:
-            print(f"Skipping {int(empty.sum())} jobs with empty descriptions.")
+            print(f"Skipping {int(empty.sum())} jobs with empty descriptions.", file=sys.stderr)
         jobs = jobs.loc[~empty].copy()
     return jobs.drop_duplicates(subset="url", keep="first")
 

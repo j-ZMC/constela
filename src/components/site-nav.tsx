@@ -2,17 +2,17 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, ListChecks, MessagesSquare, Sparkles, UserRound } from "lucide-react";
+import { BriefcaseBusiness, GraduationCap, ListChecks, MessagesSquare, UserRound } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { PersonalizationPanel } from "@/components/personalization-panel";
 import { cn } from "@/lib/utils";
 
 const links = [
-  { href: "/profile", label: "Profile", icon: UserRound },
   { href: "/plan", label: "My plan", icon: ListChecks },
-  { href: "/recommended", label: "Recommended", icon: Sparkles },
   { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
+  { href: "/learn", label: "Learn", icon: GraduationCap },
   { href: "/interview", label: "Interview", icon: MessagesSquare },
+  { href: "/profile", label: "Profile", icon: UserRound },
 ];
 
 export function SiteNav() {
@@ -28,7 +28,7 @@ export function SiteNav() {
         href={href}
         aria-current={active ? "page" : undefined}
         className={cn(
-          "flex flex-1 flex-col items-center gap-1 whitespace-nowrap rounded-lg px-1 py-2 text-xs lg:flex-none lg:flex-row lg:gap-2 lg:px-3 lg:text-sm",
+          "press flex min-h-11 flex-1 flex-col items-center justify-center gap-1 rounded-lg px-1 py-2 text-center text-sm leading-tight lg:flex-none lg:flex-row lg:gap-2 lg:px-3 lg:text-base",
           active ? "bg-secondary font-semibold text-foreground" : "text-muted-foreground hover:text-foreground"
         )}
       >
@@ -40,9 +40,10 @@ export function SiteNav() {
 
   return (
     <>
-      <header className="sticky top-0 z-10 border-b bg-background">
-        <div className="mx-auto flex max-w-5xl items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="text-lg">
+      {/* Translucent, like a native toolbar: the page sky and content stay faintly visible as they scroll under it. */}
+      <header className="sticky top-0 z-10 border-b bg-background/85 backdrop-blur-xl backdrop-saturate-150">
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3">
+          <Link href="/" className="flex min-h-11 items-center text-lg">
             <Logo />
           </Link>
           {!intro && (
@@ -53,11 +54,13 @@ export function SiteNav() {
           <PersonalizationPanel />
         </div>
       </header>
-      {/* On phones and tablets the nav sits at the bottom, within thumb reach; lg leaves room for large text */}
+      {/* On phones and tablets the nav sits at the bottom, within thumb reach; lg leaves room for large text.
+          globals.css hides it while the keyboard is open (data-mobile-nav), so it never covers the field. */}
       {!intro && (
         <nav
           aria-label="Main"
-          className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background px-2 pb-[env(safe-area-inset-bottom)] lg:hidden"
+          data-mobile-nav
+          className="fixed inset-x-0 bottom-0 z-10 flex border-t bg-background/85 px-2 pb-[env(safe-area-inset-bottom)] backdrop-blur-xl backdrop-saturate-150 lg:hidden"
         >
           {items}
         </nav>

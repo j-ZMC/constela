@@ -4,21 +4,21 @@ import { useState } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
+import { loadProfile } from "@/lib/profile";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const action = "h-11 px-5 text-base";
 
 const HOW = [
-  { title: "Choose what matters at work", text: "Select workplace conditions for the job filter to review. No diagnosis required." },
+  { title: "Tell us what helps you", text: "Answer a few short questions. No diagnosis required." },
   { title: "Get one small step at a time", text: "Your plan shows what to do now, and breaks big tasks into small ones." },
   { title: "Watch your stars light up", text: "Every step you finish lights a star, from getting ready to your first interview." },
 ];
 
-// One clear way in. Accounts come later (Supabase); until then the account line says so plainly.
+// One clear way in. Sign-in returns here when accounts exist (Supabase).
 export function IntroActions() {
-  const hasProfile = useHydrated() && loadBarrierPreferences() !== null;
+  const hasProfile = useHydrated() && (loadProfile() !== null || loadBarrierPreferences() !== null);
   const [how, setHow] = useState(false);
-  const [note, setNote] = useState(false);
   return (
     <div className="flex flex-col gap-4">
       <div className="flex flex-wrap gap-3">
@@ -46,25 +46,12 @@ export function IntroActions() {
         </ol>
       )}
 
-      {/* The status line stays in the page (never display:none) so screen readers announce the note. */}
-      <div className="flex flex-col">
-      <p className="flex flex-wrap items-center gap-x-1 text-muted-foreground">
-        Have an account?
-        <Button variant="link" className="h-11 px-1 text-base" onClick={() => setNote(true)}>
-          Sign in
-        </Button>
-        or
-        <Button variant="link" className="h-11 px-1 text-base" onClick={() => setNote(true)}>
-          create one
-        </Button>
+      <p className="text-sm text-muted-foreground">
+        No account needed. Your progress stays on this device.{" "}
+        <Link href="/privacy" className="underline underline-offset-4 hover:text-foreground">
+          Privacy
+        </Link>
       </p>
-      <p role="status" className="text-sm text-muted-foreground">
-        {note && "Accounts are coming soon. You can start now: your progress stays on this device."}
-      </p>
-      </div>
-      <Link href="/privacy" className="w-fit text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
-        How we keep your data private
-      </Link>
     </div>
   );
 }

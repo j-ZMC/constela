@@ -1,5 +1,11 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { barrierCatalog, loadBarrierPreferences, saveBarrierPreferences } from "@/lib/barrier-preferences";
+import {
+  barrierCatalog,
+  loadBarrierPreferences,
+  loadCustomBlockers,
+  normalizeCustomBlocker,
+  saveBarrierPreferences,
+} from "@/lib/barrier-preferences";
 
 describe("barrier preferences", () => {
   let store: Record<string, string>;
@@ -29,6 +35,22 @@ describe("barrier preferences", () => {
       user_blockers: ["adhd:distraction_and_interruptions", "unknown:bad", "adhd:distraction_and_interruptions"],
     });
     expect(loadBarrierPreferences()).toEqual(["adhd:distraction_and_interruptions"]);
+  });
+
+  it("saves the person's own words, normalized, and keeps them when only the catalog choices are saved", () => {
+    saveBarrierPreferences([], ["  Night   Shift ", "night shift", 'bad"word', "open office"]);
+    expect(loadCustomBlockers()).toEqual(["night shift", "open office"]);
+    saveBarrierPreferences(["adhd:distraction_and_interruptions"]);
+    expect(loadCustomBlockers()).toEqual(["night shift", "open office"]);
+  });
+
+  it("normalizes tags and rejects text that cannot be one", () => {
+    expect(normalizeCustomBlocker("  Open   Office ")).toBe("open office");
+    expect(normalizeCustomBlocker("C++")).toBe("c++");
+    expect(normalizeCustomBlocker("")).toBeNull();
+    expect(normalizeCustomBlocker("x".repeat(41))).toBeNull();
+    expect(normalizeCustomBlocker("--option")).toBe("--option");
+    expect(normalizeCustomBlocker("a\nb")).toBe("a b");
   });
 
   it("distinguishes an unsaved profile from a saved empty selection", () => {

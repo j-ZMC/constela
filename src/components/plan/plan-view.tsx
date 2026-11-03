@@ -1,13 +1,14 @@
 "use client";
 
-import { useState } from "react";
+import { useRef, useState } from "react";
 import Link from "next/link";
 import { Check, ChevronRight, CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { Constellation } from "@/components/profile/constellation";
 import { AddStep } from "@/components/plan/add-step";
+import { PlanMap } from "@/components/plan/plan-map";
+import { AskConstela } from "@/components/plan/ask-constela";
 import { BreakdownDialog } from "@/components/plan/breakdown-dialog";
-import { CheckInReply, EnergyCheckIn } from "@/components/plan/energy-check-in";
+import { EasierToday } from "@/components/plan/energy-check-in";
 import { PathDialog } from "@/components/plan/path-dialog";
 import { Tour, tourSeen, type TourStep } from "@/components/tour";
 import { firstSentence } from "@/components/summary";
@@ -15,7 +16,6 @@ import { AllDone, CurrentStep, Duration, ICONS, NextStep, Pause, Removed, Rest, 
 import { StepDetails } from "@/components/plan/step-details";
 import {
   addSteps,
-  checkInDue,
   completeStep,
   gentleTone,
   loadPlan,
@@ -24,33 +24,33 @@ import {
   resetCheckIn,
   savePlan,
   setEnergy,
-  STAGES,
+  BRANCHES,
   stepKey,
   syncWithProfile,
   todayEnergy,
   undoStep,
   visibleSteps,
-  type Energy,
   type NewStep,
   type Plan,
   type PlanStep,
-  type Stage,
+  type Branch,
 } from "@/lib/plan";
-import { STAGE_NAMES, STAGE_PREVIEW, STAGE_STEPS, activeSteps, fillToday, goBack, nextStage, stageComplete, stageOf, weekGoal } from "@/lib/path";
+import { BRANCH_PREVIEW, BRANCH_STEPS, activeSteps, branchComplete, branchName, currentBranch, fillToday, weekGoal } from "@/lib/path";
+import { branchesIn, pathMap } from "@/lib/path-map";
 import { loadProfile, toAdaptations } from "@/lib/profile";
 import { useHydrated } from "@/lib/use-hydrated";
+import { Loading } from "@/components/loading";
+import { PageSky, onSky } from "@/components/page-sky";
 
 // The first-visit tour of My plan, one part at a time. Parts not on screen right now are skipped.
 const PLAN_TOUR: TourStep[] = [
   { target: "step", title: "Your step for now", text: "Do one thing at a time. When you finish, press Done. If it feels big, press Break it down for me." },
-  { target: "stars", title: "Your stars", text: "Each star is a step of this stage. Done steps light up. Tap a star to see that step." },
-  { target: "path", title: "Your path", text: "The job search has 5 stages, from getting ready to your first reply. See them here, or go back to one." },
-  { target: "checkin", title: "How you feel today", text: "Tell us how you feel. On a low day you get smaller steps. It stays on this device." },
-  { target: "add", title: "Your own steps", text: "Add any task you have. We can break it into small steps with you." },
-  { target: "personalize", title: "Make it yours", text: "Change colors, text size, the font and motion whenever you want." },
+  { target: "stars", title: "Your map", text: "You are the star in the middle. Each branch is a part of the job search, and each star is a step. Done steps light up. Tap a star to see that step." },
+  { target: "ask", title: "Hey Constela", text: "Have a question about your plan? Press Hey Constela and ask. You can also turn on listening and say Hey Constela out loud." },
+  { target: "path", title: "All branches", text: "Work on the branches in any order. See them all here, and choose which one to work on next." },
 ];
 
-// Every change goes through the path: move on if a stage is done, keep a step ready, add a due habit, set the week's goal.
+// Every change goes through the path: add the branches' steps, light steps for what happened, add a due habit, set the week's goal.
 function throughPath(plan: Plan): Plan {
   const now = new Date();
   return weekGoal(fillToday(plan, now), now).plan;
@@ -58,7 +58,18 @@ function throughPath(plan: Plan): Plan {
 
 // Plan and profile live in localStorage, so render only after hydration (same as the Profile flow).
 export function PlanView() {
-  return useHydrated() ? <View /> : null;
+  return useHydrated() ? (
+    <View />
+  ) : (
+    <>
+      <PageSky>
+        <h1 className="text-3xl font-bold tracking-tight sm:text-4xl">Today</h1>
+      </PageSky>
+      <div className="mx-auto w-full max-w-xl px-4 py-8">
+        <Loading />
+      </div>
+    </>
+  );
 }
 
 function View() {
@@ -68,8 +79,11 @@ function View() {
     savePlan(p);
     return p;
   });
-  // The stage just finished, shown as its own moment before the next stage's first step.
-  const [stageDone, setStageDone] = useState<Stage | null>(null);
+  // The branch just finished, shown as its own moment before the next step.
+  const [stageDone, setStageDone] = useState<Branch | null>(null);
+  // The map Hey Constela shows itself on, and the branches its answer names.
+  const stage = useRef<HTMLDivElement>(null);
+  const [talkedAbout, setTalkedAbout] = useState<Array<Branch | "own">>([]);
   const [pathOpen, setPathOpen] = useState(false);
   // Shown once on the first visit; "How this works" brings it back anytime.
   const [touring, setTouring] = useState(() => !tourSeen("plan"));
@@ -89,13 +103,13 @@ function View() {
   const flags = { explicitSteps: adaptations.explicitSteps, summaryMode: adaptations.summaryMode, gentleTone: gentleTone(energy) };
 
   function update(next: Plan): Plan {
-    // A stage whose rule is met by this change; going back to a stage never counts as finishing it.
-    const finished = next.stage && stageComplete(next) ? stageOf(next) : null;
     const p = throughPath(next);
+    // A branch this change finished: every one of its steps done now, and not before.
+    const finished = BRANCHES.find((b) => !branchComplete(plan, b) && branchComplete(p, b)) ?? null;
     setPlan(p);
     savePlan(p);
     setRemoved(null);
-    if (finished && stageOf(p) !== finished) setStageDone(finished);
+    if (finished) setStageDone(finished);
     return p;
   }
 
@@ -111,28 +125,27 @@ function View() {
     setAnnouncement(`Back on your plan: ${removed.title}`);
   }
 
-  const stage = stageOf(plan);
+  const working = currentBranch(plan);
   const active = activeSteps(plan);
   const shown = visibleSteps({ ...plan, steps: active }, adaptations, energy);
   const [current, ...upNext] = shown;
   // importantFirst: only the current step stays on screen; everything else waits behind a count.
   const next = adaptations.importantFirst ? [] : upNext;
   const later = active.filter((s) => !s.done && s !== current && !next.includes(s));
-  // The constellation is this stage's round only: its waiting steps and the stars earned since it opened.
-  // The person's own steps, habits and leftovers from earlier stages stay in the lists below, never in the band.
-  const thisRound = (s: PlanStep) => !plan.stageOpenedAt || (s.doneAt !== undefined && s.doneAt >= plan.stageOpenedAt);
-  const stars = active.filter((s) => s.stage === stage && (!s.done || thisRound(s)));
+  // Every branch on one sky; the count is every star on it.
+  const map = pathMap(plan);
+  const stars = map.flatMap((b) => b.nodes);
   const done = stars.filter((s) => s.done).length;
   const goal = weekGoal(plan, now);
   // "Stop for today" is saved with the date, so a reload keeps the rest screen; the next day starts fresh.
   const resting = plan.restingOn === localDate(now);
   const setResting = (on: boolean) => update({ ...plan, restingOn: on ? localDate(new Date()) : undefined });
-  // summaryMode keeps stage descriptions to their first sentence.
-  const preview = (s: Stage) => (adaptations.summaryMode ? firstSentence(STAGE_PREVIEW[s]) : STAGE_PREVIEW[s]);
-  // headsUpOnChanges: when finishing the current step would finish the stage, say what starts next before it starts.
-  const finishesStage = current !== undefined && stageComplete(completeStep(plan, current.id, now));
-  const headsUp =
-    adaptations.headsUpOnChanges && finishesStage ? `After this step, ${STAGE_NAMES[nextStage(stage)]} starts. ${preview(nextStage(stage))}` : undefined;
+  // summaryMode keeps branch descriptions to their first sentence.
+  const preview = (b: Branch) => (adaptations.summaryMode ? firstSentence(BRANCH_PREVIEW[b]) : BRANCH_PREVIEW[b]);
+  // headsUpOnChanges: when finishing the current step would finish its branch, say so before it happens.
+  const ownBranch = current?.stage;
+  const finishesBranch = current !== undefined && ownBranch !== undefined && branchComplete(completeStep(plan, current.id, now), ownBranch);
+  const headsUp = adaptations.headsUpOnChanges && finishesBranch && ownBranch ? `After this step, ${branchName(ownBranch)} is complete.` : undefined;
   const selectedStep = plan.steps.find((s) => s.id === selected);
   const finishedToday = plan.steps.filter((s) => s.done && s.doneAt && localDate(new Date(s.doneAt)) === localDate(now));
   const justDoneTitle = plan.steps.find((s) => s.id === justDone)?.title;
@@ -143,8 +156,8 @@ function View() {
     const updated = update(completeStep(plan, id, new Date()));
     setJustDone(id);
     const upcoming = visibleSteps({ ...updated, steps: activeSteps(updated) }, adaptations, energy)[0];
-    if (stageOf(updated) !== stage) {
-      // The stage card's heading takes focus and says it; the live region stays quiet so it is not heard twice.
+    if (BRANCHES.some((b) => !branchComplete(plan, b) && branchComplete(updated, b))) {
+      // The branch card's heading takes focus and says it; the live region stays quiet so it is not heard twice.
       setAnnouncement("");
       return;
     }
@@ -152,16 +165,18 @@ function View() {
     setPaused(adaptations.gentlePacing && upcoming !== undefined);
   }
 
-  function backTo(target: Stage) {
-    update(goBack(plan, target, new Date()));
+  // From All branches: work on this branch next, or let Constela choose again.
+  function choose(branch: Branch | "own" | undefined) {
+    update({ ...plan, focus: branch });
     setPathOpen(false);
     setStageDone(null);
-    setAnnouncement(`Back to ${STAGE_NAMES[target]}.`);
+    setAnnouncement(branch ? `Working on ${branchName(branch)} now.` : "Constela chooses your next step again.");
   }
 
-  function checkIn(level: Energy | null) {
-    update(setEnergy(plan, level, new Date()));
-    // The reply takes focus, so the step card must not grab it too.
+  // "Need an easier step today?" is stored as a low-energy day for today only; tomorrow starts as usual.
+  function easierToday(on: boolean) {
+    update(on ? setEnergy(plan, "low", new Date()) : resetCheckIn(plan));
+    // The button keeps focus, so the step card must not grab it too.
     setAnnouncement("");
     setCheckedIn(true);
   }
@@ -191,119 +206,115 @@ function View() {
   }
 
   return (
-    <div className="flex flex-col gap-8">
-      {/* Kept compact so the current step is on the first screen of a phone. */}
-      <header className="flex flex-col gap-2 sm:gap-3">
-        <div className="flex flex-wrap items-center justify-between gap-x-3">
-          <h1 className="text-2xl font-bold sm:text-3xl">Today</h1>
-          <div className="flex items-center">
-            <Button variant="ghost" className="h-11 px-3 text-base" onClick={() => setTouring(true)} aria-label="How this works">
-              <CircleHelp aria-hidden className="size-5" />
-              <span className="max-sm:hidden">How this works</span>
-            </Button>
-            <Button data-tour="path" variant="ghost" className="h-11 px-3 text-base underline underline-offset-4" onClick={() => setPathOpen(true)}>
-              Your path
-            </Button>
+    <>
+      {/* My plan is one sky: the title, the constellation as big as the screen allows, and today's step floating on it,
+          beside the map on wide screens and under it on phones. Pressing Done lights its star in view. */}
+      <section aria-labelledby="plan-title" className="relative isolate flex flex-col overflow-hidden bg-sky text-white lg:min-h-[calc(100svh-5rem)]">
+        <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 pt-6 sm:pt-8">
+          <div className="flex flex-wrap items-center justify-between gap-x-3">
+            <h1 id="plan-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Today</h1>
+            <div className="flex items-center">
+              <Button variant="ghost" className={`h-11 px-3 text-base ${onSky}`} onClick={() => setTouring(true)} aria-label="How this works">
+                <CircleHelp aria-hidden className="size-5" />
+                <span className="max-sm:hidden">How this works</span>
+              </Button>
+              <Button data-tour="path" variant="ghost" className={`h-11 px-3 text-base underline underline-offset-4 ${onSky}`} onClick={() => setPathOpen(true)}>
+                All branches
+              </Button>
+            </div>
+          </div>
+          <p className="font-medium text-white/80">{working ? `Working on: ${branchName(working)}` : "Every step is done"}</p>
+        </div>
+
+        <p aria-live="polite" className="sr-only">
+          {announcement}
+        </p>
+
+        <div className="mx-auto grid min-h-0 w-full max-w-6xl flex-1 gap-6 px-4 pt-2 pb-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-[minmax(0,1fr)_auto]">
+          {/* As tall as a phone's screen between its bars; on wide screens, all the height the sky has. */}
+          <div className="flex min-h-0 flex-col items-center gap-2 max-lg:h-[calc(100svh-15rem)] max-lg:min-h-[24rem] lg:row-span-2">
+            <div ref={stage} data-tour="stars" data-voice="idle" className="flex min-h-0 w-full flex-1 items-center justify-center [container-type:size]">
+              <PlanMap branches={map} currentId={current?.id} glowId={justDone ?? undefined} highlight={talkedAbout} onSelect={setSelected} />
+            </div>
+            {/* One small goal a week: when it is met it says so; when the week ends unmet, a new week brings a new goal. */}
+            <div className="flex flex-col gap-0.5 text-center">
+              <p className="text-white/80">
+                {done} of {stars.length} steps done.{" "}
+                <span data-detail="extra" className="text-sm max-sm:hidden">
+                  Tap a star to see a step.
+                </span>
+              </p>
+              <p className="flex items-center justify-center gap-2">
+                {goal.met && <Check className="size-5 shrink-0 text-star" aria-hidden />}
+                <span>
+                  {goal.text}
+                  {goal.met && <span className="text-white/70"> (done)</span>}
+                </span>
+              </p>
+            </div>
+          </div>
+
+          <div className="flex flex-col gap-4 text-foreground max-lg:order-last lg:self-end">
+            {stageDone ? (
+              <StageDone
+                finished={branchName(stageDone)}
+                next={working ? branchName(working) : "every step is done"}
+                preview={working && working !== "own" ? preview(working) : ""}
+                listen={adaptations.listenButton}
+                stars={BRANCH_STEPS[stageDone].length}
+                onContinue={() => {
+                  setStageDone(null);
+                  setAnnouncement(current ? `Next: ${current.title}` : "");
+                }}
+              />
+            ) : resting ? (
+              <Rest next={current} onBack={() => setResting(false)} />
+            ) : paused && current ? (
+              <Pause
+                finished={justDoneTitle}
+                next={current}
+                listen={adaptations.listenButton}
+                onContinue={() => setPaused(false)}
+                onStop={() => {
+                  setPaused(false);
+                  setResting(true);
+                }}
+              />
+            ) : current ? (
+              <CurrentStep
+                key={current.id}
+                step={current}
+                focus={announcement !== ""}
+                breakdownFirst={breakdownFirst(current)}
+                prominentTime={adaptations.showDurations}
+                listen={adaptations.listenButton}
+                headsUp={headsUp}
+                footer={<EasierToday on={gentleTone(energy)} focus={checkedIn} onChange={easierToday} />}
+                onDone={() => finish(current.id)}
+                onBreakdown={() => setRequest({ id: crypto.randomUUID(), task: current.title, stepId: current.id })}
+              />
+            ) : (
+              <AllDone focus={announcement !== ""} today={finishedToday} />
+            )}
+            {removed && <Removed title={removed.title} onUndo={undoRemove} />}
+          </div>
+
+          <div className="flex justify-center lg:col-start-2">
+            <AskConstela plan={plan} stage={stage} onAnswer={(text) => setTalkedAbout(branchesIn(text, map))} />
           </div>
         </div>
-        <p className="font-medium">
-          Stage {STAGES.indexOf(stage) + 1} of {STAGES.length}: {STAGE_NAMES[stage]}
+      </section>
+
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-10">
+      {!profile && (
+        <p className="text-sm text-muted-foreground">
+          These are the standard settings.{" "}
+          <Link href="/profile" className="font-medium text-foreground underline underline-offset-4">
+            Set up your profile
+          </Link>{" "}
+          to fit the plan to you.
         </p>
-        {!stageDone && (
-        <div data-tour="stars">
-        <Constellation
-          lit={stars.map((s) => s.done)}
-          names={stars.map((s) => s.title)}
-          label={`${done} of ${stars.length} steps done`}
-          onSelect={(i) => setSelected(stars[i].id)}
-          glow={stars.findIndex((s) => s.id === justDone && s.done)}
-          current={current ? stars.indexOf(current) : undefined}
-        />
-        </div>
-        )}
-        {/* Progress and the week's goal share one block. One small goal a week: when it is met it says so; when the week
-            ends unmet, a new week simply brings a new goal. */}
-        {!stageDone && (
-        <div className="flex flex-col gap-1">
-          <p className="text-muted-foreground">
-            {done} of {stars.length} steps done.{" "}
-            <span data-detail="extra" className="text-sm max-sm:hidden">
-              Tap a star to see a step.
-            </span>
-          </p>
-          <p className="flex items-center gap-2">
-            {goal.met && <Check className="size-5 shrink-0 text-primary" aria-hidden />}
-            <span>
-              {goal.text}
-              {goal.met && <span className="text-muted-foreground"> (done)</span>}
-            </span>
-          </p>
-        </div>
-        )}
-        {!profile && (
-          <p className="text-sm text-muted-foreground">
-            These are the standard settings.{" "}
-            <Link href="/profile" className="font-medium text-foreground underline underline-offset-4">
-              Set up your profile
-            </Link>{" "}
-            to fit the plan to you.
-          </p>
-        )}
-      </header>
-
-      <p aria-live="polite" className="sr-only">
-        {announcement}
-      </p>
-
-      {stageDone ? (
-        <StageDone
-          finished={STAGE_NAMES[stageDone]}
-          next={STAGE_NAMES[stage]}
-          preview={preview(stage)}
-          listen={adaptations.listenButton}
-          stars={STAGE_STEPS[stageDone].length}
-          onContinue={() => {
-            setStageDone(null);
-            setAnnouncement(current ? `Next: ${current.title}` : "");
-          }}
-        />
-      ) : resting ? (
-        <Rest next={current} onBack={() => setResting(false)} />
-      ) : paused && current ? (
-        <Pause
-          finished={justDoneTitle}
-          next={current}
-          listen={adaptations.listenButton}
-          onContinue={() => setPaused(false)}
-          onStop={() => {
-            setPaused(false);
-            setResting(true);
-          }}
-        />
-      ) : current ? (
-        <CurrentStep
-          key={current.id}
-          step={current}
-          focus={announcement !== ""}
-          breakdownFirst={breakdownFirst(current)}
-          prominentTime={adaptations.showDurations}
-          listen={adaptations.listenButton}
-          headsUp={headsUp}
-          footer={
-            energy ? (
-              <CheckInReply level={energy} focus={checkedIn} onChange={() => update(resetCheckIn(plan))} />
-            ) : checkInDue(plan, now) ? (
-              <EnergyCheckIn onChoose={checkIn} />
-            ) : undefined
-          }
-          onDone={() => finish(current.id)}
-          onBreakdown={() => setRequest({ id: crypto.randomUUID(), task: current.title, stepId: current.id })}
-        />
-      ) : (
-        <AllDone focus={announcement !== ""} today={finishedToday} />
       )}
-
-      {removed && <Removed title={removed.title} onUndo={undoRemove} />}
 
       {!paused && !resting && !stageDone && next.length > 0 && (
         <section aria-labelledby="up-next" className="flex flex-col gap-3">
@@ -359,7 +370,7 @@ function View() {
       {/* Room under the last parts, so the tour can bring them above its panel. */}
       {touring && <div aria-hidden className="h-[50vh]" />}
 
-      {pathOpen && <PathDialog plan={plan} onBack={backTo} onClose={() => setPathOpen(false)} />}
+      {pathOpen && <PathDialog plan={plan} onChoose={choose} onClose={() => setPathOpen(false)} />}
 
       {selectedStep && (
         <StepDetails
@@ -392,6 +403,7 @@ function View() {
           onClose={() => setRequest(null)}
         />
       )}
-    </div>
+      </div>
+    </>
   );
 }
