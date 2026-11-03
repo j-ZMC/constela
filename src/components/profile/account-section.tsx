@@ -47,7 +47,7 @@ export function AccountSection() {
             className="h-11 text-base md:text-base"
           />
         </div>
-        <Button type="submit" size="touch" className="w-fit">
+        <Button type="submit" variant="outline" size="touch" className="w-fit">
           Save details
         </Button>
         <p role="status" className="text-sm text-muted-foreground">

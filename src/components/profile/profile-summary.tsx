@@ -61,8 +61,8 @@ export function ProfileSummary({ answers, onEdit }: { answers: Answers; onEdit: 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-secondary p-4">
             <p className="text-sm">
               {aidsOn
-                ? "The dyslexia-friendly font and larger text are on. Change them in Personalize at the top."
-                : "Long texts feel hard. Want the dyslexia-friendly font and larger text?"}
+                ? "The easier-to-read font and larger text are on. Change them in Personalize at the top."
+                : "Long texts feel hard. Want an easier-to-read font and larger text?"}
             </p>
             {!aidsOn && (
               <Button

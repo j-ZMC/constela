@@ -86,7 +86,7 @@ export function CvSection() {
             </Label>
             <Input id="cv-file" name="file" type="file" accept="application/pdf,.pdf" className="h-auto min-h-11 py-2 text-base md:text-base" />
           </div>
-          <Button type="submit" size="touch" className="w-fit" disabled={loading}>
+          <Button type="submit" variant="outline" size="touch" className="w-fit" disabled={loading}>
             {loading ? "Reading your CV…" : "Add my CV"}
           </Button>
         </form>

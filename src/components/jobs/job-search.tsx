@@ -39,17 +39,14 @@ export function JobResults({ results }: { results: JobSearchResponse }) {
   const count = results.jobs.length;
   return (
     <div className="flex flex-col gap-6">
-      <p role="status" className="text-muted-foreground">
-        {count === 0 && results.blockedJobs.length === 0
+      <p role="status" className={results.saved ? "rounded-xl bg-secondary p-4" : "text-muted-foreground"}>
+        {/* Saved results say so first, so nobody takes them for an answer to what they typed. */}
+        {results.saved
+          ? "We can't search right now. These are jobs from an earlier search, so they may not match what you typed and they don't point out what you asked us to watch for."
+          : count === 0 && results.blockedJobs.length === 0
           ? "No jobs found. Try other words, like a job title or a skill."
           : `${count} ${count === 1 ? "job" : "jobs"} found${results.blockedJobs.length ? `, and ${results.blockedJobs.length} to check` : ""}.`}
       </p>
-      {results.saved && (
-        <p className="rounded-xl bg-secondary p-4">
-          We can&apos;t search right now, so these are saved results from an earlier search. They don&apos;t point out what you
-          asked us to watch for.
-        </p>
-      )}
       {count > 0 && (
         <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
           {results.jobs.map((job) => (

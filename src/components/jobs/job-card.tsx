@@ -38,6 +38,15 @@ function workMode(job: Job): string {
   return labels[job.modality_classification];
 }
 
+// Some posts put the work mode in the location field ("Hybrid", "Remote"). Show it once, as the work mode.
+const MODE_WORDS = /^(remote|hybrid|on-?site|in office)$/i;
+export function jobDetails(job: Job): string[] {
+  const location = job.location.trim();
+  const locationIsMode = MODE_WORDS.test(location);
+  const mode = job.modality_classification === "unknown" && locationIsMode ? location : workMode(job);
+  return [locationIsMode ? "" : location, mode].filter((x, i, all) => x && all.findIndex((y) => y.toLowerCase() === x.toLowerCase()) === i);
+}
+
 export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean }) {
   const key = job.url ?? `${job.company}:${job.title}`;
   const [saved, setSaved] = useState(() => savedJobs().includes(key));
@@ -74,8 +83,9 @@ export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean 
         </p>
         <h3 className="text-lg font-semibold text-balance">{job.title}</h3>
         <ul aria-label="Job details" className="flex flex-wrap gap-x-4 gap-y-1 text-muted-foreground">
-          <li>{job.location}</li>
-          <li>{workMode(job)}</li>
+          {jobDetails(job).map((d) => (
+            <li key={d}>{d}</li>
+          ))}
           {salary(job) && <li>{salary(job)}</li>}
         </ul>
       </div>
@@ -102,7 +112,7 @@ export function JobCard({ job, flagged = false }: { job: Job; flagged?: boolean 
 
       <div className="flex flex-wrap gap-3 border-t pt-4">
         {job.url && (
-          <a href={job.url} target="_blank" rel="noreferrer" className={buttonVariants({ size: "touch" })}>
+          <a href={job.url} target="_blank" rel="noreferrer" className={buttonVariants({ variant: "outline", size: "touch" })}>
             Open the job post
             <ExternalLink aria-hidden data-icon="inline-end" />
             <span className="sr-only">(opens in a new tab)</span>
