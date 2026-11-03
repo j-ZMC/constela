@@ -408,7 +408,7 @@ function PartFields({ part, form, change }: { part: PartId; form: VacancyForm; c
                 {ENVIRONMENT[factor]}
               </label>
             ))}
-            <label className="flex min-h-11 cursor-pointer items-center gap-3 border-t-2 py-1">
+            <label className="flex min-h-11 cursor-pointer items-center gap-3 border-t py-1">
               <Checkbox checked={form.environment?.length === 0} onCheckedChange={(on) => change("environment", on === true ? [] : undefined)} />
               This job offers none of these
             </label>
@@ -443,7 +443,7 @@ function PartFields({ part, form, change }: { part: PartId; form: VacancyForm; c
             addLabel="Add a hiring step"
             onChange={(steps) => change("process", steps)}
             render={(s, i, update) => (
-              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(12rem,100%),1fr))] items-end gap-4 rounded-lg border-2 p-4">
+              <div className="grid grid-cols-[repeat(auto-fit,minmax(min(12rem,100%),1fr))] items-end gap-4 rounded-lg border p-4">
                 <TextField label={`Step ${i + 1}`} value={s.name} maxLength={MAX_SHORT} onChange={(name) => update({ ...s, name })} />
                 <SelectField label="How it happens" value={s.format} options={STAGE_OPTIONS} onChange={(format) => format && update({ ...s, format })} />
                 <NumberField label="Minutes" value={s.minutes} min={MINUTES_RANGE[0]} max={MINUTES_RANGE[1]} onChange={(minutes) => update({ ...s, minutes })} />

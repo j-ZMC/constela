@@ -24,7 +24,7 @@ function Home() {
     <div className="flex flex-col gap-6">
       <h1 className={pageTitle}>Home</h1>
 
-      <section aria-labelledby="next-heading" className="flex flex-wrap items-center justify-between gap-4 rounded-lg border-2 border-primary bg-secondary p-5">
+      <section aria-labelledby="next-heading" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/15 bg-card p-5 shadow-[0_10px_30px_-14px_rgb(36_59_83/0.35)] sm:p-7">
         <div className="min-w-0">
           <h2 id="next-heading" className="text-xl font-semibold">
             Do this next

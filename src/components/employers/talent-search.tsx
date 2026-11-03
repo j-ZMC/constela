@@ -200,7 +200,7 @@ function AfterYes({ candidateId, vacancy, data }: { candidateId: string; vacancy
   const shortNotice = interviewAt !== undefined && opensAt(interviewAt) < new Date(data.permissions.findLast(pair)?.at ?? 0);
 
   return (
-    <div className="flex flex-col gap-3 border-t-2 pt-3">
+    <div className="flex flex-col gap-3 border-t pt-3">
       <Field label="Interview date and time">
         <Input
           type="datetime-local"

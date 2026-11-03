@@ -110,7 +110,7 @@ function GuideRead() {
   const { guideRead } = useEmployerData();
   const [failed, setFailed] = useState(false);
   return (
-    <div className="flex flex-wrap items-center gap-3 border-t-2 pt-4">
+    <div className="flex flex-wrap items-center gap-3 border-t pt-4">
       {!guideRead && (
         <Button className={action} onClick={() => setFailed(!markGuideRead())}>
           I read it

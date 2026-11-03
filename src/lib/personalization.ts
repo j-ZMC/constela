@@ -19,10 +19,6 @@ export const DEFAULT_ROLES: Roles = {
   background: "#e7f0ed", text: "#243b53", card: "#ffffff", border: "#d0ddd8", accent: "#243b53", soft: "#dde8e4",
 };
 
-// Same values as html[data-area="employers"] in globals.css
-export const EMPLOYER_ROLES: Roles = {
-  background: "#efefe8", text: "#232b27", card: "#fafaf6", border: "#737e76", accent: "#2f5f6b", soft: "#dce7e4",
-};
 
 export const PRESETS: { id: string; name: string; colors: Roles | null }[] = [
   { id: "astralis", name: "Astralis (default)", colors: null },

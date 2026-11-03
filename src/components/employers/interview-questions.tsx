@@ -150,7 +150,7 @@ function RubricField({ label, value, onChange }: { label: string; value: string;
 function QuestionRow({ number, question: q, onChange }: { number: number; question: InterviewQuestion; onChange: (next: InterviewQuestion) => void }) {
   const flags = checkQuestion(q.question);
   return (
-    <div className="flex flex-col gap-3 rounded-lg border-2 p-4">
+    <div className="flex flex-col gap-3 rounded-lg border p-4">
       <p className="font-semibold">For: {q.requirement}</p>
       <RubricField label={`Question ${number}`} value={q.question} onChange={(question) => onChange({ ...q, question })} />
       {flags.length > 0 && (

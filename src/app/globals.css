@@ -163,40 +163,6 @@
   --star: #e8c4a0;
 }
 
-/* Constela for Employers: one near-black text color, no grey, and outlines of 3:1 or more on every background here.
-   SiteNav sets data-area on <html>, so these reach the page and dialogs, and a palette from Personalize (inline on <html>) still wins. */
-html[data-area="employers"] {
-  --background: #efefe8;
-  --foreground: #232b27;
-  --card: #fafaf6;
-  --card-foreground: #232b27;
-  --popover: #fafaf6;
-  --popover-foreground: #232b27;
-  --primary: #2f5f6b;
-  --primary-foreground: #ffffff;
-  --secondary: #dce7e4;
-  --secondary-foreground: #232b27;
-  --muted: #dce7e4;
-  --muted-foreground: #232b27;
-  --accent: #dce7e4;
-  --accent-foreground: #232b27;
-  --border: #737e76;
-  --input: #737e76;
-  --ring: #232b27;
-  --radius: 0.4rem;
-  --employer-scale: 1.125;
-  font-size: calc(var(--employer-scale) * 100%);
-  line-height: 1.6;
-}
-@media (width >= 64rem) {
-  html[data-area="employers"] {
-    --employer-scale: 1.25;
-  }
-}
-html[data-area="employers"] [data-background-sky] {
-  display: none;
-}
-
 /* The one authored moment: a star lights when a step is done. Final state is the default,
    so the reduce-motion rules below simply show it lit. */
 .star-lit .star-core,
@@ -303,9 +269,6 @@ html[data-pz~="font"] * {
 }
 html[data-pz~="size"] {
   font-size: calc(var(--pz-size) * 1%);
-}
-html[data-area="employers"][data-pz~="size"] {
-  font-size: calc(var(--employer-scale) * var(--pz-size) * 1%);
 }
 html[data-pz~="lh"] body * {
   line-height: var(--pz-lh);

@@ -44,9 +44,7 @@ Direction B: everything stays in the same place. Research behind it: W3C COGA, G
 
 - **The same layout on every screen.** A fixed side menu with Home, Jobs, People and Guide, then a list and its detail. Phones and tablets show a top bar, the menu at the bottom, and one screen at a time: a row opens its detail.
 - **What is open lives in the URL** (`?post=`, `?part=`, `?person=`, `?job=`), so the Back gesture closes one step at a time and the menu returns to the list. It moves with `history.pushState` and calls no server.
-- **One text color, no grey.** `#232B27` on `#EFEFE8`, 12.6:1. Panels `#FAFAF6`, selected areas `#DCE7E4`, buttons `#2F5F6B` with white text, outlines `#737E76`, which keep 3:1 on every background here. Peach stays for achievements only.
-- **Noto Sans, 20 px on a computer and 18 px on a phone.** The theme lives on `html[data-area="employers"]`, so it reaches the page and dialogs. Colors, fonts and sizes from Personalize win over it, and the text size slider adds to the larger base. Candidate pages don't change, and they never download this font.
-- **No background sky or animation here.**
+- **One brand with the candidate side** (changed 2026-11-02). The same palette, Atkinson Hyperlegible, type scale and background sky as the rest of Constela ([DESIGN.md](DESIGN.md)), so Personalize works the same everywhere. On a computer the side menu is a strip of night sky with white links. Peach stays for achievements only.
 - **At most one main action per screen.** Everything else is outlined. Taking or dropping an AI suggestion look the same, so the AI is never the easier path.
 - **Words before numbers.** "3 things left" and "2 of 3 skills" come first. The clarity score stays as one line that says what the number means, because the features document asks for it and every score must be explained. Reduced information hides that line and the point values.
 - **Plain words.** Home, Jobs, People, job post, "checked by Constela", "they say they have it", "a similar tool". Code and URLs keep `vacancy` and `talent`, because those are shared names.
