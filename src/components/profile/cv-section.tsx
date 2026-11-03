@@ -1,9 +1,7 @@
 "use client";
 
 import { useState, type FormEvent } from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { clearResumeProfile, loadResumeProfile, saveResumeProfile } from "@/lib/local-profile";
 import { parseResumeProfile, type ResumeProfile } from "@/lib/resume";
 
@@ -13,6 +11,7 @@ export function CvSection() {
   const [profile, setProfile] = useState<ResumeProfile | null>(() => loadResumeProfile());
   const [loading, setLoading] = useState(false);
   const [status, setStatus] = useState("");
+  const [fileName, setFileName] = useState("");
 
   async function upload(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
@@ -41,6 +40,7 @@ export function CvSection() {
       setProfile(parsed);
       setStatus("We read your CV. Jobs for you are ready on the Jobs page.");
       formEl.reset();
+      setFileName("");
     } catch (error) {
       setStatus(error instanceof Error ? error.message : "We could not read this PDF.");
     } finally {
@@ -80,13 +80,25 @@ export function CvSection() {
         </div>
       ) : (
         <form onSubmit={upload} className="flex flex-col gap-4 rounded-xl border bg-card p-5">
-          <div className="flex flex-col gap-2">
-            <Label htmlFor="cv-file" className="text-base">
-              PDF file
-            </Label>
-            <Input id="cv-file" name="file" type="file" accept="application/pdf,.pdf" className="h-auto min-h-11 py-2 text-base md:text-base" />
+          {/* Our own button instead of the browser's file picker, whose text follows the browser's language, not the app's. */}
+          <div className="flex flex-wrap items-center gap-3">
+            <input
+              id="cv-file"
+              name="file"
+              type="file"
+              accept="application/pdf,.pdf"
+              className="peer sr-only"
+              onChange={(e) => setFileName(e.target.files?.[0]?.name ?? "")}
+            />
+            <label
+              htmlFor="cv-file"
+              className={buttonVariants({ variant: "outline", size: "touch", className: "cursor-pointer peer-focus-visible:ring-3 peer-focus-visible:ring-ring/50" })}
+            >
+              Choose a PDF
+            </label>
+            <span className="text-muted-foreground">{fileName || "No file chosen yet."}</span>
           </div>
-          <Button type="submit" variant="outline" size="touch" className="w-fit" disabled={loading}>
+          <Button type="submit" size="touch" className="w-fit" disabled={loading || !fileName}>
             {loading ? "Reading your CV…" : "Add my CV"}
           </Button>
         </form>

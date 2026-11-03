@@ -6,12 +6,13 @@ import { VacancyEditor, unsavedForms } from "@/components/employers/vacancy-edit
 import { action, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
 import { useEmployerData } from "@/lib/employer-store";
+import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 import { emptyForm, formFromVacancy, leftText, thingsLeft } from "@/lib/vacancy-editor";
 
 // Job posts live in localStorage, so render only after hydration (same as the Profile flow).
 export function VacancyWorkspace() {
-  return useHydrated() ? <Workspace /> : null;
+  return useHydrated() ? <Workspace /> : <Loading />;
 }
 
 function Workspace() {

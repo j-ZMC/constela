@@ -7,6 +7,7 @@ import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { answerInvitation, chooseFormat, useEmployerData, type StageChoice } from "@/lib/employer-store";
 import { opensAt, questionsOpen } from "@/lib/interview-questions";
 import { addInterviewStep, listInvitations, type Invitation } from "@/lib/invitations";
+import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 import { STAGE_FORMAT_LABELS, type Stage } from "@/lib/vacancy";
 import { DEMO_PROFILES } from "@/lib/work-profile";
@@ -17,7 +18,7 @@ const action = "h-auto min-h-11 max-w-full shrink whitespace-normal px-5 py-2 te
 const when = (iso: string | Date) => new Date(iso).toLocaleString("en-US", { weekday: "long", month: "long", day: "numeric", hour: "numeric", minute: "2-digit" });
 
 export function InvitationList() {
-  return useHydrated() ? <List /> : null;
+  return useHydrated() ? <List /> : <Loading />;
 }
 
 function List() {

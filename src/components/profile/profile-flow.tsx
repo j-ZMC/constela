@@ -8,13 +8,14 @@ import { ProfileSummary } from "@/components/profile/profile-summary";
 import { QuestionStep } from "@/components/profile/question-step";
 import { QUESTIONS, type Answers, loadProfile, loadStep, saveProfile, saveStep } from "@/lib/profile";
 import { setReadingOption } from "@/lib/reading";
+import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 
 // Saved answers live in localStorage, which the server can't see. Render the flow only after
 // hydration so its lazy state reads storage without a server/client mismatch.
 // `after` (work choices, CV, details) shows on the welcome and summary screens, never between questions.
 export function ProfileFlow({ after }: { after?: ReactNode }) {
-  return useHydrated() ? <Flow after={after} /> : null;
+  return useHydrated() ? <Flow after={after} /> : <Loading />;
 }
 
 function Flow({ after }: { after?: ReactNode }) {

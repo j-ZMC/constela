@@ -7,6 +7,7 @@ import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/li
 import { action, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
 import { markGuideRead, useEmployerData } from "@/lib/employer-store";
+import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 
 const GUIDE = [
@@ -50,7 +51,7 @@ const LAST_READ = GUIDE[GUIDE.length - 1].id;
 
 // What is open lives in the URL, so render only after hydration (same as the Profile flow).
 export function InterviewerGuide() {
-  return useHydrated() ? <Guide /> : null;
+  return useHydrated() ? <Guide /> : <Loading />;
 }
 
 function Guide() {

@@ -8,6 +8,7 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addPermission, markAnswerSent, scheduleInterview, useEmployerData, type EmployerData } from "@/lib/employer-store";
 import { opensAt, toLocalInput } from "@/lib/interview-questions";
+import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 import { STAGE_FORMAT_LABELS, type Vacancy } from "@/lib/vacancy";
 import { DEMO_PROFILES, skillsLine, talentRows, type TalentRow } from "@/lib/work-profile";
@@ -21,7 +22,7 @@ const STATES: Record<NonNullable<TalentRow["status"]>, string> = { invited: "Inv
 
 // Job posts live in localStorage, so render only after hydration (same as the Profile flow).
 export function TalentSearch() {
-  return useHydrated() ? <Search /> : null;
+  return useHydrated() ? <Search /> : <Loading />;
 }
 
 function ToJobs({ message }: { message: string }) {

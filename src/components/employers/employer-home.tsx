@@ -6,12 +6,13 @@ import { action, outlined, pageTitle } from "@/components/employers/vacancy-fiel
 import { Button, buttonVariants } from "@/components/ui/button";
 import { homeSummary } from "@/lib/employer-home";
 import { saveVacancy, useEmployerData, useSeal } from "@/lib/employer-store";
+import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 import { DEMO_VACANCY } from "@/lib/vacancy";
 
 // Everything here comes from localStorage, so render only after hydration (same as the Profile flow).
 export function EmployerHome() {
-  return useHydrated() ? <Home /> : null;
+  return useHydrated() ? <Home /> : <Loading />;
 }
 
 function Home() {

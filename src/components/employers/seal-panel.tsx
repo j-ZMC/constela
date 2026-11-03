@@ -6,11 +6,12 @@ import { outlined, pageTitle, panel } from "@/components/employers/vacancy-field
 import { buttonVariants } from "@/components/ui/button";
 import { useEmployerData, useSeal } from "@/lib/employer-store";
 import { SEAL_LEVELS, SEAL_NAMES, nextLevel, type SealCheck } from "@/lib/seal";
+import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 
 // The seal lives in localStorage data, so render only after hydration (same as the Profile flow).
 export function SealPanel() {
-  return useHydrated() ? <Panel /> : null;
+  return useHydrated() ? <Panel /> : <Loading />;
 }
 
 function Panel() {

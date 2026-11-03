@@ -64,7 +64,7 @@ export function IntroActions() {
         {note && "Accounts are coming soon. You can start now: your progress stays on this device."}
       </p>
       </div>
-      <Link href="/privacy" className="w-fit text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+      <Link href="/privacy" className="flex min-h-11 w-fit items-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
         How we keep your data private
       </Link>
       <Link href="/employers" className="flex min-h-11 w-fit items-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">

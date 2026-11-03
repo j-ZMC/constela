@@ -97,7 +97,7 @@ export function PersonalizationPanel({ className }: { className?: string }) {
 
         <div role="tablist" aria-label="Categories" className="flex flex-wrap gap-2">
           {TABS.map(([id, text]) => (
-            <Button key={id} role="tab" type="button" className={tap} variant={tab === id ? "secondary" : "ghost"} aria-selected={tab === id} onClick={() => setTab(id)}>
+            <Button key={id} role="tab" type="button" className={tap} variant={tab === id ? "default" : "ghost"} aria-selected={tab === id} onClick={() => setTab(id)}>
               {text}
             </Button>
           ))}
