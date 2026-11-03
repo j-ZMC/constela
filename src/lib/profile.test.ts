@@ -66,6 +66,12 @@ describe("toAdaptations", () => {
     expect(toAdaptations({ changes }).headsUpOnChanges).toBe(expected);
   });
 
+  it("keeps the screen still only when asked", () => {
+    expect(toAdaptations({ motion: "still" }).stillScreen).toBe(true);
+    expect(toAdaptations({ motion: "fine" }).stillScreen).toBe(false);
+    expect(toAdaptations({}).stillScreen).toBe(false);
+  });
+
   it("keeps sensory needs and drops 'nothing in particular'", () => {
     expect(toAdaptations({ sensory: ["noise", "textures"] }).sensoryNeeds).toEqual(["noise", "textures"]);
     expect(toAdaptations({ sensory: ["none"] }).sensoryNeeds).toEqual([]);
@@ -121,8 +127,8 @@ describe("describeAdaptations", () => {
 });
 
 describe("QUESTIONS", () => {
-  it("has the 8 questions from the spec, each with options", () => {
-    expect(QUESTIONS).toHaveLength(8);
+  it("has the 9 questions from the spec, each with options", () => {
+    expect(QUESTIONS).toHaveLength(9);
     for (const q of QUESTIONS) expect(q.options.length).toBeGreaterThan(1);
   });
 });

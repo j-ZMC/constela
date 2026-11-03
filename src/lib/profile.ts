@@ -57,6 +57,16 @@ export const QUESTIONS = [
     ],
   },
   {
+    // A need, not a condition: some people find movement at the edge of the screen hard to ignore while reading.
+    id: "motion",
+    kind: "single",
+    text: "Do moving things on the screen distract you?",
+    options: [
+      { value: "fine", label: "No, they're fine" },
+      { value: "still", label: "Yes, keep the screen still" },
+    ],
+  },
+  {
     id: "startBlockers",
     kind: "multi",
     text: "What makes it hard to get started?",
@@ -112,6 +122,7 @@ export type Adaptations = {
   importantFirst: boolean;
   workplaceFilters: Workplace[];
   gentlePacing: boolean;
+  stillScreen: boolean;
 };
 
 export const DEFAULT_ADAPTATIONS: Adaptations = {
@@ -127,6 +138,7 @@ export const DEFAULT_ADAPTATIONS: Adaptations = {
   importantFirst: false,
   workplaceFilters: [],
   gentlePacing: false,
+  stillScreen: false,
 };
 
 export function toAdaptations(a: Answers): Adaptations {
@@ -144,6 +156,7 @@ export function toAdaptations(a: Answers): Adaptations {
     importantFirst: blockers.includes("distracted"),
     workplaceFilters: (a.workplace ?? []).filter((w): w is Workplace => w !== "not-sure"),
     gentlePacing: a.support === "check-ins" || a.support === "regular",
+    stillScreen: a.motion === "still",
   };
 }
 
@@ -190,6 +203,7 @@ export function describeAdaptations(a: Adaptations): string[] {
     a.sensoryNeeds.length > 0 && "Jobs that may not suit your sensory needs will be flagged.",
     a.workplaceFilters.length > 0 && "Jobs are filtered to where you'd like to work.",
     a.gentlePacing && "We'll check in with you along the way.",
+    a.stillScreen && "The screen stays still: no twinkling stars or moving parts.",
   ].filter((l): l is string => typeof l === "string");
   return lines.length > 0 ? lines : ["We'll use the standard settings. You can change them anytime."];
 }

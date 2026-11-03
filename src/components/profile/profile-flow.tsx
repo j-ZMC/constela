@@ -7,6 +7,7 @@ import { Constellation } from "@/components/profile/constellation";
 import { ProfileSummary } from "@/components/profile/profile-summary";
 import { QuestionStep } from "@/components/profile/question-step";
 import { QUESTIONS, type Answers, loadProfile, loadStep, saveProfile, saveStep } from "@/lib/profile";
+import { setReadingOption } from "@/lib/reading";
 import { useHydrated } from "@/lib/use-hydrated";
 
 // Saved answers live in localStorage, which the server can't see. Render the flow only after
@@ -33,6 +34,8 @@ function Flow({ after }: { after?: ReactNode }) {
     if (value === undefined) delete next[id as keyof Answers];
     setAnswers(next);
     saveProfile(next);
+    // The answer turns Reduce motion on or off right away; Personalize shows the same switch.
+    if (id === "motion" && value !== undefined) setReadingOption("reduce-motion", value === "still");
   }
 
   if (step === -1) {
