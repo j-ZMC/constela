@@ -4,6 +4,8 @@ import { DEMO_VACANCY, SKILLS, SKILL_IDS, type EnvironmentFactor, type SkillId, 
 import {
   DEMO_PROFILES,
   adjustmentNotes,
+  changeText,
+  explainPlace,
   anonymize,
   compatibility,
   fitSummary,
@@ -11,6 +13,7 @@ import {
   latestPermission,
   matchReason,
   needsFromBarriers,
+  ordinal,
   rankCandidates,
   skillsLine,
   talentRows,
@@ -195,6 +198,63 @@ describe("matchReason", () => {
     expect(reason([{ skill: "google_sheets", evidence: "verified" }])).toBe("Excel: they use Google Sheets, a similar tool, checked by Constela");
     expect(reason([{ skill: "google_sheets", evidence: "declared" }])).toBe("Excel: they use Google Sheets, a similar tool, they say they have it");
     expect(reason([])).toBe("Excel: not on this profile");
+  });
+});
+
+describe("explainPlace", () => {
+  const explain = (id: string, v: Vacancy = DEMO_VACANCY, pool = DEMO_PROFILES) => explainPlace(v, pool, id);
+
+  // By hand, for the demo job post (SQL, Excel, Power BI): 2187 scores 70, 1042 scores 63, 9417 scores 33.
+  it("finds every single skill change that moves a person up, best first", () => {
+    expect(explain("c-1042")).toEqual({
+      place: 2,
+      changes: [
+        { skill: "excel", change: "check", place: 1 }, // 63 → 77
+        { skill: "power_bi", change: "own", place: 1 }, // 63 → 87
+      ],
+      sameWithoutNeeds: true,
+    });
+  });
+
+  it("names a missing skill as one to add", () => {
+    expect(explain("c-9417")?.changes).toEqual([
+      { skill: "sql", change: "add", place: 2 }, // 33 → 67, still under 70
+      { skill: "power_bi", change: "add", place: 2 },
+    ]);
+  });
+
+  it("has nothing to suggest for the person in first place", () => {
+    expect(explain("c-2187")).toEqual({ place: 1, changes: [], sameWithoutNeeds: true });
+  });
+
+  it("leaves out changes that wouldn't move the person", () => {
+    const v = asking(["sql"]);
+    const pool = [person("a", [{ skill: "sql", evidence: "verified" }]), person("b", [{ skill: "sql", evidence: "declared" }])];
+    // A tie keeps the order by id, so catching up with "a" is a move from 3rd to 2nd, never a promise of 1st.
+    expect(explainPlace(v, [...pool, person("c", [])], "c")?.changes).toEqual([{ skill: "sql", change: "add", place: 2 }]);
+    expect(explainPlace(v, pool, "b")?.changes).toEqual([]);
+    expect(explainPlace(v, [person("z", [{ skill: "sql", evidence: "verified" }]), person("b", [{ skill: "sql", evidence: "declared" }])], "b")?.changes).toEqual([{ skill: "sql", change: "check", place: 1 }]);
+    expect(explainPlace(asking(["sql", "excel"]), [person("x", [{ skill: "sql", evidence: "verified" }, { skill: "excel", evidence: "verified" }]), person("y", [])], "y")?.changes).toEqual([]);
+  });
+
+  it("asks about each skill once, even when two requirements share it", () => {
+    const v = { ...DEMO_VACANCY, essential: [{ text: "SQL", skill: "sql" as const }, { text: "More SQL", skill: "sql" as const }] };
+    expect(explainPlace(v, [person("a", [{ skill: "sql", evidence: "declared" }]), person("b", [])], "b")?.changes).toHaveLength(1);
+  });
+
+  it("shows that needs never change anyone's place, for every person in the demo", () => {
+    for (const p of DEMO_PROFILES) expect(explain(p.id)?.sameWithoutNeeds).toBe(true);
+  });
+
+  it("knows nobody it hasn't been given", () => {
+    expect(explain("c-none")).toBeNull();
+  });
+
+  it("says it in words", () => {
+    expect(changeText({ skill: "excel", change: "check", place: 1 })).toBe("If Excel were checked by Constela: 1st place.");
+    expect(changeText({ skill: "power_bi", change: "own", place: 2 })).toBe("If they used Power BI itself, checked by Constela: 2nd place.");
+    expect(changeText({ skill: "sql", change: "add", place: 3 })).toBe("If they had SQL, checked by Constela: 3rd place.");
+    expect([4, 11, 12, 13, 21, 22, 23, 101, 111].map(ordinal)).toEqual(["4th", "11th", "12th", "13th", "21st", "22nd", "23rd", "101st", "111th"]);
   });
 });
 

@@ -177,6 +177,46 @@ export function rankCandidates(v: Vacancy, profiles: WorkProfile[]): RankedCandi
     .sort((a, b) => b.score - a.score || a.id.localeCompare(b.id));
 }
 
+// "check": a skill they say they have gets checked. "own": the skill itself instead of a similar tool. "add": a skill they don't list.
+export type PlaceChange = { skill: SkillId; change: "check" | "own" | "add"; place: number };
+export type PlaceExplanation = { place: number; changes: PlaceChange[]; sameWithoutNeeds: boolean };
+
+// What would move a person up, one essential skill at a time, worked out by running the same ranking again. Needs are run
+// too, both removed and all added, to show on every card that sharing one never changes a place (the CV-pair test, live).
+export function explainPlace(v: Vacancy, profiles: WorkProfile[], id: string): PlaceExplanation | null {
+  const person = profiles.find((p) => p.id === id);
+  if (!person) return null;
+  const placeWith = (changed: WorkProfile) => rankCandidates(v, profiles.map((p) => (p.id === id ? changed : p))).findIndex((r) => r.id === id) + 1;
+  const place = placeWith(person);
+
+  const required = [...new Set(v.essential.flatMap((r) => (r.skill ? [r.skill] : [])))];
+  const changes = required
+    .flatMap((skill): PlaceChange[] => {
+      const exact = person.skills.find((s) => s.skill === skill);
+      if (exact?.evidence === "verified") return [];
+      const similar = EQUIVALENT_SKILLS.find((g) => g.includes(skill))?.some((other) => other !== skill && person.skills.some((s) => s.skill === other));
+      const change = exact ? "check" : similar ? "own" : "add";
+      const skills = [...person.skills.filter((s) => s.skill !== skill), { skill, evidence: "verified" as const }];
+      return [{ skill, change, place: placeWith({ ...person, skills }) }];
+    })
+    .filter((c) => c.place < place)
+    .sort((a, b) => a.place - b.place);
+
+  const sameWithoutNeeds =
+    placeWith({ ...person, needs: [], modalities: [] }) === place && placeWith({ ...person, needs: [...ENVIRONMENT_FACTORS], modalities: [...MODALITIES] }) === place;
+  return { place, changes, sameWithoutNeeds };
+}
+
+export const ordinal = (n: number) => `${n}${n % 100 >= 11 && n % 100 <= 13 ? "th" : ["th", "st", "nd", "rd"][n % 10] ?? "th"}`;
+
+const CHANGE_WORDS: Record<PlaceChange["change"], (skill: string) => string> = {
+  check: (skill) => `If ${skill} were checked by Constela`,
+  own: (skill) => `If they used ${skill} itself, checked by Constela`,
+  add: (skill) => `If they had ${skill}, checked by Constela`,
+};
+
+export const changeText = ({ skill, change, place }: PlaceChange) => `${CHANGE_WORDS[change](SKILLS[skill])}: ${ordinal(place)} place.`;
+
 const EVIDENCE_WORDS: Record<Evidence, string> = { verified: "checked by Constela", declared: "they say they have it" };
 
 // The reason behind each part of the score, in the words the employer reads.

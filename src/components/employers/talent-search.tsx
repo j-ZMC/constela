@@ -11,7 +11,7 @@ import { opensAt, toLocalInput } from "@/lib/interview-questions";
 import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 import { STAGE_FORMAT_LABELS, type Vacancy } from "@/lib/vacancy";
-import { DEMO_PROFILES, skillsLine, talentRows, type TalentRow } from "@/lib/work-profile";
+import { DEMO_PROFILES, changeText, explainPlace, ordinal, skillsLine, talentRows, type TalentRow } from "@/lib/work-profile";
 
 const ANSWERS: Record<NonNullable<TalentRow["status"]>, string> = {
   invited: "Invited. Waiting for their answer.",
@@ -130,13 +130,14 @@ function Results({ vacancy, rows, data, row }: { vacancy: Vacancy; rows: TalentR
 
 function TalentDetail({ row, vacancy, data, title }: { row: TalentRow; vacancy: Vacancy; data: EmployerData; title: RefObject<HTMLHeadingElement | null> }) {
   const { profile, name, status, reasons, notes } = row;
-  const place = useRef<HTMLDivElement>(null);
+  const place = explainPlace(vacancy, DEMO_PROFILES, profile.id);
+  const answer = useRef<HTMLDivElement>(null);
   const [failed, setFailed] = useState(false);
 
   function invite() {
     setFailed(!addPermission({ candidateId: profile.id, vacancyId: vacancy.id, status: "invited", at: new Date().toISOString() }));
     // The button goes once the invitation is saved, so focus rests beside the answer instead of falling back to the page.
-    place.current?.focus();
+    answer.current?.focus();
   }
 
   return (
@@ -160,6 +161,20 @@ function TalentDetail({ row, vacancy, data, title }: { row: TalentRow; vacancy: 
         </ul>
       </div>
 
+      {place && (
+        <div className="flex flex-col gap-1">
+          <h3 className="font-semibold">What would change the order</h3>
+          <ul className="list-disc pl-6">
+            {place.changes.slice(0, 2).map((change) => (
+              <li key={change.skill}>{changeText(change)}</li>
+            ))}
+            {place.changes.length === 0 && <li>{place.place === 1 ? "They are in 1st place." : `No single skill would move them above ${ordinal(place.place)} place.`}</li>}
+            {/* Worked out for this person just now, not promised: the ranking runs again with their needs taken out and with every need added. */}
+            {place.sameWithoutNeeds && <li>Sharing what they need at work doesn&apos;t change their place. We check this for each person.</li>}
+          </ul>
+        </div>
+      )}
+
       {notes.length > 0 && (
         <div className="flex flex-col gap-1">
           <h3 className="font-semibold">What would help this person</h3>
@@ -171,7 +186,7 @@ function TalentDetail({ row, vacancy, data, title }: { row: TalentRow; vacancy: 
         </div>
       )}
 
-      <div ref={place} tabIndex={-1} className="flex flex-wrap items-center gap-3 outline-none">
+      <div ref={answer} tabIndex={-1} className="flex flex-wrap items-center gap-3 outline-none">
         {status === null && (
           <Button className={action} onClick={invite}>
             Invite this person
