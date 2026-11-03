@@ -3,6 +3,7 @@
 import { useSyncExternalStore } from "react";
 import { z } from "zod";
 import type { InterviewQuestion } from "@/lib/employer-ai";
+import { EMPTY_SNAPSHOT, publicSnapshot } from "@/lib/public-employer";
 import { computeSeal, type Seal, type SealResponse } from "@/lib/seal";
 import { ALTERNATIVE_FORMATS, MAX_ITEMS, MAX_LINE, MAX_QUESTION, MAX_SHORT, MAX_STAGES, vacancySchema, type Vacancy } from "@/lib/vacancy";
 import type { Permission } from "@/lib/work-profile";
@@ -181,6 +182,23 @@ export const employerStore = {
 // Next keeps visited pages alive but hidden, so data read once would go stale. This re-reads when a page comes back.
 export function useEmployerData(): EmployerData {
   return useSyncExternalStore(employerStore.subscribe, employerStore.snapshot, () => SERVER_DATA);
+}
+
+let sent = JSON.stringify(EMPTY_SNAPSHOT);
+
+// Keeps the public API's copy up to date. Only a change to what is published goes out, so typing in a draft sends nothing,
+// and a browser with nothing published never clears the copy. A send that fails goes again with the next change of any kind.
+export function syncPublicData(data: EmployerData): void {
+  const body = JSON.stringify(publicSnapshot(data));
+  if (body === sent) return;
+  sent = body;
+  const retry = () => {
+    if (sent === body) sent = "";
+  };
+  fetch("/api/employer-sync", { method: "PUT", headers: { "Content-Type": "application/json" }, body })
+    // 503 means this server has writes turned off, so trying again would only add noise.
+    .then((res) => res.status >= 500 && res.status !== 503 && retry())
+    .catch(retry);
 }
 
 const noUpdates = () => () => {};

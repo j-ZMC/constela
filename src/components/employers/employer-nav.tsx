@@ -1,11 +1,13 @@
 "use client";
 
+import { useEffect } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BookOpen, FileText, House, Star, UsersRound } from "lucide-react";
 import { LogoMark } from "@/components/logo";
 import { NightSky } from "@/components/night-sky";
 import { PersonalizationPanel } from "@/components/personalization-panel";
+import { syncPublicData, useEmployerData } from "@/lib/employer-store";
 import { cn } from "@/lib/utils";
 
 const LINKS = [
@@ -22,6 +24,10 @@ const isActive = (href: string, pathname: string) => (href === "/employers" ? pa
 // The same place on every page: a side menu on a computer. Phones and tablets get the menu at the bottom, within thumb reach.
 export function EmployerNav() {
   const pathname = usePathname();
+  const data = useEmployerData();
+
+  // Here because this menu is on every employer page, so any change that reaches the store goes out.
+  useEffect(() => syncPublicData(data), [data]);
 
   // sky: the computer side menu is a strip of night sky, so its links are white.
   const items = (className: string, sky = false) =>

@@ -12,11 +12,11 @@ export default function PrivacyPage() {
     <main className="flex flex-col">
       <PageSky>
         <h1 className="text-3xl font-bold tracking-tight text-balance sm:text-4xl">Your privacy</h1>
-        <p className="text-pretty text-white/80">Draft for the Constela prototype. Last updated 3 November 2026.</p>
+        <p className="text-pretty text-white/80">Draft for the Constela prototype. Last updated 4 November 2026.</p>
       </PageSky>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-8">
 
-      <Summarized summary="Your saved profile stays in this browser. Searches and optional features send only the data described below. You can delete saved data below.">
+      <Summarized summary="Your saved profile stays in this browser. Searches and optional features send only the data described below. Job posts an employer publishes are public. You can delete saved data below.">
       <section className="flex flex-col gap-2">
         <h2 className="flex items-center gap-2 text-xl font-semibold"><HardDrive aria-hidden className="size-6 shrink-0 text-primary" />What we keep, and where</h2>
         <p>Your answers, contact details, parsed CV profile, plan and settings are saved in this browser, on this device. We do not have online accounts or keep your profile data on a server.</p>
@@ -103,6 +103,11 @@ export default function PrivacyPage() {
         <p>
           If you use Constela for Employers: when you press &quot;Read it for me&quot;, &quot;Write it for me&quot; or &quot;Draft
           with AI&quot;, we send that job post text to Groq. No candidate&apos;s details go with it.
+        </p>
+        <p>
+          When an employer publishes a job post, a copy goes to our server, and anyone can read it there. Tools like a browser
+          extension use it to show the job post and the seal. The dates of the employer&apos;s answers go too, to work out the seal,
+          but never who the answers were for. Unpublishing a job post removes it, and so does deleting your data below.
         </p>
       </section>
 

@@ -34,6 +34,9 @@ yarn-error.log*
 .env*
 !.env.example
 
+# what employers publish, kept by the server for the public API
+/.data/
+
 # vercel
 .vercel
 

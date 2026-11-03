@@ -23,6 +23,90 @@ const interview = { vacancyId: DEMO_VACANCY.id, questions: [{ requirement: "SQL"
 const booking: EmployerData["bookings"][number] = { candidateId: "c-1", vacancyId: DEMO_VACANCY.id, interviewAt: "2026-11-05T10:00:00.000Z", choices: [{ stage: "Meet the data team", format: "written" }] };
 const data: EmployerData = { vacancies: [DEMO_VACANCY], permissions: [permission], responses: [response], guideRead: true, interviews: [interview], bookings: [booking] };
 
+describe("syncPublicData", () => {
+  const draft = { ...DEMO_VACANCY, id: "v-draft", status: "draft" as const };
+
+  async function setUp(answer: () => Promise<Response> = () => Promise.resolve(new Response(null, { status: 204 }))) {
+    vi.resetModules(); // what was already sent lives in the module
+    const fetchMock = vi.fn<(url: string, init: RequestInit) => Promise<Response>>(answer);
+    vi.stubGlobal("fetch", fetchMock);
+    const { syncPublicData } = await import("@/lib/employer-store");
+    return { syncPublicData, fetchMock, body: (call = 0) => String(fetchMock.mock.calls[call][1].body) };
+  }
+
+  it("sends what is published, once", async () => {
+    const { syncPublicData, fetchMock, body } = await setUp();
+    syncPublicData(data);
+    syncPublicData({ ...data });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+    expect(fetchMock.mock.calls[0][0]).toBe("/api/employer-sync");
+    expect(fetchMock.mock.calls[0][1].method).toBe("PUT");
+    expect(JSON.parse(body()).vacancies.map((v: { id: string }) => v.id)).toEqual([DEMO_VACANCY.id]);
+  });
+
+  it("sends nothing while a draft is being typed", async () => {
+    const { syncPublicData, fetchMock } = await setUp();
+    syncPublicData({ ...data, vacancies: [DEMO_VACANCY, draft] });
+    syncPublicData({ ...data, vacancies: [DEMO_VACANCY, { ...draft, title: "Typing" }] });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+
+  it("sends nothing from a browser with nothing published, so it can't clear the public copy", async () => {
+    const { syncPublicData, fetchMock } = await setUp();
+    syncPublicData(EMPTY);
+    syncPublicData({ ...EMPTY, vacancies: [draft] });
+    expect(fetchMock).not.toHaveBeenCalled();
+  });
+
+  it("sends again when a job post is unpublished, so it leaves the public API", async () => {
+    const { syncPublicData, fetchMock, body } = await setUp();
+    syncPublicData(data);
+    syncPublicData({ ...data, vacancies: [] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(JSON.parse(body(1)).vacancies).toEqual([]);
+  });
+
+  it("sends a new answer date, because the seal needs it", async () => {
+    const { syncPublicData, fetchMock } = await setUp();
+    syncPublicData(data);
+    syncPublicData({ ...data, responses: [response, { dueAt: "2026-11-09T00:00:00.000Z" }] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("never sends a candidate, a question or a booking", async () => {
+    const { syncPublicData, body } = await setUp();
+    syncPublicData({ ...data, responses: [{ ...response, candidateId: "c-1", vacancyId: DEMO_VACANCY.id }] });
+    expect(body()).not.toContain("c-1");
+    expect(Object.keys(JSON.parse(body())).sort()).toEqual(["guideRead", "responses", "vacancies"]);
+  });
+
+  const settle = () => new Promise((resolve) => setTimeout(resolve));
+
+  it("keeps working when the server can't be reached, and tries again with the next change", async () => {
+    const { syncPublicData, fetchMock } = await setUp(() => Promise.reject(new Error("offline")));
+    expect(() => syncPublicData(data)).not.toThrow();
+    await settle();
+    syncPublicData({ ...data, vacancies: [DEMO_VACANCY, draft] });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("tries again after a server error, so the copy doesn't stay behind", async () => {
+    const { syncPublicData, fetchMock } = await setUp(() => Promise.resolve(new Response(null, { status: 500 })));
+    syncPublicData(data);
+    await settle();
+    syncPublicData(data);
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+  });
+
+  it("doesn't keep asking a server that has writes turned off", async () => {
+    const { syncPublicData, fetchMock } = await setUp(() => Promise.resolve(new Response(null, { status: 503 })));
+    syncPublicData(data);
+    await settle();
+    syncPublicData({ ...data, vacancies: [DEMO_VACANCY, draft] });
+    expect(fetchMock).toHaveBeenCalledTimes(1);
+  });
+});
+
 describe("employer store", () => {
   let store: Record<string, string>;
   const saved = (value: unknown) => {
