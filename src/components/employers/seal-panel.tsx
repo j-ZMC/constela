@@ -25,7 +25,8 @@ function Panel() {
         <h1 className={`${pageTitle} flex items-center gap-2`}>
           {/* Star gold marks achievements only. The outline keeps it visible on white. */}
           {seal.level && <Star aria-hidden className="size-7 shrink-0 fill-star text-foreground" />}
-          {seal.level ? `Neuroinclusive seal: ${SEAL_NAMES[seal.level]}` : "No Neuroinclusive seal yet"}
+          {/* Progress, not a deficit: the line below says what is left. */}
+          {seal.level ? `Neuroinclusive seal: ${SEAL_NAMES[seal.level]}` : "Your Neuroinclusive seal"}
         </h1>
         <p data-detail="extra">It comes from what you do on Constela. It changes as soon as your data does.</p>
         {next && (

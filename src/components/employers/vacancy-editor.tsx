@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Info } from "lucide-react";
-import { ListDetail, ListRow, useOpenRow } from "@/components/employers/list-detail";
+import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/list-detail";
 import { MarkedText, PhraseHelp } from "@/components/employers/phrase-help";
 import { Field, LongTextField, NumberField, Rows, SelectField, TextField, action, longControl, note, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
@@ -251,7 +251,7 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
             <p role="status" className="font-semibold">
               {leftText(left)}
             </p>
-            <nav aria-label="Parts of this job post" className="flex flex-col gap-2">
+            <nav aria-label="Parts of this job post" className={ROWS}>
               {parts.map((p) => (
                 <ListRow key={p.id} id={p.id} selected={p.id === selected} open={open !== null} onOpen={() => setOpen(p.id)} className="items-center justify-between">
                   {p.name}
@@ -260,7 +260,8 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
                 </ListRow>
               ))}
             </nav>
-            <p data-detail="extra">
+            {/* Always shown, even in the Reduced view: the seal counts this score. */}
+            <p>
               Clarity score: {score} of 100. {score >= CLEAR_SCORE ? "This job post is clear." : `A job post is clear at ${CLEAR_SCORE}.`}
             </p>
             {posting.trim() && (

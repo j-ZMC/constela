@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { DeleteMyData } from "@/components/delete-my-data";
+import { PageSky } from "@/components/page-sky";
 import { Summarized } from "@/components/summary";
 
 export const metadata: Metadata = { title: "Privacy · Constela" };
@@ -7,11 +8,12 @@ export const metadata: Metadata = { title: "Privacy · Constela" };
 // Draft for the prototype, in Easy Read. Update it before accounts (Supabase) or analytics are added.
 export default function PrivacyPage() {
   return (
-    <main className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-10">
-      <header className="flex flex-col gap-2">
-        <h1 className="text-3xl font-bold">Your privacy</h1>
-        <p className="text-muted-foreground">Draft for the Constela prototype. Last updated 1 November 2026.</p>
-      </header>
+    <main className="flex flex-col">
+      <PageSky>
+        <h1 className="text-3xl font-bold text-balance sm:text-4xl">Your privacy</h1>
+        <p className="text-pretty text-white/80">Draft for the Constela prototype. Last updated 3 November 2026.</p>
+      </PageSky>
+      <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-8">
 
       <Summarized summary="Your data stays on this device. Only what you choose to send reaches an AI service: a task to break down, an interview answer, a job search, a CV or a vacancy. It is not stored. You can delete everything below.">
       <section className="flex flex-col gap-2">
@@ -20,7 +22,7 @@ export default function PrivacyPage() {
         <ul className="list-disc space-y-1 pl-6">
           <li>Your profile answers, which describe needs, never diagnoses</li>
           <li>The work conditions you chose for the job filter</li>
-          <li>The name and email you typed in Account, if you did</li>
+          <li>The name and email you typed in Your details, if you did</li>
           <li>What we read from your CV, if you uploaded one</li>
           <li>Your plan: steps, stars and stages</li>
           <li>How you said you feel today, if you used the check-in</li>
@@ -75,6 +77,7 @@ export default function PrivacyPage() {
         <p>You can delete everything Constela saved on this device at any time.</p>
         <DeleteMyData />
       </section>
+      </div>
     </main>
   );
 }

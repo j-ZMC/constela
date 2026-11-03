@@ -3,7 +3,7 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { InterviewQuestions } from "@/components/employers/interview-questions";
-import { ListDetail, ListRow, useOpenRow } from "@/components/employers/list-detail";
+import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/list-detail";
 import { action, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
 import { markGuideRead, useEmployerData } from "@/lib/employer-store";
@@ -71,7 +71,7 @@ function Guide() {
         backLabel="Back to all parts"
         onBack={() => setOpen(null)}
         list={
-          <nav aria-label="Parts of this guide" className="flex flex-col gap-2">
+          <nav aria-label="Parts of this guide" className={ROWS}>
             {PARTS.map((p) => (
               <ListRow key={p.id} id={p.id} selected={p === selected} open={open !== null} onOpen={() => setOpen(p.id)} className="items-center">
                 {p.title}

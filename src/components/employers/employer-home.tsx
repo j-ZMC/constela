@@ -1,9 +1,8 @@
 "use client";
 
-import type { ReactNode } from "react";
 import Link from "next/link";
-import { ArrowRight, FileText, Star, UsersRound } from "lucide-react";
-import { action, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
+import { ArrowRight, ChevronRight, FileText, Star, UsersRound, type LucideIcon } from "lucide-react";
+import { action, outlined, pageTitle } from "@/components/employers/vacancy-fields";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { homeSummary } from "@/lib/employer-home";
 import { saveVacancy, useEmployerData, useSeal } from "@/lib/employer-store";
@@ -48,11 +47,12 @@ function Home() {
         )}
       </section>
 
-      <div className="grid grid-cols-[repeat(auto-fit,minmax(min(13rem,100%),1fr))] gap-5">
-        <Box icon={<FileText aria-hidden className="size-6 shrink-0" />} title="Jobs" lines={jobs} href="/employers/vacancies" label="Open jobs" />
-        <Box icon={<UsersRound aria-hidden className="size-6 shrink-0" />} title="People" lines={people} href="/employers/talent" label="Open people" />
-        <Box icon={<Star aria-hidden className="size-6 shrink-0" />} title="Seal" lines={sealLines} href="/employers/seal" label="See what to do" />
-      </div>
+      {/* One quiet card with a row each, not a grid of tiles: the next step above is the only action that stands out. */}
+      <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
+        <Row icon={FileText} title="Jobs" lines={jobs} href="/employers/vacancies" />
+        <Row icon={UsersRound} title="People" lines={people} href="/employers/talent" />
+        <Row icon={Star} title="Seal" lines={sealLines} href="/employers/seal" />
+      </ul>
 
       <Link href="/" className="flex min-h-11 w-fit items-center underline underline-offset-4">
         Looking for a job? Go to Constela
@@ -61,21 +61,21 @@ function Home() {
   );
 }
 
-function Box({ icon, title, lines, href, label }: { icon: ReactNode; title: string; lines: string[]; href: string; label: string }) {
+function Row({ icon: Icon, title, lines, href }: { icon: LucideIcon; title: string; lines: string[]; href: string }) {
   return (
-    <section className={panel}>
-      <h2 className="flex items-center gap-2 text-xl font-semibold">
-        {icon}
-        {title}
-      </h2>
-      <div className="flex flex-col gap-1">
-        {lines.map((line) => (
-          <p key={line}>{line}</p>
-        ))}
-      </div>
-      <Link href={href} className={buttonVariants({ variant: "outline", className: `${outlined} mt-auto` })}>
-        {label}
+    <li>
+      <Link href={href} className="flex min-h-11 items-center gap-4 p-5 hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none">
+        <Icon aria-hidden className="size-6 shrink-0 text-primary" />
+        <span className="flex min-w-0 flex-1 flex-col gap-1">
+          <span className="text-lg font-semibold">{title}</span>
+          {lines.map((line) => (
+            <span key={line} className="text-muted-foreground">
+              {line}
+            </span>
+          ))}
+        </span>
+        <ChevronRight aria-hidden className="size-5 shrink-0" />
       </Link>
-    </section>
+    </li>
   );
 }

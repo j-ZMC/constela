@@ -24,8 +24,9 @@ export default function JobsPage() {
         <p className="text-pretty text-white/80">Jobs picked for you, or search for any job. We point out what you asked us to watch for.</p>
       </PageSky>
       <div className="mx-auto flex w-full max-w-3xl flex-col gap-8 px-4 py-8">
-        <PublishedVacancies />
         <JobsView />
+        {/* After the search: the person came to find jobs, so the tabs sit right under the sky. */}
+        <PublishedVacancies />
       </div>
     </main>
   );

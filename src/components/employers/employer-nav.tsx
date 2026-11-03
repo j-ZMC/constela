@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BookOpen, FileText, House, UsersRound } from "lucide-react";
+import { BookOpen, FileText, House, Star, UsersRound } from "lucide-react";
 import { LogoMark } from "@/components/logo";
 import { NightSky } from "@/components/night-sky";
 import { PersonalizationPanel } from "@/components/personalization-panel";
@@ -12,11 +12,12 @@ const LINKS = [
   { href: "/employers", label: "Home", icon: House },
   { href: "/employers/vacancies", label: "Jobs", icon: FileText },
   { href: "/employers/talent", label: "People", icon: UsersRound },
+  { href: "/employers/seal", label: "Seal", icon: Star },
   { href: "/employers/guide", label: "Guide", icon: BookOpen },
 ];
 
-// Home is the section's root, so every employer page starts with its href. The seal opens from Home and has no menu item.
-const isActive = (href: string, pathname: string) => (href === "/employers" ? pathname === href || pathname === "/employers/seal" : pathname.startsWith(href));
+// Home is the section's root, so every employer page starts with its href: Home is current on itself only.
+const isActive = (href: string, pathname: string) => (href === "/employers" ? pathname === href : pathname.startsWith(href));
 
 // The same place on every page: a side menu on a computer. Phones and tablets get the menu at the bottom, within thumb reach.
 export function EmployerNav() {
@@ -57,7 +58,7 @@ export function EmployerNav() {
         <Link href="/employers" className="flex min-h-11 items-center gap-2 leading-tight font-semibold">
           <LogoMark className="size-8 shrink-0" />
           <span>
-            Constela <span className="hidden lg:inline">for Employers</span>
+            Constela for Employers
           </span>
         </Link>
         <nav aria-label="Main" className="hidden flex-col gap-2 lg:flex">

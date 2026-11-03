@@ -8,7 +8,7 @@ const route = vi.hoisted(() => ({ path: "/" }));
 vi.mock("next/navigation", () => ({ usePathname: () => route.path }));
 
 const CANDIDATE_PAGES = ["/profile", "/plan", "/jobs", "/interview"];
-const EMPLOYER_PAGES = ["/employers", "/employers/vacancies", "/employers/talent", "/employers/guide"];
+const EMPLOYER_PAGES = ["/employers", "/employers/vacancies", "/employers/talent", "/employers/seal", "/employers/guide"];
 
 function render(nav: () => React.ReactNode, path: string) {
   route.path = path;
@@ -50,7 +50,7 @@ describe("EmployerNav", () => {
     expect([...render(EmployerNav, "/employers/talent").current]).toEqual(["/employers/talent"]);
   });
 
-  it("keeps Home current on the seal, which has no menu item", () => {
-    expect([...render(EmployerNav, "/employers/seal").current]).toEqual(["/employers"]);
+  it("marks the seal as current on its own page", () => {
+    expect([...render(EmployerNav, "/employers/seal").current]).toEqual(["/employers/seal"]);
   });
 });

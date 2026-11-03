@@ -52,6 +52,9 @@ export function ListDetail({ open, backLabel, onBack, list, children }: { open: 
 }
 
 // selected shows on a computer, where a detail is always in view. Current is only said once a row was really opened.
+// Rows sit in one card split by lines (ROWS below), like every list in the app (DESIGN.md).
+export const ROWS = "flex flex-col divide-y overflow-hidden rounded-xl border bg-card";
+
 export function ListRow({ id, selected, open, onOpen, className, children }: { id: string; selected: boolean; open: boolean; onOpen: () => void; className?: string; children: ReactNode }) {
   return (
     <button
@@ -59,7 +62,7 @@ export function ListRow({ id, selected, open, onOpen, className, children }: { i
       id={rowId(id)}
       aria-current={selected && open ? "true" : undefined}
       onClick={onOpen}
-      className={cn("flex min-h-13 w-full gap-3 rounded-lg border bg-card px-4 py-2 text-left hover:bg-secondary", selected && "lg:border-primary lg:bg-secondary lg:font-semibold", className)}
+      className={cn("flex min-h-13 w-full gap-3 px-4 py-2 text-left hover:bg-secondary", selected && "lg:bg-secondary lg:font-semibold", className)}
     >
       {children}
     </button>

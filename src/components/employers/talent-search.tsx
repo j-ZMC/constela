@@ -2,7 +2,7 @@
 
 import { useRef, useState, type RefObject } from "react";
 import Link from "next/link";
-import { ListDetail, ListRow, useOpenRow, useUrlValue } from "@/components/employers/list-detail";
+import { ListDetail, ListRow, ROWS, useOpenRow, useUrlValue } from "@/components/employers/list-detail";
 import { Field, SelectField, action, control, note, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -91,7 +91,7 @@ function Results({ vacancy, rows, data, row }: { vacancy: Vacancy; rows: TalentR
           onBack={() => setOpen(null)}
           list={
             <div className="flex flex-col gap-3">
-              <ol aria-label="People, best skills match first" className="flex flex-col gap-2">
+              <ol aria-label="People, best skills match first" className={ROWS}>
                 {rows.map((r, i) => (
                   <li key={r.profile.id}>
                     <ListRow id={r.profile.id} selected={r === selected} open={open !== null} onOpen={() => setOpen(r.profile.id)} className="flex-col items-start gap-0">

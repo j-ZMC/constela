@@ -1,7 +1,8 @@
 "use client";
 
 import { useRef, useState } from "react";
-import { Button } from "@/components/ui/button";
+import Link from "next/link";
+import { Button, buttonVariants } from "@/components/ui/button";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { answerInvitation, chooseFormat, useEmployerData, type StageChoice } from "@/lib/employer-store";
 import { opensAt, questionsOpen } from "@/lib/interview-questions";
@@ -22,7 +23,15 @@ export function InvitationList() {
 function List() {
   const data = useEmployerData();
   const invitations = listInvitations(data, DEMO_PROFILES);
-  if (invitations.length === 0) return <p className="text-muted-foreground">You have no invitations yet. When an employer invites you, it shows here.</p>;
+  if (invitations.length === 0)
+    return (
+      <div className="flex flex-col gap-3 rounded-xl border bg-card p-5">
+        <p>You have no invitations yet. When an employer invites you, it shows here.</p>
+        <Link href="/jobs" className={buttonVariants({ size: "touch", className: "w-fit" })}>
+          Look at jobs
+        </Link>
+      </div>
+    );
   return (
     <ul className="flex flex-col gap-6">
       {invitations.map((invitation) => (
