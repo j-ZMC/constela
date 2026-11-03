@@ -1,5 +1,15 @@
 import { parseJobSearchRequest, parseWorkerResult } from "@/lib/jobs";
 import { JobsWorkerError, runJobsWorker } from "@/lib/jobs-worker";
+import savedSearches from "@/data/saved-job-searches.json";
+
+// A few searches saved from real results, so a demo never stops at an error. They skip the person's work conditions,
+// so the page says they are saved. shortcut: two fixed queries, drop once the backend is hosted and reliable.
+const SAVED: Record<string, unknown> = savedSearches;
+const SAVED_TIMEOUT_MS = 25_000;
+const savedFor = (query: string) => {
+  const hit = SAVED[query.toLowerCase().replace(/\s+/g, " ")];
+  return hit ? Response.json({ ...(hit as object), saved: true }) : null;
+};
 
 const ERRORS = {
   invalid_input: { status: 400, message: "Enter a valid job-search phrase and profile selection." },
@@ -21,12 +31,14 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const input = parseJobSearchRequest(body);
   if (!input) return failure("invalid_input");
-  if (!process.env.OPENAI_API_KEY?.trim()) return failure("not_configured");
+  const saved = savedFor(input.query);
+  if (!process.env.OPENAI_API_KEY?.trim()) return saved ?? failure("not_configured");
 
   try {
-    const result = parseWorkerResult(await runJobsWorker(input));
-    return result ? Response.json(result) : failure("backend_failed");
+    // With saved results to fall back on, don't keep the person waiting the full two minutes.
+    const result = parseWorkerResult(await runJobsWorker(input, saved ? { timeoutMs: SAVED_TIMEOUT_MS } : undefined));
+    return result ? Response.json(result) : (saved ?? failure("backend_failed"));
   } catch (error) {
-    return failure(error instanceof JobsWorkerError ? error.code : "backend_failed");
+    return saved ?? failure(error instanceof JobsWorkerError ? error.code : "backend_failed");
   }
 }

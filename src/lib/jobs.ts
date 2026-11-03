@@ -80,6 +80,8 @@ const workerResultSchema = z.object({
 
 export type Job = Omit<z.infer<typeof jobSchema>, "url"> & { url: string | null };
 export type JobSearchResponse = {
+  // Results saved from an earlier search, shown when the live search fails (see /api/jobs).
+  saved?: boolean;
   jobs: Job[];
   blockedJobs: Job[];
   summary: {
@@ -137,6 +139,7 @@ export function parseWorkerResult(value: unknown): JobSearchResponse | null {
 
 const apiJobSchema = jobSchema.extend({ url: z.string().nullable() });
 const apiResponseSchema = z.object({
+  saved: z.boolean().optional(),
   jobs: z.array(apiJobSchema),
   blockedJobs: z.array(apiJobSchema),
   summary: z.object({

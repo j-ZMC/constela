@@ -77,4 +77,21 @@ describe("POST /api/jobs", () => {
     expect(response.status).toBe(504);
     expect(await response.json()).toEqual({ error: { code: "timeout", message: expect.any(String) } });
   });
+
+  it("falls back to saved results for a saved query, waiting less, and says so", async () => {
+    runJobsWorkerMock.mockRejectedValue(new JobsWorkerErrorMock("timeout"));
+    const response = await POST(request({ query: "  Customer   Service " }));
+    expect(response.status).toBe(200);
+    const body = await response.json();
+    expect(body.saved).toBe(true);
+    expect(body.jobs.length).toBeGreaterThan(0);
+    expect(runJobsWorkerMock.mock.calls[0][1]).toEqual({ timeoutMs: 25_000 });
+  });
+
+  it("uses saved results even without a server key", async () => {
+    delete process.env.OPENAI_API_KEY;
+    const response = await POST(request({ query: "data analyst" }));
+    expect(response.status).toBe(200);
+    expect((await response.json()).saved).toBe(true);
+  });
 });
