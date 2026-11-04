@@ -9,7 +9,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "eslint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "eval:ai": "vitest run --config vitest.eval.config.mts"
   },
   "dependencies": {
     "@ai-sdk/groq": "^4.0.71",
