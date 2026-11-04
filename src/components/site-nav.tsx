@@ -1,0 +1,87 @@
+"use client";
+
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import { BriefcaseBusiness, GraduationCap, ListChecks, MessagesSquare, UserRound } from "lucide-react";
+import { Logo } from "@/components/logo";
+import { PersonalizationPanel } from "@/components/personalization-panel";
+import { cn } from "@/lib/utils";
+
+const links = [
+  { href: "/plan", label: "My plan", icon: ListChecks },
+  { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
+  { href: "/learn", label: "Learn", icon: GraduationCap },
+  { href: "/interview", label: "Preparation", icon: MessagesSquare },
+  { href: "/profile", label: "Profile", icon: UserRound },
+];
+
+export function SiteNav() {
+  const pathname = usePathname();
+  // The intro asks for one decision only, so the app menu waits until the person starts. Personalize stays.
+  const intro = pathname === "/";
+
+  // side: the wide-screen bar on the left, one link per row; otherwise the phone tab bar, icon over label.
+  const items = (side: boolean) =>
+    links.map(({ href, label, icon: Icon }) => {
+      const active = pathname.startsWith(href);
+      return (
+        <Link
+          key={href}
+          href={href}
+          aria-current={active ? "page" : undefined}
+          className={cn(
+            "press flex min-h-11 items-center rounded-lg text-sm leading-tight outline-none focus-visible:ring-2 focus-visible:ring-star",
+            side ? "w-full gap-3 px-3 py-2.5 text-base" : "flex-1 flex-col justify-center gap-1 px-1 py-2 text-center",
+            active ? "bg-white/15 font-semibold text-white" : "text-white/80 hover:bg-white/10 hover:text-white",
+          )}
+        >
+          <Icon className="size-5 shrink-0" aria-hidden data-pz-icon />
+          <span data-pz-label>{label}</span>
+        </Link>
+      );
+    });
+
+  return (
+    <>
+      {/* The bars are the dark sky color (--sky, always dark enough for white text, in every palette), so they never
+          blend with the page. On wide screens the app menu is the bar on the left, so this top bar shows only on the
+          intro and on phones. */}
+      <header className={cn("sticky top-0 z-10 border-b border-white/10 bg-sky text-white", !intro && "lg:hidden")}>
+        <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3">
+          <Link href="/" className="flex min-h-11 items-center text-lg">
+            <Logo />
+          </Link>
+          <PersonalizationPanel onSky />
+        </div>
+      </header>
+      {!intro && (
+        <>
+          {/* Wide screens: one bar down the left side; layout.tsx moves the page over by its width (data-side-nav). */}
+          <aside
+            data-side-nav
+            className="fixed inset-y-0 left-0 z-10 hidden w-56 flex-col gap-6 border-r border-white/10 bg-sky px-3 py-4 text-white lg:flex"
+          >
+            <Link href="/" className="flex min-h-11 items-center px-3 text-lg">
+              <Logo />
+            </Link>
+            <nav aria-label="Main" className="flex flex-col gap-1">
+              {items(true)}
+            </nav>
+            <div className="mt-auto px-1">
+              <PersonalizationPanel onSky />
+            </div>
+          </aside>
+          {/* Phones and tablets: the nav sits at the bottom, within thumb reach. globals.css hides it while the keyboard
+              is open (data-mobile-nav), so it never covers the field. */}
+          <nav
+            aria-label="Main"
+            data-mobile-nav
+            className="fixed inset-x-0 bottom-0 z-10 flex border-t border-white/10 bg-sky px-2 pb-[env(safe-area-inset-bottom)] text-white lg:hidden"
+          >
+            {items(false)}
+          </nav>
+        </>
+      )}
+    </>
+  );
+}

@@ -1,0 +1,420 @@
+@import "tailwindcss";
+@import "tw-animate-css";
+@import "shadcn/tailwind.css";
+
+@custom-variant dark (&:is(.dark *));
+
+@theme inline {
+  --color-background: var(--background);
+  --color-star: var(--star);
+  --color-sky: var(--sky);
+  --color-foreground: var(--foreground);
+  --font-sans: var(--font-sans);
+  --font-mono: var(--font-geist-mono);
+  --font-heading: var(--font-sans);
+  --color-sidebar-ring: var(--sidebar-ring);
+  --color-sidebar-border: var(--sidebar-border);
+  --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
+  --color-sidebar-accent: var(--sidebar-accent);
+  --color-sidebar-primary-foreground: var(--sidebar-primary-foreground);
+  --color-sidebar-primary: var(--sidebar-primary);
+  --color-sidebar-foreground: var(--sidebar-foreground);
+  --color-sidebar: var(--sidebar);
+  --color-chart-5: var(--chart-5);
+  --color-chart-4: var(--chart-4);
+  --color-chart-3: var(--chart-3);
+  --color-chart-2: var(--chart-2);
+  --color-chart-1: var(--chart-1);
+  --color-ring: var(--ring);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-destructive: var(--destructive);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-accent: var(--accent);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-muted: var(--muted);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-secondary: var(--secondary);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-primary: var(--primary);
+  --color-popover-foreground: var(--popover-foreground);
+  --color-popover: var(--popover);
+  --color-card-foreground: var(--card-foreground);
+  --color-card: var(--card);
+  --radius-sm: calc(var(--radius) * 0.6);
+  --radius-md: calc(var(--radius) * 0.8);
+  --radius-lg: var(--radius);
+  --radius-xl: calc(var(--radius) * 1.4);
+  --radius-2xl: calc(var(--radius) * 1.8);
+  --radius-3xl: calc(var(--radius) * 2.2);
+  --radius-4xl: calc(var(--radius) * 2.6);
+}
+
+/* Astralis palette (Regina): navy #243B53, mint #E7F0ED, white, peach #F2B880.
+   Peach marks achievements only, never text: it is 1.8:1 on white. */
+:root {
+  --background: #e7f0ed;
+  --foreground: #243b53;
+  --card: #ffffff;
+  --card-foreground: #243b53;
+  --popover: #ffffff;
+  --popover-foreground: #243b53;
+  --primary: #243b53;
+  --primary-foreground: #ffffff;
+  --secondary: #dde8e4;
+  --secondary-foreground: #243b53;
+  --muted: #dde8e4;
+  --muted-foreground: #52667a;
+  --accent: #dde8e4;
+  --accent-foreground: #243b53;
+  /* Terracotta instead of alarm red */
+  --destructive: oklch(0.52 0.12 35);
+  --border: #d0ddd8;
+  /* Inputs need 3:1 against white to be visible as fields */
+  --input: #7f8f9c;
+  --ring: #4a6a8a;
+  --star: #f2b880;
+  /* The constellation's night sky: Regina's navy. Personalize palettes replace it with skyFor(), always dark enough for white text */
+  --sky: #243b53;
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --radius: 0.625rem;
+  --sidebar: oklch(0.985 0 0);
+  --sidebar-foreground: oklch(0.145 0 0);
+  --sidebar-primary: oklch(0.205 0 0);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.97 0 0);
+  --sidebar-accent-foreground: oklch(0.205 0 0);
+  --sidebar-border: oklch(0.922 0 0);
+  --sidebar-ring: oklch(0.708 0 0);
+}
+
+.dark {
+  --background: oklch(0.145 0 0);
+  --foreground: oklch(0.985 0 0);
+  --card: oklch(0.205 0 0);
+  --card-foreground: oklch(0.985 0 0);
+  --popover: oklch(0.205 0 0);
+  --popover-foreground: oklch(0.985 0 0);
+  --primary: oklch(0.922 0 0);
+  --primary-foreground: oklch(0.205 0 0);
+  --secondary: oklch(0.269 0 0);
+  --secondary-foreground: oklch(0.985 0 0);
+  --muted: oklch(0.269 0 0);
+  --muted-foreground: oklch(0.708 0 0);
+  --accent: oklch(0.269 0 0);
+  --accent-foreground: oklch(0.985 0 0);
+  --destructive: oklch(0.704 0.191 22.216);
+  --border: oklch(1 0 0 / 10%);
+  --input: oklch(1 0 0 / 15%);
+  --ring: oklch(0.556 0 0);
+  --chart-1: oklch(0.87 0 0);
+  --chart-2: oklch(0.556 0 0);
+  --chart-3: oklch(0.439 0 0);
+  --chart-4: oklch(0.371 0 0);
+  --chart-5: oklch(0.269 0 0);
+  --sidebar: oklch(0.205 0 0);
+  --sidebar-foreground: oklch(0.985 0 0);
+  --sidebar-primary: oklch(0.488 0.243 264.376);
+  --sidebar-primary-foreground: oklch(0.985 0 0);
+  --sidebar-accent: oklch(0.269 0 0);
+  --sidebar-accent-foreground: oklch(0.985 0 0);
+  --sidebar-border: oklch(1 0 0 / 10%);
+  --sidebar-ring: oklch(0.556 0 0);
+}
+
+@layer base {
+  * {
+    @apply border-border outline-ring;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+  html {
+    @apply font-sans;
+    /* Light by default, whatever the system says; a dark Personalize palette switches native controls too. */
+    color-scheme: light;
+    accent-color: var(--primary);
+    caret-color: var(--primary);
+    scrollbar-color: color-mix(in oklch, var(--foreground) 30%, transparent) transparent;
+    /* Our own pressed state replaces the gray flash phones draw on tap. */
+    -webkit-tap-highlight-color: transparent;
+    /* Keep focused and scrolled-to elements clear of the sticky header and the mobile bottom nav. */
+    scroll-padding-top: 5rem;
+    scroll-padding-bottom: 6rem;
+  }
+  html[data-pz-scheme="dark"] {
+    color-scheme: dark;
+  }
+  ::selection {
+    background: color-mix(in oklch, var(--primary) 22%, transparent);
+    color: var(--foreground);
+  }
+  /* Reading settings: classes on <html> toggled by the "Reading" panel */
+  .text-large {
+    font-size: 118.75%;
+  }
+}
+
+/* Unlayered and on every element so font utilities like font-heading can't override it. */
+.dyslexic,
+.dyslexic * {
+  font-family: "OpenDyslexic", sans-serif;
+}
+
+/* Softer than the base palette: less contrast and muted color */
+.calm {
+  --background: #edf2f0;
+  --foreground: #3a4e63;
+  --card: #f8faf9;
+  --primary: #4a6178;
+  --secondary: #e2eae7;
+  --muted-foreground: #56697b;
+  --border: #d9e3df;
+  --star: #e8c4a0;
+}
+
+/* Pressed: anything you tap gives a little under your finger, like a native control. Short and eased out, and
+   only the transform moves, so it never shifts the layout. Reduce motion keeps the color change only. */
+@utility press {
+  transition-property: transform, background-color, color, border-color, box-shadow;
+  transition-duration: 160ms;
+  transition-timing-function: cubic-bezier(0.22, 1, 0.36, 1);
+  &:active:not(:disabled, [aria-disabled="true"]) {
+    transform: scale(0.97);
+  }
+}
+.reduce-motion .press:active {
+  transform: none;
+}
+@media (prefers-reduced-motion: reduce) {
+  .press:active {
+    transform: none;
+  }
+}
+
+/* Phones: while a text field has focus the keyboard is open, and the bottom nav would sit on the field. */
+@media not all and (min-width: 64rem) {
+  body:has(:is(input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"], [type="file"]), textarea, [contenteditable="true"]):focus)
+    [data-mobile-nav] {
+    display: none;
+  }
+}
+
+/* The one authored moment: a star lights when a step is done. Final state is the default,
+   so the reduce-motion rules below simply show it lit. */
+.star-lit .star-core,
+.star-lit .star-ring {
+  transform-box: fill-box;
+  transform-origin: center;
+}
+.star-lit .star-core {
+  animation: star-light 700ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+.star-ring {
+  opacity: 0;
+}
+.star-lit .star-ring {
+  animation: star-ring 1100ms cubic-bezier(0.16, 1, 0.3, 1);
+}
+@keyframes star-light {
+  from {
+    transform: scale(0.3);
+    filter: brightness(1.4);
+  }
+}
+@keyframes star-ring {
+  from {
+    transform: scale(1);
+    opacity: 0.8;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
+}
+
+/* Hey Constela on the map: the "You" star glows with the person's voice while it listens (--level, set by
+   ask-constela.tsx), breathes while it thinks and pulses while it talks. With reduced motion it simply glows. */
+.voice-halo {
+  width: 8rem;
+  aspect-ratio: 1;
+  translate: -50% -50%;
+  border-radius: 9999px;
+  background: radial-gradient(circle, color-mix(in oklch, var(--star) 60%, transparent) 0%, transparent 68%);
+  opacity: 0;
+  scale: 0.5;
+  transition: opacity 300ms ease, scale 120ms ease-out;
+}
+[data-voice="listening"] .voice-halo,
+[data-voice="writing"] .voice-halo {
+  opacity: 1;
+  scale: calc(0.65 + var(--level, 0) * 0.9);
+}
+[data-voice="thinking"] .voice-halo {
+  opacity: 0.7;
+  scale: 0.8;
+  animation: voice-breathe 1800ms ease-in-out infinite;
+}
+[data-voice="speaking"] .voice-halo {
+  opacity: 1;
+  scale: 1;
+  animation: voice-talk 700ms ease-in-out infinite alternate;
+}
+@keyframes voice-breathe {
+  50% {
+    scale: 1.05;
+    opacity: 0.35;
+  }
+}
+@keyframes voice-talk {
+  to {
+    scale: 1.3;
+    opacity: 0.75;
+  }
+}
+/* A branch Constela is talking about. */
+.branch-glow {
+  animation: branch-glow 600ms ease-out;
+}
+@keyframes branch-glow {
+  from {
+    opacity: 0;
+  }
+}
+
+/* Intro sky (night-sky.tsx). Slow and soft on purpose: nothing flashes, and the still state is the default. */
+.sky-twinkle {
+  opacity: 0.75;
+  animation: sky-twinkle 5s ease-in-out infinite alternate;
+}
+@keyframes sky-twinkle {
+  from {
+    opacity: 0.25;
+  }
+}
+.sky-draw {
+  animation: sky-draw 2.4s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+@keyframes sky-draw {
+  from {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 1;
+  }
+  to {
+    stroke-dasharray: 1;
+    stroke-dashoffset: 0;
+  }
+}
+/* A short bright dash travels along the line, then rests; hidden when animations are off. */
+.sky-trail {
+  opacity: 0;
+  stroke-dasharray: 0.12 0.88;
+  animation: sky-trail 9s ease-in-out infinite;
+}
+@keyframes sky-trail {
+  0% {
+    stroke-dashoffset: 1.12;
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.9;
+  }
+  45% {
+    stroke-dashoffset: 0;
+    opacity: 0.9;
+  }
+  55%,
+  100% {
+    stroke-dashoffset: 0;
+    opacity: 0;
+  }
+}
+
+.reduce-motion *,
+.reduce-motion *::before,
+.reduce-motion *::after,
+html[data-pz-calm] *,
+html[data-pz-calm] *::before,
+html[data-pz-calm] *::after {
+  animation: none !important;
+  transition: none !important;
+  scroll-behavior: auto !important;
+}
+/* Calm mode (Personalize): no glow either. The halo, the ring around a lit star and the gold rings go; the state
+   they show is still said in words (labels, "speaking", "done"). */
+html[data-pz-calm] :is(.voice-halo, .star-ring, .sky-trail) {
+  display: none;
+}
+html[data-pz-calm] :is(.ring-star, .ring-star\/60, .ring-star\/70) {
+  --tw-ring-color: transparent;
+}
+html[data-pz-calm] .press:active {
+  transform: none;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation: none !important;
+    transition: none !important;
+  }
+}
+
+/* Personalization (src/lib/personalization.ts). Every rule needs a data-pz* attribute or .focus-strong on <html>,
+   so with default settings none of this applies and the app looks unchanged. */
+html[data-pz~="font"],
+html[data-pz~="font"] * {
+  font-family: var(--pz-font);
+}
+html[data-pz~="size"] {
+  font-size: calc(var(--pz-size) * 1%);
+}
+html[data-pz~="lh"] body * {
+  line-height: var(--pz-lh);
+}
+html[data-pz~="ls"] body {
+  letter-spacing: var(--pz-ls);
+}
+html[data-pz~="w"] :is(p, li) {
+  max-width: var(--pz-w);
+}
+html[data-pz~="cur"],
+html[data-pz~="cur"] * {
+  cursor: var(--pz-cursor);
+}
+html[data-pz~="icon"] :is(button, a) > svg {
+  width: var(--pz-icon);
+  height: var(--pz-icon);
+}
+html[data-pz~="ctl"] :is(button, select, textarea, input:not([type="checkbox"], [type="radio"], [type="range"], [type="color"])) {
+  min-height: var(--pz-ctl);
+}
+/* Icons only: labels stay available to screen readers */
+html[data-pz-icons="icons"] [data-pz-label] {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+html[data-pz-icons="text"] [data-pz-icon] {
+  display: none;
+}
+/* Content opts in with data-detail="extra" (hidden when reduced) or "full" (only in the full view) */
+html[data-pz-detail="reduced"] [data-detail] {
+  display: none;
+}
+html[data-pz-detail="comfortable"] [data-detail="full"] {
+  display: none;
+}
+html.focus-strong :focus-visible {
+  outline: 4px solid var(--foreground);
+  outline-offset: 3px;
+  box-shadow: 0 0 0 7px var(--star);
+}

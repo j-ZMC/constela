@@ -1,0 +1,55 @@
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+env/
+*.egg-info/
+resume_parser.py/resumes/
+
+# Secrets / local environment configuration
+.env
+.env.*
+!.env.example
+
+# Data (regenerable / pesado, no subir)
+*.json
+!jobs_test.json
+!config/neurodivergence_job_barriers.json
+!data/raw/jobs/jobs_usa_full_backup_cleaned.json
+!resume_parser.py/resume_taxonomy.json
+*.jsonl
+*.npy
+*.npz
+*.csv
+*.parquet
+*.sqlite
+*.sqlite3
+*.db
+data/processed/*
+*.ipynb_checkpoints/
+# Kept in git: what the job search reads at run time, so a fresh clone searches without rebuilding anything.
+# The vectors were computed on this computer with Qwen3-Embedding-0.6B (pretokenize_openai.py).
+!data/processed/embeddings/
+data/processed/embeddings/*
+!data/processed/embeddings/*_qwen3_embeddings.npy
+!data/processed/embeddings/*_qwen3_ids.json
+!data/processed/embeddings/neurodivergence_barriers_qwen3.npz
+!data/processed/company_inclusion.sqlite
+!data/processed/qualified_company_jobs.sqlite
+!data/raw/jobs/internships.json
+!data/reference/company_data/company_sizes.json
+*.ipynb_checkpoints/
+
+# Keep the OpenAI filter; ignore the legacy local-model filter.
+/filter_jobs.py
+
+# OS / editor
+.vscode/
+.DS_Store
+Thumbs.db
+
+01_test.ipynb
+
+# Downloaded models (Kokoro voice): fetched on first run by speak_server.py
+models/
