@@ -51,5 +51,9 @@ Thumbs.db
 
 01_test.ipynb
 
-# Downloaded models (Kokoro voice): fetched on first run by speak_server.py
-models/
+# Models: only the Kokoro voice comes with the repository (int8 model and voices, see speak_server.py).
+models/*
+!models/kokoro/
+models/kokoro/*
+!models/kokoro/kokoro-v1.0.int8.onnx
+!models/kokoro/voices-v1.0.bin

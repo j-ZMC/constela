@@ -2,8 +2,8 @@
 
 1. A Python environment in `.venv` at the project root, with backend/requirements.txt.
 2. The models that would otherwise download the first time someone uses them, so the first voice reply already uses
-   Kokoro instead of the browser's voice: Kokoro (the AI's voice, about 340 MB), Whisper small.en (about 500 MB) and the
-   voice-tone model for "Adjust the practice" (about 380 MB).
+   Kokoro instead of the browser's voice: Whisper small.en (about 500 MB) and the voice-tone model for "Adjust the
+   practice" (about 380 MB). The Kokoro voice comes with the repository; this only checks it is there.
 3. The Ollama models (llama3.1:8b and qwen3-embedding:0.6b), when Ollama is installed.
 
 Safe to run again: everything already in place is skipped. Uses only the standard library, so any Python 3.10+ runs it.

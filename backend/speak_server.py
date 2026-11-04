@@ -7,7 +7,9 @@ Uses the protocol in worker_protocol.py:
   result:   {"id": "...", "seconds": 2.4}    (the audio is written to `path` as a WAV file)
 
 It runs on the CPU, which is fast enough for a model this small and leaves the GPU to Ollama and Whisper.
-The model files (about 340 MB) are downloaded once into backend/models/kokoro the first time it runs.
+The model files come with the repository in backend/models/kokoro: the int8 model (88 MB, under GitHub's 100 MB file
+limit; as fast as the full 310 MB one) and the voices (27 MB). Both are Apache 2.0. If they are missing, they are
+downloaded there the first time it runs.
 Settings: KOKORO_VOICE (default af_heart), KOKORO_SPEED (default 0.95), KOKORO_DIR.
 """
 from __future__ import annotations
@@ -25,7 +27,7 @@ VOICE = os.environ.get("KOKORO_VOICE", "af_heart")
 # A little slower than normal speech, easier to follow.
 SPEED = float(os.environ.get("KOKORO_SPEED", "0.95"))
 FILES_URL = "https://github.com/thewh1teagle/kokoro-onnx/releases/download/model-files-v1.0"
-FILES = ("kokoro-v1.0.onnx", "voices-v1.0.bin")
+FILES = ("kokoro-v1.0.int8.onnx", "voices-v1.0.bin")
 
 
 def download_model() -> None:

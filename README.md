@@ -77,21 +77,65 @@ The [privacy page](src/app/privacy/page.tsx) says the same in Easy Read. Keep th
 
 [Next.js 16](https://nextjs.org) · [shadcn/ui](https://ui.shadcn.com) on [Base UI](https://base-ui.com) · [AI SDK](https://ai-sdk.dev) · Tailwind CSS · TypeScript · Python (job filter, CV parser, Whisper, Kokoro) · [Ollama](https://ollama.com) · [faster-whisper](https://github.com/SYSTRAN/faster-whisper) · [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)
 
-## Getting started
+## How to set up
 
-You need Node.js 20 or newer, Python 3.10 or newer (3.12 recommended) and [Ollama](https://ollama.com/download).
+Constela runs on your own computer. All the AI runs locally, except "Break it down for me", which uses Groq.
+
+### 1. Install the tools
+
+| Tool | Version | Get it |
+| --- | --- | --- |
+| Node.js | 20 or newer | https://nodejs.org |
+| Python | 3.10 or newer (3.12 recommended) | https://www.python.org/downloads (on Windows, tick "Add python.exe to PATH") |
+| Ollama | latest | https://ollama.com/download (open it once so it keeps running) |
+| Git | any | https://git-scm.com/downloads |
+
+An NVIDIA GPU makes the interview faster, but it is not required.
+
+### 2. Get the code
 
 ```bash
+git clone https://github.com/j-ZMC/constela.git
+cd constela
 npm install
-cp .env.example .env.local   # optional: GROQ_API_KEY for "Break it down for me"
-npm run dev                  # the first time, it sets everything up first (about 2 GB, once)
 ```
 
-Open http://localhost:3000. The first time, `npm run dev` runs `backend/setup_local.py`: the Python environment, the
-voice and speech models (Kokoro, Whisper, voice tone) and the Ollama models, so the first voice reply already uses
-Kokoro. Afterwards it only checks a marker file (`.venv/.constela-setup-done`). `npm run setup` runs it again by hand.
-The first time the app opens, "What is hard for you?" comes first and cannot be skipped: at least one choice starts the app.
-The job data and the search vectors (computed locally with Qwen3-Embedding) come with the repository.
+The job data, the search vectors and the Kokoro voice model come with the repository.
+
+### 3. Add your keys (optional)
+
+```bash
+cp .env.example .env.local    # PowerShell: Copy-Item .env.example .env.local
+```
+
+Only "Break it down for me" needs a key: put a free Groq key in `GROQ_API_KEY` (https://console.groq.com/keys).
+Everything else works without one. See [Environment variables](#environment-variables) for the rest.
+
+### 4. Start it
+
+```bash
+npm run dev
+```
+
+The first time, this sets everything up before starting (about 2 GB, once; 5 to 15 minutes): it runs
+`backend/setup_local.py`, which creates the Python environment in `.venv`, downloads Whisper and the voice-tone model,
+and pulls the Ollama models (`llama3.1:8b`, `qwen3-embedding:0.6b`). Later starts only check a marker file
+(`.venv/.constela-setup-done`) and begin at once.
+
+### 5. Open the app
+
+Go to http://localhost:3000. The first time, "What is hard for you?" comes first and cannot be skipped: choose at
+least one option and press "Turn on this help". You can change it later in Profile, What is hard.
+
+### If something does not work
+
+| What you see | What to do |
+| --- | --- |
+| "Setup did not finish" when starting | Run `npm run setup` and read the step that failed. Delete `.venv` to start the setup over. |
+| Jobs says the service is not set up | The Python environment is missing: run `npm run setup`. |
+| The interview does not answer | Open Ollama, then run `ollama pull llama3.1:8b`. |
+| The interview is slow | Run `ollama ps`: it should say `100% GPU`. If not, quit Ollama and open it again (see [below](#interview-ollama-whisper-and-kokoro)). |
+| The AI speaks with the browser's voice | Kokoro is still loading the first time; wait a few seconds. Check that `backend/models/kokoro/` has both files. |
 
 ### Environment variables
 
@@ -118,7 +162,7 @@ python -m venv .venv
 .venv\Scripts\python.exe -m pip install -r backend\requirements.txt
 ```
 
-For Jobs, prepare the data once (see the [backend README](backend/README.md)):
+The job data comes with the repository. To rebuild it (see the [backend README](backend/README.md)):
 
 ```powershell
 cd backend
@@ -147,7 +191,7 @@ Ollama must be running when you practice. Constela asks it for an 8,192-token wi
 
 Talk mode turns speech into text with Whisper on the same computer. It is installed with `backend/requirements.txt`, uses an NVIDIA GPU when there is one (otherwise the CPU), and downloads the `small.en` model (about 500 MB) the first time. Choosing Talk starts loading it.
 
-The AI's voice is Kokoro-82M through `kokoro-onnx`, which runs the model without PyTorch. It runs on the CPU, which is fast enough for a model this small (a 5-second sentence takes about half a second) and leaves the GPU to Ollama and Whisper. The first time, `backend/speak_server.py` downloads the model files (about 340 MB) into `backend/models/kokoro/`, which git ignores. Choosing Talk or Write and listen starts loading it.
+The AI's voice is Kokoro-82M through `kokoro-onnx`, which runs the model without PyTorch. It runs on the CPU, which is fast enough for a model this small (a 5-second sentence takes about half a second) and leaves the GPU to Ollama and Whisper. The model comes with the repository in `backend/models/kokoro/`: the int8 model (88 MB, under GitHub's 100 MB file limit and as fast as the full one) and the voices (27 MB). If they are missing, `backend/speak_server.py` downloads them there. Choosing Talk or Write and listen starts loading it.
 
 ## Commands
 
@@ -241,7 +285,7 @@ The CV parser (`backend/resume_parser.py/`) and third-party source reports (`bac
 
 ### Data: what is generated, and how to rebuild it
 
-Everything under `backend/data/` except `jobs_usa_full_backup_cleaned.json` is ignored by git (`*.json`, `*.sqlite`, `*.npy`). A fresh clone needs the steps in "Python backend" above. In order:
+The files the app reads (the job lists, the company databases and the Qwen3 search vectors) are in the repository, so a fresh clone needs none of these steps. Run them only to rebuild the data, in order:
 
 | Step | Writes | Cost and time |
 | --- | --- | --- |
