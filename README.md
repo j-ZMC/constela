@@ -83,13 +83,14 @@ You need Node.js 20 or newer, Python 3.10 or newer (3.12 recommended) and [Ollam
 
 ```bash
 npm install
-npm run setup                # Python environment, voice and speech models, Ollama models (about 2 GB the first time)
 cp .env.example .env.local   # optional: GROQ_API_KEY for "Break it down for me"
-npm run dev
+npm run dev                  # the first time, it sets everything up first (about 2 GB, once)
 ```
 
-Open http://localhost:3000. `npm run setup` (`backend/setup_local.py`) is safe to run again; it skips what is already there.
-Without it, the first voice reply waits for Kokoro to download (about 340 MB) and the browser's voice reads instead.
+Open http://localhost:3000. The first time, `npm run dev` runs `backend/setup_local.py`: the Python environment, the
+voice and speech models (Kokoro, Whisper, voice tone) and the Ollama models, so the first voice reply already uses
+Kokoro. Afterwards it only checks a marker file (`.venv/.constela-setup-done`). `npm run setup` runs it again by hand.
+The first time the app opens, "What is hard for you?" comes first and cannot be skipped: at least one choice starts the app.
 The job data and the search vectors (computed locally with Qwen3-Embedding) come with the repository.
 
 ### Environment variables

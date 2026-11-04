@@ -4,6 +4,7 @@
   "private": true,
   "scripts": {
     "setup": "python backend/setup_local.py",
+    "predev": "python backend/setup_local.py --if-needed || echo Setup did not finish. Run: npm run setup",
     "dev": "next dev",
     "build": "next build",
     "start": "next start",

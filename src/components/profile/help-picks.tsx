@@ -25,34 +25,39 @@ const ICONS: Record<string, LucideIcon> = {
 
 // The first thing in the Profile: what is hard. Every pick is optional, and "Decide later" skips all.
 // Shortcuts by type turn on screen settings directly; which ones were chosen is passed on once and never kept.
-// onBack: shown inside the profile questions, where it has Back and Skip like the other questions.
+// onBack: shows Back and Skip, like a question in a flow. required: the first start of the app; there is no way
+// around it, and at least one pick or shortcut turns on "Turn on this help".
 export function HelpPicks({
   initial,
   onDone,
   onBack,
+  required = false,
 }: {
   initial: readonly string[];
   onDone: (picks: string[], types: NeuroType[]) => void;
   onBack?: () => void;
+  required?: boolean;
 }) {
   const [picks, setPicks] = useState<string[]>([...initial]);
   const [types, setTypes] = useState<NeuroType[]>([]);
 
   // A live preview: what is ticked changes the page right away (font, size, dark screen, bigger buttons...).
   // Nothing is saved until "Turn on this help"; anything else (untick, "Decide later", leaving) puts it back.
-  const before = useRef(loadPrefs());
+  // Previews start from what is saved now, and leaving puts back what is saved, so two of these on screen at once
+  // (the first-start window over the Profile tab) never undo each other.
   const wasDyslexic = useRef(document.documentElement.classList.contains("dyslexic"));
   const kept = useRef(false);
   useEffect(() => {
-    const preview = applyHelp(picks, {}, before.current, types).prefs;
+    const preview = applyHelp(picks, {}, loadPrefs(), types).prefs;
     applyPrefs(preview);
     setDyslexic(wasDyslexic.current || preview.font === "dyslexic");
   }, [picks, types]);
   useEffect(
     () => () => {
       if (kept.current) return;
-      applyPrefs(before.current);
-      setDyslexic(wasDyslexic.current);
+      const saved = loadPrefs();
+      applyPrefs(saved);
+      setDyslexic(wasDyslexic.current || saved.font === "dyslexic");
     },
     [],
   );
@@ -132,9 +137,12 @@ export function HelpPicks({
         >
           Turn on this help
         </Button>
-        <Button className={action} variant="outline" onClick={() => onDone([], [])}>
-          {onBack ? "Skip" : "Decide later"}
-        </Button>
+        {!required && (
+          <Button className={action} variant="outline" onClick={() => onDone([], [])}>
+            {onBack ? "Skip" : "Decide later"}
+          </Button>
+        )}
+        {required && !previewing && <p className="self-center text-sm text-muted-foreground">Choose at least one to start.</p>}
         {onBack && (
           <Button className={action} variant="ghost" onClick={onBack}>
             Back

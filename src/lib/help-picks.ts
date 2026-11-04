@@ -1,8 +1,9 @@
 // "What is hard for you?": optional picks at the start of the Profile. Each turns on help that already exists:
 // answers to the Profile questions (so toAdaptations() picks them up) and Personalize settings. Nothing here is sent
 // anywhere.
-import type { Answers } from "@/lib/profile";
-import { PRESETS, type Prefs } from "@/lib/personalization";
+import { loadProfile, saveProfile, type Answers } from "@/lib/profile";
+import { PRESETS, applyPrefs, loadPrefs, savePrefs, type Prefs } from "@/lib/personalization";
+import { setReadingOption } from "@/lib/reading";
 
 // The visual settings that often help with each kind of neurodivergence. Used two ways:
 // - Each "What is hard" pick draws its visuals from one entry (`visual`), so answering by need is enough.
@@ -132,6 +133,17 @@ export function loadHelpPicks(): string[] | null {
   } catch {
     return null;
   }
+}
+
+// Keeps the chosen help: the answers it sets, the screen settings, and the picks themselves. Browser only.
+export function turnOnHelp(picks: readonly string[], types: readonly NeuroType[]): void {
+  const next = applyHelp(picks, loadProfile() ?? {}, loadPrefs(), types);
+  // OpenDyslexic is switched by the reading class on <html>, the same way the Settings panel does it.
+  if (next.prefs.font === "dyslexic") setReadingOption("dyslexic", true);
+  saveProfile(next.answers);
+  savePrefs(next.prefs);
+  applyPrefs(next.prefs);
+  saveHelpPicks(picks);
 }
 
 export function saveHelpPicks(picks: readonly string[]): void {

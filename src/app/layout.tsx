@@ -4,6 +4,7 @@ import "@fontsource/opendyslexic/400.css";
 import "@fontsource/opendyslexic/700.css";
 import "./globals.css";
 import { BackgroundSky } from "@/components/night-sky";
+import { FirstRunHelp } from "@/components/first-run-help";
 import { SiteNav } from "@/components/site-nav";
 
 // Designed by the Braille Institute for maximum legibility.
@@ -53,6 +54,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
         <BackgroundSky />
         <SiteNav />
         <div className="flex flex-1 flex-col pb-24 lg:pb-0">{children}</div>
+        <FirstRunHelp />
       </body>
     </html>
   );

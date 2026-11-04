@@ -7,6 +7,8 @@
 3. The Ollama models (llama3.1:8b and qwen3-embedding:0.6b), when Ollama is installed.
 
 Safe to run again: everything already in place is skipped. Uses only the standard library, so any Python 3.10+ runs it.
+`npm run dev` runs it first with --if-needed: right after cloning it sets everything up, and afterwards it only checks
+a marker file and returns at once.
 """
 from __future__ import annotations
 
@@ -21,6 +23,8 @@ BACKEND = os.path.join(ROOT, "backend")
 VENV = os.path.join(ROOT, ".venv")
 PYTHON = os.path.join(VENV, "Scripts", "python.exe") if os.name == "nt" else os.path.join(VENV, "bin", "python")
 OLLAMA_MODELS = ("llama3.1:8b", "qwen3-embedding:0.6b")
+# Written when the Python part is done, so `--if-needed` can skip everything on later starts.
+READY = os.path.join(VENV, ".constela-setup-done")
 
 # Run inside .venv, from backend/, so it uses the same settings as the app's workers.
 PRELOAD = """
@@ -43,6 +47,10 @@ def run(command: list[str], cwd: str = ROOT) -> None:
 
 
 def main() -> int:
+    if "--if-needed" in sys.argv and os.path.exists(READY):
+        return 0
+    if "--if-needed" in sys.argv:
+        print("First start: setting up Constela on this computer (about 2 GB, once).", flush=True)
     if sys.version_info < (3, 10):
         print("Constela needs Python 3.10 or newer (3.12 recommended).", file=sys.stderr)
         return 1
@@ -55,6 +63,8 @@ def main() -> int:
 
     step("Voice and speech models")
     run([PYTHON, "-W", "ignore", "-c", PRELOAD], cwd=BACKEND)
+    with open(READY, "w", encoding="utf-8") as marker:
+        print("Python environment and voice models are ready. Delete this file to run the setup again.", file=marker)
 
     step("Ollama models")
     ollama = shutil.which("ollama")
