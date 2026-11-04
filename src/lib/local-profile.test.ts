@@ -2,8 +2,8 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import { loadLocalAccount, loadResumeProfile, saveLocalAccount, saveResumeProfile } from "@/lib/local-profile";
 
 const resume = {
-  name: "Jesus",
-  email: "jesus@example.com",
+  name: "Alex",
+  email: "alex@example.com",
   phone: "5550100100",
   skills_found: ["Python"],
   projects: [],
@@ -24,8 +24,8 @@ describe("local profile storage", () => {
   });
 
   it("round-trips the local account", () => {
-    saveLocalAccount({ name: "Jesus", email: "jesus@example.com" });
-    expect(loadLocalAccount()).toEqual({ name: "Jesus", email: "jesus@example.com" });
+    saveLocalAccount({ name: "Alex", email: "alex@example.com" });
+    expect(loadLocalAccount()).toEqual({ name: "Alex", email: "alex@example.com" });
   });
 
   it("round-trips the parsed resume profile", () => {
@@ -36,7 +36,7 @@ describe("local profile storage", () => {
   it("rejects broken or outdated stored data", () => {
     store["resume-profile"] = "{broken";
     expect(loadResumeProfile()).toBeNull();
-    store["account-profile"] = JSON.stringify({ version: 99, data: { name: "Jesus", email: "" } });
+    store["account-profile"] = JSON.stringify({ version: 99, data: { name: "Alex", email: "" } });
     expect(loadLocalAccount()).toBeNull();
   });
 });

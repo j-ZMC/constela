@@ -2,28 +2,11 @@ import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   DEFAULT_ADAPTATIONS,
   QUESTIONS,
-  describeAdaptations,
   toJobPreferences,
   loadProfile,
-  loadStep,
   saveProfile,
-  saveStep,
   toAdaptations,
-  toggleOption,
 } from "@/lib/profile";
-
-describe("toggleOption", () => {
-  it("adds and removes a value", () => {
-    expect(toggleOption(["noise"], "crowds")).toEqual(["noise", "crowds"]);
-    expect(toggleOption(["noise", "crowds"], "noise")).toEqual(["crowds"]);
-  });
-
-  it("makes 'none' and 'not-sure' exclusive", () => {
-    expect(toggleOption(["noise", "crowds"], "none")).toEqual(["none"]);
-    expect(toggleOption(["none"], "noise")).toEqual(["noise"]);
-    expect(toggleOption(["remote"], "not-sure")).toEqual(["not-sure"]);
-  });
-});
 
 describe("toAdaptations", () => {
   it("returns the defaults for an empty profile", () => {
@@ -66,11 +49,6 @@ describe("toAdaptations", () => {
     expect(toAdaptations({ changes }).headsUpOnChanges).toBe(expected);
   });
 
-  it("keeps sensory needs and drops 'nothing in particular'", () => {
-    expect(toAdaptations({ sensory: ["noise", "textures"] }).sensoryNeeds).toEqual(["noise", "textures"]);
-    expect(toAdaptations({ sensory: ["none"] }).sensoryNeeds).toEqual([]);
-  });
-
   it("shows one step at a time when there are too many options", () => {
     expect(toAdaptations({ startBlockers: ["too-many-options"] }).stepsAtOnce).toBe(1);
     expect(toAdaptations({ startBlockers: ["big-tasks"] }).stepsAtOnce).toBe(3);
@@ -97,32 +75,10 @@ describe("toAdaptations", () => {
   });
 });
 
-describe("describeAdaptations", () => {
-  it("gives one reassuring line for the defaults", () => {
-    expect(describeAdaptations(DEFAULT_ADAPTATIONS)).toHaveLength(1);
-  });
-
-  it("lists every chosen adaptation, most useful first", () => {
-    const everything = toAdaptations({
-      reading: "listen",
-      longText: "hard",
-      unclear: "stuck",
-      changes: "stressful",
-      sensory: ["noise"],
-      startBlockers: ["too-many-options", "big-tasks", "time", "distracted"],
-      workplace: ["remote"],
-      support: "regular",
-    });
-    const lines = describeAdaptations(everything);
-    expect(lines).toHaveLength(11);
-    expect(lines[0]).toBe("We'll show you one step at a time.");
-    expect(lines).toContain("Jobs are filtered to where you'd like to work.");
-  });
-});
-
 describe("QUESTIONS", () => {
-  it("has the 8 questions from the spec, each with options", () => {
-    expect(QUESTIONS).toHaveLength(8);
+  it("has 7 answer kinds, each with options; workplace conditions live in Job conditions", () => {
+    expect(QUESTIONS).toHaveLength(7);
+    expect(QUESTIONS.map((q) => q.id)).not.toContain("sensory");
     for (const q of QUESTIONS) expect(q.options.length).toBeGreaterThan(1);
   });
 });
@@ -141,8 +97,8 @@ describe("loadProfile / saveProfile", () => {
   });
 
   it("round-trips a profile", () => {
-    saveProfile({ reading: "summary", sensory: ["noise"] });
-    expect(loadProfile()).toEqual({ reading: "summary", sensory: ["noise"] });
+    saveProfile({ reading: "summary", startBlockers: ["time"] });
+    expect(loadProfile()).toEqual({ reading: "summary", startBlockers: ["time"] });
   });
 
   it("returns null when nothing is saved", () => {
@@ -161,19 +117,10 @@ describe("loadProfile / saveProfile", () => {
   it("drops values that are not valid options", () => {
     store.profile = JSON.stringify({
       version: 1,
-      answers: { reading: "shout", sensory: ["noise", "lasers"], workplace: "remote" },
+      answers: { reading: "shout", startBlockers: ["time", "lasers"], workplace: "remote", sensory: ["noise"] },
     });
-    expect(loadProfile()).toEqual({ sensory: ["noise"] });
-  });
-
-  it("round-trips the current step and rejects bad values", () => {
-    expect(loadStep()).toBe(-1);
-    saveStep(3);
-    expect(loadStep()).toBe(3);
-    store["profile-step"] = "42";
-    expect(loadStep()).toBe(-1);
-    store["profile-step"] = "abc";
-    expect(loadStep()).toBe(-1);
+    // "sensory" was a question once; old saved answers to it are dropped like any unknown value.
+    expect(loadProfile()).toEqual({ startBlockers: ["time"] });
   });
 
   it("does not throw when storage is unavailable", () => {
@@ -192,8 +139,8 @@ describe("loadProfile / saveProfile", () => {
 
 describe("toJobPreferences", () => {
   it("turns answers into barrier subtypes and workplace choices, never categories", () => {
-    const prefs = toJobPreferences({ sensory: ["noise", "crowds"], longText: "hard", workplace: ["remote", "not-sure"] });
-    expect(prefs.barriers).toEqual(["sound", "sensory_load", "smell_touch_temperature_and_crowding", "high_reading_load", "time_pressure_for_text"]);
+    const prefs = toJobPreferences({ longText: "hard", workplace: ["remote", "not-sure"] });
+    expect(prefs.barriers).toEqual(["high_reading_load", "time_pressure_for_text"]);
     expect(prefs.workplace).toEqual(["remote"]);
     expect(toJobPreferences({})).toEqual({ barriers: [], workplace: [] });
   });
@@ -203,7 +150,6 @@ describe("toJobPreferences", () => {
     const config = JSON.parse(readFileSync("backend/config/neurodivergence_job_barriers.json", "utf-8"));
     const known = new Set(config.categories.flatMap((c: { subtypes: { id: string }[] }) => c.subtypes.map((s) => s.id)));
     const all = toJobPreferences({
-      sensory: ["noise", "lights", "crowds", "textures", "smells"],
       longText: "hard",
       unclear: "stuck",
       changes: "stressful",

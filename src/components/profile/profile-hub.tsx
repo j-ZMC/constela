@@ -9,13 +9,13 @@ import { ProfileFlow } from "@/components/profile/profile-flow";
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from "@/components/ui/tabs";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { loadResumeProfile } from "@/lib/local-profile";
-import { QUESTIONS, loadStep } from "@/lib/profile";
+import { loadHelpPicks } from "@/lib/help-picks";
 import { useHydrated } from "@/lib/use-hydrated";
 import { Loading } from "@/components/loading";
 
 type Section = "needs" | "conditions" | "cv" | "contact";
 const sections: Array<{ id: Section; label: string }> = [
-  { id: "needs", label: "Your needs" },
+  { id: "needs", label: "What is hard" },
   { id: "conditions", label: "Job conditions" },
   { id: "cv", label: "CV" },
   { id: "contact", label: "Contact details" },
@@ -23,7 +23,7 @@ const sections: Array<{ id: Section; label: string }> = [
 
 // Contact details are optional and nothing depends on them, so they never count as unfinished.
 const progress = (): Partial<Record<Section, boolean>> => ({
-  needs: loadStep() >= QUESTIONS.length,
+  needs: loadHelpPicks() !== null,
   conditions: loadBarrierPreferences() !== null,
   cv: loadResumeProfile() !== null,
 });

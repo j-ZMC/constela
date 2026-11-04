@@ -3,7 +3,7 @@ import { buildResumeRecommendationText, parseResumeProfile, type ResumeProfile }
 
 const profile: ResumeProfile = {
   name: "Alex Rivera",
-  email: "jesus@example.com",
+  email: "alex@example.com",
   phone: "5550100100",
   skills_found: ["Python", "SQL"],
   projects: ["Financial data pipeline"],

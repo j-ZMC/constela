@@ -101,7 +101,7 @@ export function describeVisual(p: Partial<Prefs>): string {
 const KEY = "help-picks";
 
 // Turns the picks and shortcuts on, on top of what the person already chose. Lists are joined, and "Nothing in
-// particular" gives way to a real answer, the same way toggleOption does.
+// particular" gives way to a real answer, as a real answer should.
 export function applyHelp(
   picks: readonly string[],
   answers: Answers,

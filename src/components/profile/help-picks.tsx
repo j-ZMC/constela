@@ -25,7 +25,16 @@ const ICONS: Record<string, LucideIcon> = {
 
 // The first thing in the Profile: what is hard. Every pick is optional, and "Decide later" skips all.
 // Shortcuts by type turn on screen settings directly; which ones were chosen is passed on once and never kept.
-export function HelpPicks({ initial, onDone }: { initial: readonly string[]; onDone: (picks: string[], types: NeuroType[]) => void }) {
+// onBack: shown inside the profile questions, where it has Back and Skip like the other questions.
+export function HelpPicks({
+  initial,
+  onDone,
+  onBack,
+}: {
+  initial: readonly string[];
+  onDone: (picks: string[], types: NeuroType[]) => void;
+  onBack?: () => void;
+}) {
   const [picks, setPicks] = useState<string[]>([...initial]);
   const [types, setTypes] = useState<NeuroType[]>([]);
 
@@ -124,8 +133,13 @@ export function HelpPicks({ initial, onDone }: { initial: readonly string[]; onD
           Turn on this help
         </Button>
         <Button className={action} variant="outline" onClick={() => onDone([], [])}>
-          Decide later
+          {onBack ? "Skip" : "Decide later"}
         </Button>
+        {onBack && (
+          <Button className={action} variant="ghost" onClick={onBack}>
+            Back
+          </Button>
+        )}
       </div>
     </section>
   );

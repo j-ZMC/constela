@@ -78,6 +78,11 @@ export async function POST(request: Request) {
     if (error instanceof Error && "code" in error && error.code === "ETIMEDOUT") {
       return fail("timeout", "The job search took too long. Try again.", 504);
     }
+    // No Python environment yet (a fresh clone): say it is not set up, and tell whoever runs the server how to fix it.
+    if (error instanceof Error && "code" in error && error.code === "ENOENT") {
+      console.error(`Job search: no Python at ${python}. Run "npm run setup" in the project folder.`);
+      return fail("not_configured", "The jobs service is not set up yet.", 503);
+    }
     return fail("backend_failed", "Could not search jobs right now.", 502);
   }
 }

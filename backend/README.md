@@ -146,7 +146,7 @@ result as JSON for integrations. Each job has `company_verified`
   returned; unmatched companies remain eligible as `unknown`.
 - `SIMILARITY_THRESHOLD` is a standard-deviation multiplier above the mean
   similarity (`2.0` by default): the cutoff is `mean + 2 * standard_deviation`.
-  `BLOCKED_THRESHOLD` is currently `0.385`.
+  `BLOCKED_THRESHOLD` is currently `0.35` (Qwen3 vectors).
 
 ## 7. Company inclusion matching (`company_inclusion.py`)
 

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { Palette } from "lucide-react";
+import { Settings } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
@@ -89,7 +89,7 @@ export function PersonalizationPanel({ onSky = false }: { onSky?: boolean }) {
       setP({ ...l, font: dys ? "dyslexic" : l.font === "dyslexic" ? "default" : l.font });
     }}>
       <DialogTrigger render={<Button variant="outline" className={onSky ? `border-white/30 bg-transparent ${onSkyText}` : undefined} />}>
-        <Palette aria-hidden data-pz-icon />
+        <Settings aria-hidden data-pz-icon />
         <span data-pz-label>Settings</span>
       </DialogTrigger>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-xl">

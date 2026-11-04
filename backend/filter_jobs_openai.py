@@ -54,9 +54,11 @@ QUALIFIED_COMPANIES_DB = "data/processed/qualified_company_jobs.sqlite"
 # Exclude matched companies absent from the qualifying-company database; unmatched stay eligible.
 EXCLUDE_KNOWN_NON_INCLUSIVE = True
 SIMILARITY_THRESHOLD = 2.0  # Number of standard deviations above the mean.
-# Qwen3-Embedding-0.6B: flags the same share of (condition, job) pairs, 0.78%, as OpenAI did at 0.385.
-# shortcut: matched by share, not checked against people's judgments; re-tune if conditions flag too much or too little.
-BLOCKED_THRESHOLD = 0.40
+# Qwen3-Embedding-0.6B. At 0.40 (OpenAI's share of flags) 12 of 33 conditions flagged under 10 jobs ("sound": 3).
+# 0.35 sets apart about 3.6% of (condition, job) pairs, every condition at least 10 jobs ("sound": 58); below it,
+# jobs with no clear link start to show.
+# shortcut: tuned on what the flagged jobs look like, not checked with people; re-tune if it sets apart too much or too little.
+BLOCKED_THRESHOLD = 0.35
 
 
 def normalize_rows(vectors: np.ndarray) -> np.ndarray:

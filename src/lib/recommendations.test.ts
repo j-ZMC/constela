@@ -3,7 +3,7 @@ import { buildRecommendedJobsRequest } from "@/lib/recommendations";
 
 const profile = {
   name: "Alex Rivera",
-  email: "jesus@example.com",
+  email: "alex@example.com",
   phone: "5550100100",
   skills_found: ["Python", "SQL"],
   projects: ["Financial data pipeline"],

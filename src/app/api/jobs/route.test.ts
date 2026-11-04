@@ -157,6 +157,14 @@ describe("POST /api/jobs", () => {
     expect(execFileMock).not.toHaveBeenCalled();
   });
 
+  it("says the search is not set up when there is no Python environment yet", async () => {
+    vi.spyOn(console, "error").mockImplementation(() => {});
+    mockWorker("", Object.assign(new Error("spawn python ENOENT"), { code: "ENOENT" }));
+    const response = await post({ query: "remote analyst" });
+    expect(response.status).toBe(503);
+    expect((await response.json()).error.code).toBe("not_configured");
+  });
+
   it("returns a backend error when Python returns invalid JSON", async () => {
     mockWorker("not json");
 
