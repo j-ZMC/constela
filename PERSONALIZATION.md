@@ -16,3 +16,14 @@ Mark content hidden in the reduced view with `data-detail="extra"`. My plan alre
 
 ## Colors
 The roles (background, text, cards, borders, accent, soft areas) override the shadcn tokens (`--background`, `--primary`, ...) inline on `<html>`. The old Reading options live here now: OpenDyslexic and size in Text, Reduce motion in Experience, and Calm as a color preset.
+
+## Soft light, Calm mode, Slower AI voice
+- **Soft light** (Colors, levels 1 to 3): `softLight()` mixes the background, cards, soft areas and borders toward a warm brown, and lowers the amount until every `checkContrast()` row passes. A palette that already fails stays as it is. A page cannot change the screen's real brightness.
+- **Calm mode** (Experience): sets `data-pz-calm` on `<html>`. `globals.css` turns off animations and transitions and hides the glows (`.voice-halo`, `.star-ring`, `.sky-trail`, gold rings). `calmMode()` lets code check it: Hey Constela then answers in text only. Voices the person chose (Talk, Write and listen) still speak.
+- **Slower AI voice** (Experience): `voiceSpeed()` gives 0.8 instead of 0.95, sent to `/api/interview/speak` as `speed` and used as the browser voice's rate.
+- "What is hard for you?" in the Profile can turn these on (`src/lib/help-picks.ts`).
+
+## Stars and the sky
+- Each preset is designed as a whole in `PRESETS`: page colors, a `sky` (menu bar, page headers, My plan) darker than the page, and a `star` color that belongs with that sky and stands out on it (4.5:1 or more, tested). Light (white, royal blue, gold) is its own palette, not the default with a white page.
+- **Stars** is a color cell in Colors (`--star`), checked against the sky ("Stars against the menu and sky", 3:1). The sky is not a cell; a custom palette without one gets `skyFor()` from its accent.
+- Palettes saved before Stars existed load with the default stars (`cleanRoles`).

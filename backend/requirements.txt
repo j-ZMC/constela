@@ -1,13 +1,7 @@
-faiss-gpu
 huggingface-hub
-ipykernel
-jupyter
 numpy
-openai>=1.0.0
 pandas
 pdfplumber
-sentence-transformers
-torch
 # Interview practice by voice: Whisper on this computer (backend/transcribe_server.py).
 faster-whisper
 # CUDA libraries for Whisper on an NVIDIA GPU; without them it runs on the CPU.
@@ -15,3 +9,5 @@ nvidia-cublas-cu12
 nvidia-cudnn-cu12>=9,<10
 # The interview AI's voice: Kokoro-82M on this computer, without PyTorch (backend/speak_server.py).
 kokoro-onnx
+# The voice tone for "Adjust the practice" (transcribe_server.py), a wav2vec2 model in ONNX.
+onnxruntime

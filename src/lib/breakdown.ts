@@ -9,8 +9,8 @@ const STARTER_CONTEXT = {
   "starter-jobs": "In Constela's Jobs page, the Jobs tab shows jobs picked from the person's CV and has a search box with filters for pay, company size and work mode; the Internships tab has internships. Each job can be opened to read it.",
   "starter-save": "In Constela's Jobs page every job has a Save button, and saved jobs are in the Saved tab.",
   "starter-company": "In the Saved tab of Constela's Jobs page, each saved job has 'Get to know the company': what Constela knows about the company's inclusion, and a button to look the company up online (what it does, pay, inclusion, interviews).",
-  "starter-practice": "Constela's Interview page has a practice chat: the person chooses 'Practice an interview' or 'Common questions' and answers by writing or talking.",
-  "starter-expect": "Constela's Interview page has a 'What to expect' activity that explains the steps of an interview.",
+  "starter-practice": "Constela's Preparation page has a practice chat: the person chooses 'Practice an interview' or 'Common questions', then presses Start and answers by writing or talking.",
+  "starter-expect": "Constela's Preparation page has a 'What to expect' activity under 'Practice an interview' that explains the steps of an interview.",
 } as const;
 
 export const breakdownRequest = z

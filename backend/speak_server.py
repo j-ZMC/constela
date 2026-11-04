@@ -66,16 +66,23 @@ def write_wav(path: str, samples: Any, rate: int) -> float:
     return round(len(pcm) / rate, 2)
 
 
-def speak(model: Any, text: str, path: str) -> dict[str, Any]:
+def speak(model: Any, text: str, path: str, speed: float | None = None) -> dict[str, Any]:
     if not text.strip():
         raise ValueError("Nothing to say.")
-    samples, rate = model.create(text, voice=VOICE, speed=SPEED, lang="en-us")
+    # The person's "Slower AI voice" setting; anything odd falls back to the default.
+    speed = speed if isinstance(speed, (int, float)) and 0.5 <= speed <= 1.5 else SPEED
+    samples, rate = model.create(text, voice=VOICE, speed=speed, lang="en-us")
     return {"seconds": write_wav(path, samples, rate)}
 
 
 def main() -> int:
     model = load_model()
-    serve(lambda request: speak(model, str(request["text"]), str(request["path"])), {"voice": VOICE}, sys.stdin, sys.stdout)
+    serve(
+        lambda request: speak(model, str(request["text"]), str(request["path"]), request.get("speed")),
+        {"voice": VOICE},
+        sys.stdin,
+        sys.stdout,
+    )
     return 0
 
 

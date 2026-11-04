@@ -15,8 +15,8 @@ const cache: Map<string, { at: number; result: unknown }> = ((globalThis as { __
 // closest to the search first, instead of only the top matches.
 const INTERNSHIP_ARGS = [
   "--jobs", "data/raw/jobs/internships.json",
-  "--emb", "data/processed/embeddings/internships_openai_embeddings.npy",
-  "--ids", "data/processed/embeddings/internships_openai_ids.json",
+  "--emb", "data/processed/embeddings/internships_qwen3_embeddings.npy",
+  "--ids", "data/processed/embeddings/internships_qwen3_ids.json",
   "--threshold=-100",
 ];
 
@@ -48,9 +48,6 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => null);
   const parsed = parseJobSearchRequest(body);
   if (!parsed) return fail("invalid_input", "Enter a valid job search.", 400);
-  if (!process.env.OPENAI_API_KEY) {
-    return fail("not_configured", "The jobs service is not configured.", 503);
-  }
 
   const python = pythonExecutable();
   const args = [

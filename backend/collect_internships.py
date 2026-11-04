@@ -8,7 +8,7 @@ shared job schema.
 
 Usage:
   python collect_internships.py
-  python pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_openai_embeddings.npy --ids data/processed/embeddings/internships_openai_ids.json
+  python pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_qwen3_embeddings.npy --ids data/processed/embeddings/internships_qwen3_ids.json
 """
 from __future__ import annotations
 

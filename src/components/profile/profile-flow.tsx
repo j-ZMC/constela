@@ -4,9 +4,13 @@ import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Button } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
+import { HelpPicks } from "@/components/profile/help-picks";
 import { ProfileSummary } from "@/components/profile/profile-summary";
 import { QuestionStep } from "@/components/profile/question-step";
 import { QUESTIONS, type Answers, loadProfile, loadStep, saveProfile, saveStep } from "@/lib/profile";
+import { applyHelp, loadHelpPicks, saveHelpPicks } from "@/lib/help-picks";
+import { applyPrefs, loadPrefs, savePrefs } from "@/lib/personalization";
+import { setReadingOption } from "@/lib/reading";
 import { useHydrated } from "@/lib/use-hydrated";
 import { Loading } from "@/components/loading";
 
@@ -22,6 +26,8 @@ function Flow({ onNext }: { onNext: () => void }) {
   const [step, setStep] = useState(loadStep);
   const [editing, setEditing] = useState(false);
   const [draft, setDraft] = useState<string | string[] | undefined>();
+  // "What is hard for you?" comes first, once; afterwards it opens again from the welcome screen.
+  const [asking, setAsking] = useState(() => loadHelpPicks() === null);
 
   function go(next: number) {
     setStep(next);
@@ -33,6 +39,25 @@ function Flow({ onNext }: { onNext: () => void }) {
     if (value === undefined) delete next[id as keyof Answers];
     setAnswers(next);
     saveProfile(next);
+  }
+
+  if (step === -1 && asking) {
+    return (
+      <HelpPicks
+        initial={loadHelpPicks() ?? []}
+        onDone={(picks, types) => {
+          const next = applyHelp(picks, answers, loadPrefs(), types);
+          // OpenDyslexic is switched by the reading class on <html>, the same way the Personalize panel does it.
+          if (next.prefs.font === "dyslexic") setReadingOption("dyslexic", true);
+          setAnswers(next.answers);
+          saveProfile(next.answers);
+          savePrefs(next.prefs);
+          applyPrefs(next.prefs);
+          saveHelpPicks(picks);
+          setAsking(false);
+        }}
+      />
+    );
   }
 
   if (step === -1) {
@@ -49,6 +74,9 @@ function Flow({ onNext }: { onNext: () => void }) {
           </Button>
           <Button className="h-11 px-5 text-base" variant="outline" onClick={() => router.push("/plan")}>
             Skip for now
+          </Button>
+          <Button className="h-11 px-5 text-base" variant="ghost" onClick={() => setAsking(true)}>
+            What is hard for you?
           </Button>
         </div>
       </section>

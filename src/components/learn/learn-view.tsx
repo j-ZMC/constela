@@ -3,8 +3,10 @@
 import { useMemo, useRef, useState, type FormEvent } from "react";
 import Link from "next/link";
 import { useSearchParams } from "next/navigation";
-import { Check, ExternalLink, Plus } from "lucide-react";
+import { Building2, Check, ExternalLink, Library, Plus, Sparkles } from "lucide-react";
 import { Loading } from "@/components/loading";
+import { CARD, FilterGroup, FiltersToggle, GRID, GRID_WIDE, Pager, SIDEBAR, pageCount, pageOf, sidebarLayout } from "@/components/paged-grid";
+import { Tabs, TabsList, TabsPanel, TabsTrigger } from "@/components/ui/tabs";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
@@ -16,11 +18,12 @@ import { addStepToPlan, loadPlan } from "@/lib/plan";
 import { jobKey, useSavedJobs } from "@/lib/saved-jobs";
 import { useHydrated } from "@/lib/use-hydrated";
 import { useSingleFlight } from "@/lib/use-single-flight";
+import { cn } from "@/lib/utils";
 
 const select =
   "h-11 w-full rounded-md border border-input bg-background px-3 text-base font-normal outline-none focus-visible:ring-2 focus-visible:ring-ring";
-const list = "divide-y overflow-hidden rounded-2xl border bg-card shadow-[0_1px_2px_rgb(36_59_83/0.05),0_8px_24px_-12px_rgb(36_59_83/0.12)]";
-const PAGE = 15;
+// Twelve cards fill two columns evenly.
+const PAGE = 12;
 
 // "sql" reads as SQL, "power bi" as Power BI, "python" as Python.
 const pretty = (skill: string) => skill.split(" ").map((w) => (w.length <= 3 ? w.toUpperCase() : w[0].toUpperCase() + w.slice(1))).join(" ");
@@ -53,12 +56,29 @@ function View() {
   }
   const plan = { planned: (title: string) => planned.has(planTitle(title)), add: addToPlan };
 
+  // Three tabs instead of one long page, like a shop: everything, picks for you, and company courses.
+  // "Courses for what this job asks" (?job=) opens the picks; the page stays mounted, so a new ?job= switches too.
+  const [tab, setTab] = useState(() => (askedJob ? "for-you" : "all"));
+  const [lastAsked, setLastAsked] = useState(askedJob);
+  if (askedJob !== lastAsked) {
+    setLastAsked(askedJob);
+    if (askedJob) setTab("for-you");
+  }
+
   return (
-    <div className="flex flex-col gap-10">
-      <ForYou saved={saved.length} focus={focus} missing={askedJob !== null && !focus} hasCv={cv.length > 0} gaps={forYou.gaps} picks={forYou.picks} plan={plan} />
-      <CompanySearch plan={plan} />
-      <AllResources plan={plan} />
-    </div>
+    <Tabs value={tab} onValueChange={(value) => setTab(String(value))}>
+      <TabsList aria-label="Ways to learn" className="max-w-xl">
+        <TabsTrigger value="all">All courses</TabsTrigger>
+        <TabsTrigger value="for-you">Picked for you</TabsTrigger>
+        <TabsTrigger value="company">Company courses</TabsTrigger>
+      </TabsList>
+      {/* keepMounted: changing tabs keeps filters, the page and a company search. */}
+      <TabsPanel value="all" keepMounted><AllResources plan={plan} /></TabsPanel>
+      <TabsPanel value="for-you" keepMounted>
+        <ForYou saved={saved.length} focus={focus} missing={askedJob !== null && !focus} hasCv={cv.length > 0} gaps={forYou.gaps} picks={forYou.picks} plan={plan} />
+      </TabsPanel>
+      <TabsPanel value="company" keepMounted><CompanySearch plan={plan} /></TabsPanel>
+    </Tabs>
   );
 }
 
@@ -77,7 +97,7 @@ function ForYou({ saved, focus, missing, hasCv, gaps, picks, plan }: {
   return (
     <section aria-labelledby="for-you" className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 id="for-you" className="text-xl font-semibold text-balance">{heading}</h2>
+        <h2 id="for-you" className="flex items-center gap-2 text-xl font-semibold text-balance"><Sparkles aria-hidden className="size-6 shrink-0 text-primary" />{heading}</h2>
         {focus && <Link href="/learn" className="flex min-h-11 w-fit items-center font-medium underline underline-offset-4">See picks for all my saved jobs</Link>}
         {missing && <p className="text-muted-foreground">That saved job is not on this device any more, so these are for all your saved jobs.</p>}
       </div>
@@ -88,7 +108,7 @@ function ForYou({ saved, focus, missing, hasCv, gaps, picks, plan }: {
         </div>
       ) : gaps.length === 0 ? (
         <p className="rounded-xl border bg-card p-5">
-          {focus ? "This job" : "Your saved jobs"} do not name a skill we have courses for yet{hasCv ? ", or your CV already shows it" : ""}. Look through the list below, or search company courses.
+          {focus ? "This job" : "Your saved jobs"} do not name a skill we have courses for yet{hasCv ? ", or your CV already shows it" : ""}. Look in All courses, or search Company courses.
         </p>
       ) : (
         <>
@@ -96,7 +116,7 @@ function ForYou({ saved, focus, missing, hasCv, gaps, picks, plan }: {
             {focus ? "It asks for" : "They ask for"} {gaps.slice(0, 6).map((g) => (focus ? pretty(g.skill) : `${pretty(g.skill)} (${g.jobs})`)).join(", ")}
             {hasCv ? ", which your CV does not show yet." : "."}
           </p>
-          <ul aria-label="Picked for you" className={list}>
+          <ul aria-label="Picked for you" className={GRID_WIDE}>
             {picks.map(({ resource, skills }) => (
               <ResourceRow
                 key={resource.id}
@@ -115,7 +135,7 @@ function ForYou({ saved, focus, missing, hasCv, gaps, picks, plan }: {
 function ResourceRow({ resource: r, reason, plan }: { resource: Resource; reason?: string; plan: Plan }) {
   const meta = [COSTS[r.cost], FORMATS[r.format], r.students ? "For college students" : ""].filter(Boolean);
   return (
-    <li className="flex flex-col gap-3 p-5 sm:p-6">
+    <li className={cn(CARD, "flex flex-col gap-3 p-5")}>
       <div className="flex flex-col gap-1">
         <p className="text-sm text-muted-foreground">{r.provider} · {KINDS[r.kind]}</p>
         <h3 className="text-lg font-semibold leading-snug text-balance">{r.title}</h3>
@@ -134,7 +154,7 @@ function ResourceRow({ resource: r, reason, plan }: { resource: Resource; reason
 function Actions({ url, title, plan }: { url: string; title: string; plan: Plan }) {
   const inPlan = plan.planned(title);
   return (
-    <div className="flex flex-wrap gap-2">
+    <div className="mt-auto flex flex-wrap gap-2 pt-1">
       <a href={url} target="_blank" rel="noreferrer" aria-label={`Open the site: ${title}, in a new tab`} className={buttonVariants({ variant: "outline" })}>
         Open the site <ExternalLink aria-hidden className="size-4" />
       </a>
@@ -154,7 +174,7 @@ const SEARCH_ERRORS: Record<string, string> = {
 };
 const COST_WORDS = { free: "Free", paid: "Paid", unknown: "Check the price on the site" } as const;
 
-// Only the official course sites of these companies are searched, and every link is checked on the server.
+// Courses from these companies' official sites, from the hand-checked list (course-search.ts). Nothing is sent anywhere.
 function CompanySearch({ plan }: { plan: Plan }) {
   const [topic, setTopic] = useState("");
   const [company, setCompany] = useState<"" | Academy>("");
@@ -166,7 +186,7 @@ function CompanySearch({ plan }: { plan: Plan }) {
   function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault();
     if (topic.trim().length < 2) return setProblem(SEARCH_ERRORS.invalid_input);
-    // Each search is a paid web search: a double tap must not make two.
+    // A double tap must not search twice.
     void once(async () => {
       setBusy(true);
       setProblem("");
@@ -192,7 +212,7 @@ function CompanySearch({ plan }: { plan: Plan }) {
   return (
     <section aria-labelledby="company-courses" className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 id="company-courses" className="text-xl font-semibold">Search company courses</h2>
+        <h2 id="company-courses" className="flex items-center gap-2 text-xl font-semibold"><Building2 aria-hidden className="size-6 shrink-0 text-primary" />Search company courses</h2>
         <p className="text-pretty text-muted-foreground">Courses made by the companies whose tools jobs ask for: {names.join(", ")}.</p>
       </div>
       <form onSubmit={submit} className="flex flex-col gap-3 rounded-xl border bg-card p-5">
@@ -209,9 +229,9 @@ function CompanySearch({ plan }: { plan: Plan }) {
             </select>
           </label>
         </div>
-        <Button type="submit" disabled={busy} className="w-fit">{busy ? "Searching… (about 15 seconds)" : "Search company courses"}</Button>
+        <Button type="submit" disabled={busy} className="w-fit">{busy ? "Searching…" : "Search company courses"}</Button>
         <p className="text-sm text-muted-foreground">
-          We search only these companies&apos; official course sites. Only your search words are sent.{" "}
+          Courses from these companies&apos; official sites, checked by hand. Nothing is sent anywhere.{" "}
           <Link href="/privacy" className="font-medium text-foreground underline underline-offset-4">How we keep your data private</Link>
         </p>
       </form>
@@ -223,9 +243,9 @@ function CompanySearch({ plan }: { plan: Plan }) {
             {results.length ? `${results.length} ${results.length === 1 ? "course" : "courses"} found. Prices and dates can change; check each page.` : "No courses found for that. Try other words, or any company."}
           </p>
           {results.length > 0 && (
-            <ul aria-label="Company courses" className={list}>
+            <ul aria-label="Company courses" className={GRID_WIDE}>
               {results.map((c) => (
-                <li key={c.url} className="flex flex-col gap-3 p-5 sm:p-6">
+                <li key={c.url} className={cn(CARD, "flex flex-col gap-3 p-5")}>
                   <div className="flex flex-col gap-1">
                     <p className="text-sm text-muted-foreground">{c.company} · Course</p>
                     <h3 className="text-lg font-semibold leading-snug text-balance">{c.title}</h3>
@@ -252,67 +272,78 @@ const CHOICES = {
 
 function AllResources({ plan }: { plan: Plan }) {
   const [filters, setFilters] = useState<LearnFilters>(loadLearnFilters);
-  const [shown, setShown] = useState(PAGE);
+  const [page, setPage] = useState(1);
+  // On phones the filters wait behind a button, so the courses come first.
+  const [showFilters, setShowFilters] = useState(false);
+  const top = useRef<HTMLDivElement>(null);
   const found = RESOURCES.filter((r) => matchesLearn(r, filters));
+  const names = Object.keys(CHOICES) as (keyof typeof CHOICES)[];
+  const chosen = names.filter((n) => filters[n] !== "all").length + (filters.students ? 1 : 0);
   const on = JSON.stringify(filters) !== JSON.stringify(NO_LEARN_FILTERS);
+  const pages = pageCount(found.length, PAGE);
 
   function change(next: LearnFilters) {
     setFilters(next);
     saveLearnFilters(next);
-    setShown(PAGE);
+    setPage(1);
+  }
+
+  function go(next: number) {
+    setPage(next);
+    top.current?.scrollIntoView({ block: "start" });
   }
 
   return (
     <section aria-labelledby="all-resources" className="flex flex-col gap-4">
       <div className="flex flex-col gap-1">
-        <h2 id="all-resources" className="text-xl font-semibold">All courses and resources</h2>
-        <p className="text-pretty text-muted-foreground">
-          Courses, certificates, programs, free guides on GitHub and forums in the United States. Each one was checked by hand; prices can change, so check the site.
-        </p>
+        <h2 id="all-resources" className="flex items-center gap-2 text-xl font-semibold"><Library aria-hidden className="size-6 shrink-0 text-primary" />All courses and resources</h2>
+        <p className="text-pretty text-muted-foreground">Checked by hand. Prices can change, so check the site.</p>
       </div>
-      <fieldset className="flex flex-col gap-3 rounded-xl border bg-card p-4">
-        <legend className="sr-only">Search and filter</legend>
-        <label className="flex flex-col gap-1 text-sm font-medium">
-          Search
-          <Input type="search" value={filters.text} maxLength={80} onChange={(e) => change({ ...filters, text: e.target.value })} placeholder="For example, SQL, Excel or Anthropic" />
-        </label>
-        <div className="grid gap-3 sm:grid-cols-2 lg:grid-cols-4">
-          {(Object.keys(CHOICES) as (keyof typeof CHOICES)[]).map((name) => (
-            <label key={name} className="flex flex-col gap-1 text-sm font-medium">
-              {CHOICES[name].label}
-              <select value={filters[name]} onChange={(e) => change({ ...filters, [name]: e.target.value })} className={select}>
-                <option value="all">{`${CHOICES[name].all} (${countLearn(filters, name, "all")})`}</option>
-                {Object.entries(CHOICES[name].options).map(([value, text]) => {
-                  const count = countLearn(filters, name, value as never);
-                  return <option key={value} value={value} disabled={count === 0 && filters[name] !== value}>{`${text} (${count})`}</option>;
-                })}
-              </select>
-            </label>
+      {/* Like a shop: filters on the left with how many each one leaves, search and results on the right, a page at a time. */}
+      <div className={sidebarLayout(showFilters)}>
+        {showFilters && (
+        <aside aria-label="Filters" className={SIDEBAR}>
+          {names.map((name) => (
+            <FilterGroup
+              key={name}
+              id={`learn-${name}`}
+              label={CHOICES[name].label}
+              value={filters[name] as string}
+              options={([["all", CHOICES[name].all], ...Object.entries(CHOICES[name].options)] as [string, string][]).map(([v, text]) => [v, text, countLearn(filters, name, v as never)])}
+              onChange={(v) => change({ ...filters, [name]: v })}
+            />
           ))}
-        </div>
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <label className="flex min-h-11 items-center gap-2 text-sm font-medium">
+          <label className="flex min-h-11 items-center gap-2 px-3 text-sm font-medium">
             <Checkbox checked={filters.students} onCheckedChange={(checked) => change({ ...filters, students: checked === true })} />
             Only for college students
           </label>
-          {on && <Button type="button" variant="ghost" onClick={() => change(NO_LEARN_FILTERS)}>Clear filters</Button>}
+          {on && <Button type="button" variant="outline" onClick={() => change(NO_LEARN_FILTERS)}>Clear filters</Button>}
+        </aside>
+        )}
+
+        <div ref={top} className="flex min-w-0 scroll-mt-24 flex-col gap-4">
+          <label className="flex flex-col gap-1 text-sm font-medium">
+            Search
+            <Input type="search" value={filters.text} maxLength={80} onChange={(e) => change({ ...filters, text: e.target.value })} placeholder="For example, SQL, Excel or Anthropic" />
+          </label>
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <p role="status" className="text-sm text-muted-foreground">
+              {found.length} {found.length === 1 ? "result" : "results"}
+              {on ? " for your filters" : ""}
+              {pages > 1 ? ` · page ${page} of ${pages}` : ""}
+            </p>
+            <FiltersToggle open={showFilters} chosen={chosen} onToggle={() => setShowFilters(!showFilters)} />
+          </div>
+          {found.length ? (
+            <ul aria-label="Courses and resources" className={showFilters ? GRID : GRID_WIDE}>
+              {pageOf(found, page, PAGE).map((r) => <ResourceRow key={r.id} resource={r} plan={plan} />)}
+            </ul>
+          ) : (
+            <p className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">Nothing matches these filters. Try fewer filters, or search Company courses.</p>
+          )}
+          <Pager page={page} pages={pages} onPage={go} label="Courses and resources" />
         </div>
-      </fieldset>
-      <p role="status" className="text-sm text-muted-foreground">
-        {found.length} of {RESOURCES.length} {on ? "match" : "resources"}.
-      </p>
-      {found.length ? (
-        <ul aria-label="Courses and resources" className={list}>
-          {found.slice(0, shown).map((r) => <ResourceRow key={r.id} resource={r} plan={plan} />)}
-        </ul>
-      ) : (
-        <p className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">Nothing matches these filters. Try fewer filters, or search company courses above.</p>
-      )}
-      {found.length > shown && (
-        <Button type="button" variant="outline" className="w-fit self-center" onClick={() => setShown(shown + PAGE)}>
-          Show {Math.min(PAGE, found.length - shown)} more
-        </Button>
-      )}
+      </div>
     </section>
   );
 }

@@ -9,6 +9,7 @@ import {
   fillToday,
   isoWeek,
   markEventIn,
+  progressWords,
   weekGoal,
 } from "@/lib/path";
 import { BRANCHES, addSteps, completeStep, loadPlan, removeStep, starterPlan, stepKey, type Plan } from "@/lib/plan";
@@ -120,6 +121,20 @@ describe("today's steps", () => {
     const p2 = fillToday(p1, new Date(2026, 10, 5, 9)); // Thursday
     expect(p2.steps.filter((s) => s.source === "habit" && !s.done)).toHaveLength(1);
     expect(fillToday(start(), monday).steps.some((s) => s.source === "habit")).toBe(false);
+  });
+});
+
+describe("progress in words", () => {
+  it("says how far along without numbers", () => {
+    expect([0, 3, 6, 12, 20, 24].map((d) => progressWords(d, 24))).toEqual([
+      "Not started yet",
+      "Started",
+      "On the way",
+      "More than halfway",
+      "Almost done",
+      "Every step done",
+    ]);
+    expect(progressWords(0, 0)).toBe("Every step done");
   });
 });
 

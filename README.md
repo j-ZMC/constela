@@ -20,13 +20,13 @@ The challenge asks for AI that supports **executive function**: planning, focus,
 | Module | What it does | Route | Owner |
 | --- | --- | --- | --- |
 | Home | One way in: "Get started" or "Continue my plan". No account needed | `/` | |
-| Profile | Four parts, in order, that open where you left off: **Your needs** (short questions about needs, not diagnoses), **Job conditions** (workplace conditions to flag, plus your own words as tags), **CV** (PDF read on this computer) and optional **Contact details** ([SPEC-profile.md](SPEC-profile.md)) | `/profile` | Luis |
+| Profile | Four parts, in order, that open where you left off: **Your needs** (first, once: "What is hard for you?", six optional picks that turn on help, with "Decide later" (`src/lib/help-picks.ts`); then short questions about needs, not diagnoses), **Job conditions** (workplace conditions to flag, plus your own words as tags), **CV** (PDF read on this computer) and optional **Contact details** ([SPEC-profile.md](SPEC-profile.md)) | `/profile` | Luis |
 | My plan | Today's one step, and an **interactive constellation map** with the person in the middle and eight branches you can work on in any order: Set up your profile, Find jobs, Applications and follow-up, Interview prep, Documents and references, Learn and prepare, Experience and portfolio, and Your own steps. "All branches" shows each one's progress and lets you choose which to work on next. Saving a job, sending an application and practicing an interview light their stars by themselves. Plans saved before the branches keep their stars (their stages map to branches). The page is one sky: the map as big as the screen allows (taller on phones), with today's step beside it (under it on phones). **Hey Constela** is spoken: press it (or turn on "Listen for Hey Constela" and say the name) and ask; the local AI (Ollama, activity `plan` in `src/lib/interview.ts`) answers out loud in Kokoro's voice (the browser's voice if Kokoro is not ready), sentence by sentence, with a caption. The map is its face: the "You" star glows with your voice and pulses while it talks (`data-voice` and `--level`, `.voice-halo` in `globals.css`), and the branches the answer names light up in gold (`branchesIn` in `path-map.ts`). A question ends after a 1.5 s pause, with "Done talking", or by saying "stop" (for loud rooms: Whisper checks what was said so far every 2.5 s). After the first "Hey Constela", "Constela" alone is enough until the person leaves My plan. "Type instead" is the fallback. Whisper hears the voice on this computer (`src/lib/listen.ts`). It cannot change the plan. Also "Break it down for me" and a quiet "Need an easier step today?" ([SPEC-plan.md](SPEC-plan.md), [SPEC-path.md](SPEC-path.md)) | `/plan` | Luis |
 | Jobs | **Jobs**: a search box over "Jobs for you" (picked from your CV); each search can go **Back** to the one before. **Internships**: only from companies with inclusion data; all of them, closest to your words first. Results have filters for work mode (also read from the location and text), pay bands (by the middle of the range, as a full-time year), company size and inclusion data; each choice shows how many jobs it leaves. Pay shows on a job when the posting gives a range, even only in its text. Every job has **Save**; the **Saved** tab keeps them on the device, with "Get to know the company" (inclusion scores, size, what the company pays, the experience the job's page asks for, and a web search about it with sources) and "I sent my application". Saving and applying move My plan forward. Jobs that match a condition or one of your words are shown apart to review, never hidden ([SPEC-jobs.md](SPEC-jobs.md)) | `/jobs` | Zahid & Juan |
 | Job filter backend | Cleaned US jobs dataset, barrier detection with embeddings, your own words as exact matches, and a company inclusion score ([backend/README.md](backend/README.md)) | `backend/` | Zahid |
 | Learn | Courses, certificates, programs, free guides on GitHub and forums in the United States, hand-picked and checked (`src/lib/learn-resources.ts`). **Picked for your saved jobs**: what your saved jobs ask for that your CV does not show, and what teaches it (on this device). **Search company courses**: a web search limited to the official course sites of Anthropic, AWS, Google, Microsoft, NVIDIA and others. Filters by area, type, cost, format and "only for college students". Any resource can be added to My plan. The first, Mexico-only list is kept as `MEXICO_RESOURCES_LEGACY`, not shown | `/learn` | |
-| Interview | A local AI with five activities: practice an interview, common questions, short lessons, what to expect, and "Translate a message" from a recruiter. Five interview types. Write, talk, or write and listen. Can practice for a saved job, using its posting and what a web search found about the company | `/interview` | Evy |
-| Personalization | Colors, text, cursor, icons, amount of information and motion, saved on the device ([PERSONALIZATION.md](PERSONALIZATION.md)) | Personalize panel | Regina |
+| Preparation (was Interview; the route is still `/interview`) | A local AI with eight activities in four boxes (`GROUPS` in `interview-chat.tsx`): **Practice an interview** (with "What to expect"), **Common questions** (with "Learn how to answer"), **Messages and letters** (translate a recruiter's message, write an email, a cover letter or a follow-up with `[blanks]` instead of made-up facts, and "Check my writing", kind proofreading), and **Write or improve your CV** (write it from zero, get tips on yours, or fix one part; it never makes up facts and leaves blanks like `[start year]`). Choosing a box shows all its choices at once as boxes with pictograms, with defaults, and Start. Cover letters, follow-ups and CV help can use a typed or saved job (`USES_JOB` in `interview.ts`). In Write modes, **Dictate** writes what you say into the box without sending it; while the AI talks, the sentence it is saying shows as a caption. **Video call** is spoken, like a meeting app: the interviewer fills the screen with captions, you are a small tile in the corner, and a control bar has Start speaking, I need a moment, Camera, Hide me and Leave; "Type instead" is the only fallback. The camera is opt-in in More options, with a check before the call (a light tip and where to put the camera); you can hide yourself or turn the camera off, and a camera that goes off gets one calm note ([camera-view.tsx](src/components/interview/camera-view.tsx), light in [camera.ts](src/lib/camera.ts)). Nothing is recorded. In Talk mode, "I need a moment" stops the microphone and the voice until you are ready. Before a video call, **MediaPipe** (`@mediapipe/tasks-vision`, face detector model in `public/models/`, its WASM from jsDelivr pinned to the installed version) says if the face is in the middle (`framingTip` in `camera.ts`). **For a real meeting** ([meeting-helper.tsx](src/components/interview/meeting-helper.tsx)): reminders the person picks, one at a time, with no sound; live captions of a shared meeting tab, written by Whisper on this computer; both can float on top of the meeting in a Document Picture-in-Picture window (Chrome and Edge). Three interview types (General, Video call, Experience questions). Write, talk, or write and listen. Can practice for a saved job, using its posting and what a web search found about the company | `/interview` | Evy |
+| Personalization | Colors, text, cursor, icons, amount of information and motion, saved on the device. Also **Soft light** (a warmer, dimmer page that keeps every contrast check), **Calm mode** (no movement, no glow, Hey Constela answers in text) and **Slower AI voice** ([PERSONALIZATION.md](PERSONALIZATION.md)) | Settings (in the menu; the code still calls it Personalize). Also "Delete my data", which deletes everything and opens the first form | Regina |
 | Privacy | What is kept, what leaves the device, and "Delete my data" | `/privacy` | |
 | LinkedIn extension (optional) | A "less chaotic" mode with the same look and settings | — | Regina |
 
@@ -48,15 +48,15 @@ Profile answers, job conditions, the parsed CV, the plan and settings are saved 
 
 | Feature | Runs on | What it receives |
 | --- | --- | --- |
-| Interview chat | **Ollama, on this computer** | Your choices, job title, the chat, and (if allowed) the CV and plan summary |
+| Preparation chat (interview and CV help) | **Ollama, on this computer** | Your choices, job title, the chat (including any part of a CV you paste), and (if allowed) the CV and plan summary |
 | Talk mode, your voice | **Whisper, on this computer** | The recording, deleted right after it is written down |
 | The AI's voice (Talk, Write and listen) | **Kokoro, on this computer** (the browser's voice if Kokoro is not ready) | The reply text, one sentence at a time |
 | CV reading | Constela's server (`backend/resume_parser.py`) | The PDF, which is not saved |
-| Job search, Internships | OpenAI (embeddings) | Only the search words; your conditions and words stay with Constela |
-| Jobs for you | OpenAI (embeddings) | Skills, sectors, experience and projects from the CV, plus your work preference |
+| Job search, Internships | **Ollama, on this computer** (`qwen3-embedding:0.6b`) | The search words; nothing leaves the computer |
+| Jobs for you | **Ollama, on this computer** (`qwen3-embedding:0.6b`) | Skills, sectors, experience and projects from the CV, plus your work preference |
 | Learn, picks for you | **This browser** | Your saved jobs and your CV's skills; nothing is sent |
-| Learn, "Search company courses" | OpenAI `gpt-5-mini` (web search limited to official course sites) | Only the search words and the company chosen |
-| "Look up" on a saved job | OpenAI `gpt-5-mini` (with web search) | The company name, job title and place, and the text of the job's own page (Constela's server opens it) |
+| Learn, "Search company courses" | **This browser and Constela's server**: the hand-checked list (`learn-resources.ts`) filtered to those companies' official sites | Nothing is sent anywhere |
+| "Look up" on a saved job | Wikipedia's public API (no key) for the company; **Ollama on this computer** sums it up and reads the job's own page | To Wikipedia: the company name only. The page text stays on the computer |
 | Interview for a saved job | **Ollama, on this computer** | The start of the posting, what it asks for, and what the web search found |
 | Break it down for me | Groq | The task text and three settings that shape the answer |
 
@@ -97,7 +97,7 @@ Set these in `.env.local`. Only the keys for the features you use are needed.
 | --- | --- | --- |
 | `GROQ_API_KEY` | Break it down for me | Free key at https://console.groq.com/keys |
 | `GROQ_MODEL` | Break it down for me | Optional; defaults to `openai/gpt-oss-20b` |
-| `OPENAI_API_KEY` | Jobs and Internships; "Look up" on a saved job; `backend/company_sizes.py` | Embeds the search words; `gpt-5-mini` reads a saved job's page and searches the web about its company (about 10 seconds), and estimates company sizes |
+| `OPENAI_API_KEY` | `backend/company_sizes.py` only (run by hand) | The app itself no longer uses OpenAI |
 | `PYTHON_EXECUTABLE` | Jobs, CV, Talk mode | Optional; defaults to `.venv` at the project root |
 | `OLLAMA_URL` | Interview | Optional; defaults to `http://127.0.0.1:11434` |
 | `OLLAMA_MODEL` | Interview | Optional; defaults to `llama3.1:8b` |
@@ -126,7 +126,7 @@ cd backend
 ..\.venv\Scripts\python.exe company_sizes.py --web 200
 # Internships tab: collect them, then embed them (run weekly: internships are seasonal)
 ..\.venv\Scripts\python.exe collect_internships.py
-..\.venv\Scripts\python.exe pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_openai_embeddings.npy --ids data/processed/embeddings/internships_openai_ids.json
+..\.venv\Scripts\python.exe pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_qwen3_embeddings.npy --ids data/processed/embeddings/internships_qwen3_ids.json
 cd ..
 ```
 
@@ -134,6 +134,7 @@ cd ..
 
 ```powershell
 ollama pull llama3.1:8b
+ollama pull qwen3-embedding:0.6b   # job search
 ```
 
 Ollama must be running when you practice. Constela asks it for an 8,192-token window (Ollama's default for this model is 65,536 and uses about 14 GB) and keeps the model loaded for 30 minutes. Opening the Interview page loads the model and reads the shared instructions in advance, so the first answer comes in about a second.
@@ -219,9 +220,13 @@ Read this before changing anything. It is what the code alone does not tell you.
 - [DESIGN.md](DESIGN.md): the look and the screen rules, shared with the team's copy of the repo (page sky, background constellations, 44px controls, lists, copy, states, and the finishing details). Follow it for every screen.
 - [backend/README.md](backend/README.md) for the Python side. Its header ("do not run commands without asking") predates this README; ask the user when unsure.
 - The user writes in Spanish; the app's UI and code stay in English. Product facts (two audiences, Easy Read, no diagnosis, no feelings check) are decided; do not change them without asking.
-- Git: the last commit is `f533658`. A large amount of work since then (Interview, voice, internships, saved jobs, filters, company data) is **not committed**. Do not reset, stash or clean the tree. Commit only when asked.
+- Git (3 November 2026): `master` on `origin` (github.com/LuisACastellanosA/constela) was **replaced on purpose**, at the user's request, by local commit `fbf9669` (branched My plan, Hey Constela, Learn, Interview and Jobs work). The team's previous `master` (48 commits) is kept in the branch `backup/master-before-replace`; `jesus/plan-branches-voice` is a duplicate of `fbf9669` and can go. Everything after `fbf9669` is **not committed** yet: the simpler Interview start, Video call as a spoken meeting, camera and MediaPipe, "For a real meeting" (reminders, floating window, live captions), pictograms and fewer numbers, the "stop" voice command. Do not reset, stash or clean the tree. Commit only when asked; push only when asked.
+- Left out of git on purpose: `backend/resume_parser.py/` is its own git repository (with real CVs in `resumes/`), and `backend/data/reference/source_docs/` holds 21 MB of third-party reports (B Corp CSV, two PDFs).
 
 ### How the app is put together
+
+- **Layout (November 2026).** On wide screens the app menu is a fixed bar on the left (`site-nav.tsx`); `<body>` gets `lg:has-[[data-side-nav]]:pl-56` so pages move over by its width. Jobs, Internships, Saved and Learn show cards a page at a time with a filter panel that opens and closes (`paged-grid.tsx`). Learn has three tabs: All courses, Picked for you, Company courses. My plan shows the map and today's step only; the header says "Now: step 2 of 4 in Find jobs". Preparation: the interviewer has a level (Easy, Medium, Hard; `LEVELS` in `interview.ts`), a Technical questions type, fits questions to the job, and "For a real meeting" shows only under Practice an interview.
+- A new rule in `globals.css` may not reach the browser until `next dev` restarts (see below); Tailwind classes in components update at once, so layout fixes that must show now belong there.
 
 - **No accounts, no database.** Everything about the person lives in `localStorage`. The keys are listed in [delete-my-data.tsx](src/components/delete-my-data.tsx). A new key must go there, on the [privacy page](src/app/privacy/page.tsx) and in "Where data goes" above.
 - **Python runs inside Next.** `/api/jobs` starts `backend/filter_jobs_openai.py --json` for every search; its stdout must be **only** the JSON result (diagnostics go to stderr; a stray `print` breaks every search). Whisper and Kokoro are long-running workers ([python-worker.ts](src/lib/python-worker.ts)), kept on `globalThis` so hot reloads do not start copies.
@@ -244,11 +249,11 @@ Everything under `backend/data/` except `jobs_usa_full_backup_cleaned.json` is i
 | Step | Writes | Cost and time |
 | --- | --- | --- |
 | `company_inclusion.py`, `select_qualified_companies.py` | `data/processed/*.sqlite` (inclusion scores; which companies qualify) | Free; reads the 9.9M-row Glassdoor CSV in chunks |
-| `pretokenize_openai.py` | Job and barrier embeddings | OpenAI embeddings, cents |
+| `pretokenize_openai.py` (old name kept) | Job and barrier embeddings with `qwen3-embedding:0.6b` on Ollama (`ollama pull qwen3-embedding:0.6b` first) | Free; a few minutes on the GPU |
 | `company_sizes.py --web 200` | `data/reference/company_data/company_sizes.json` | About 15 cheap model calls plus 25 web searches, 3 minutes. Model answers are cached; re-run after new jobs |
 | `collect_internships.py` | `ats_boards.json` (cached boards of inclusion-verified companies; delete it or pass `--rediscover` to look again, about 10 minutes) and `data/raw/jobs/internships.json` | Free; about 2 minutes. Then embed it with the `pretokenize_openai.py --jobs ... --emb ... --ids ...` line above |
 
-Runtime OpenAI use: one embedding per search; "Look up" on a saved job makes two `gpt-5-mini` calls (job page, web search), about 10 to 15 seconds.
+At run time nothing uses OpenAI. Each search embeds its words with Qwen on Ollama. "Look up" on a saved job makes two Ollama web searches and two answers from `llama3.1:8b`; "Search company courses" makes one web search per company (13 when none is chosen).
 
 ### Things that are true about the data (measured, November 2026)
 
@@ -261,19 +266,72 @@ Runtime OpenAI use: one embedding per search; "Look up" on a saved job makes two
 
 - `npx tsc --noEmit`, `npm run lint`, `npm test` (Vitest) and `cd backend; ..\.venv\Scripts\python.exe -m unittest discover -p "test_*.py"`. Keep them all passing.
 - Vitest runs in the `node` environment: stub `localStorage` and `window` with `vi.stubGlobal` (see [saved-jobs.test.ts](src/lib/saved-jobs.test.ts)). A `beforeEach(() => mock.mockReset())` arrow returns the mock, which Vitest then calls as cleanup: use braces.
-- No browser tests are committed. Changes were checked in headless Chrome over the DevTools protocol against the running dev server, with real APIs. Check UI changes at 390 px and 1280 px wide.
+- No browser tests are committed. Changes were checked in headless Chrome over the DevTools protocol against the running dev server, with real APIs. Check UI changes at 390 px and 1280 px wide, and at 150% text (Personalize). For voice and camera, start Chrome with `--use-fake-ui-for-media-stream --use-fake-device-for-media-stream --use-file-for-fake-audio-capture=<file.wav>`: a WAV made with Kokoro (`/api/interview/speak`) works as the microphone, and the fake camera is a green circle (MediaPipe may or may not see a "face" in it). In headless Chrome on this computer (November 2026) the fake camera ends by itself about 190 ms after it opens, with no frames, on any page: camera features cannot be tested end to end there. Test the MediaPipe models instead on MediaPipe's own photos (`https://storage.googleapis.com/mediapipe-assets/portrait.jpg`, `thumb_up.jpg`, `fist.jpg`, `victory.jpg`) in VIDEO mode, the way `camera-view.tsx` calls them. Chrome's noise suppression removes white noise, so test loud rooms with other voices, not static. Sharing a tab with audio (live captions) and opening the floating window need a real click; they were not tested end to end.
 - On Windows: `with sqlite3.connect(...)` does not close the file (use `contextlib.closing`), PowerShell adds a BOM when piping to Python (the worker protocol strips it), and JSON for `curl.exe` is easiest sent from a file with `--data-binary @file`.
 
 ### This computer
 
-- Laptop with an RTX 5070 (8 GB). Ollama runs `llama3.1:8b` on it; if `ollama ps` shows CPU, quit and reopen Ollama (see above). Whisper uses CUDA; Kokoro uses the CPU on purpose.
-- Models in use: `llama3.1:8b` (Interview, local), `text-embedding-3-small` (search), `gpt-5-mini` (company research, job page reading, company sizes), `openai/gpt-oss-20b` on Groq (Break it down), Whisper `small.en`, Kokoro `af_heart`.
+- Laptop with an RTX 5070 (8 GB). Ollama runs `llama3.1:8b` on it; if `ollama ps` shows CPU, quit and reopen Ollama (see above). **On battery the laptop turns the GPU off**: Ollama then loads on the CPU and answers are slow, and `nvidia-smi` can hang. Plug it in, then restart Ollama. Whisper uses CUDA; Kokoro uses the CPU on purpose.
+- Two copies of Constela run here. **This one** (`OneDrive\Escritorio\constela`) runs on **port 3001** (`npx next dev -p 3001`). The team's copy (`OneDrive\Escritorio\IDK\constela`) runs on port 3000: never stop it. Before restarting a server, check which folder the `node` process on that port belongs to.
+- For an AI using the Bash tool here: heredocs with long, mixed-quote content fail ("unexpected EOF while looking for matching `'`"). Write such content with the file tool (or a Python script file) and run it.
+- Models in use: `llama3.1:8b` (Preparation, company research, job page reading, course picks; local), `qwen3-embedding:0.6b` (search; local, 1024 numbers per text, with a one-line task in front of searches and work conditions), Ollama web search, `gpt-5-mini` (`company_sizes.py` only), `openai/gpt-oss-20b` on Groq (Break it down), Whisper `small.en`, Kokoro `af_heart`.
 
 ### Open work
 
-- The specs ([SPEC-plan.md](SPEC-plan.md), [SPEC-path.md](SPEC-path.md), [SPEC-profile.md](SPEC-profile.md), [SPEC-jobs.md](SPEC-jobs.md)) predate most of the above: they mention only neurodivergent users and not internships, saved jobs, filters or the company research. The code and this README are the source of truth until they are updated.
-- Discussed with the user, not built: a CV analyzer (the parser does not read education or certifications yet), a finder for proven certifications and their courses, internship steps in My plan, and a country filter for internships.
+- The specs ([SPEC-plan.md](SPEC-plan.md), [SPEC-path.md](SPEC-path.md), [SPEC-profile.md](SPEC-profile.md), [SPEC-jobs.md](SPEC-jobs.md)) predate most of the above. SPEC-path still describes five stages, not the branches. The code and this README are the source of truth until they are updated.
+- Discussed with the user, not built: a finder for proven certifications and their courses, and a country filter for internships. The CV helper exists as a chat in Preparation; the parser still does not read education or certifications, and the helper cannot tailor a CV to a saved job yet.
+- After the move from OpenAI to Ollama (3 to 4 November 2026) everything runs on this computer except "Break it down for me" (Groq) and the Wikipedia call in "Look up". "Company courses" now searches only the hand-checked list (1 or 2 courses per company), so it is short. The conditions filter (`BLOCKED_THRESHOLD = 0.40`) was matched to OpenAI's share of flagged jobs but agrees with it on only 15% of them ("sound" now flags almost nothing); check it with real people. `company_sizes.py` still uses OpenAI. The old `*_openai_*` caches in `data/processed/embeddings/` can be deleted.
+- Waiting for the user: a fresh job JSON with company size and salary, as two files (US jobs, and companies). The open question is whether to re-collect (fresh, recovers pay, 60 to 90 minutes plus new embeddings) or enrich the current file.
 - Not done on purpose: re-collecting the main job file (would recover pay cut off at 4,000 characters, but needs new embeddings for about 6,500 jobs), web size search for the last 316 companies (`company_sizes.py --web 400`), keeping filters when going Back.
+- Known gaps in the newest work:
+  - Live captions miss the words said while Whisper writes down the part before (`shortcut:` comment in `meeting-helper.tsx`).
+  - MediaPipe logs an INFO line with `console.error`, so the Next dev overlay shows "1 Issue"; production is not affected.
+  - The camera choice and the meeting reminders are not remembered between visits.
+  - "Constela" alone (after the first "Hey Constela") can be woken by "constellation" in normal talk.
+  - In a loud room, background voices end up in the question.
+
+### Roadmap: help for neurodivergent people (agreed with the user)
+
+The user and the previous AI planned this in detail. Follow it phase by phase, verify each part, and wait for the user before the next phase.
+
+**Rules that are not negotiable.**
+- The person chooses the help, never a diagnosis: never ask for, store or infer a condition. One exception, agreed with the user (3 November 2026): "Shortcuts by type (optional)" in "What is hard for you?" names the ten types (`NEURO_TYPES` in `src/lib/help-picks.ts`). Choosing one only turns on screen settings; which one was chosen is never stored or sent. A second exception, also asked for by the user: "Adjust the practice to how it is going" in Preparation (off by default) reads the voice's tone (wav2vec2, `onnx-community/wav2vec2-base-superb-er-ONNX`, Apache 2.0, in `transcribe_server.py`) and face tension (MediaPipe Face Landmarker blendshapes) on this computer. They are weak evidence (a calm Kokoro sentence scored 66% "angry"), so `src/lib/practice-signals.ts` counts them only as a change from the same person's earlier answers, never alone, and only to make the next question easier. Nothing is shown, kept or sent. Raising an open hand for 1.5 s (MediaPipe Gesture Recognizer) is "I need a moment".
+- Everything is optional and off by default.
+- No scores and no judging.
+- No sound or flashing, and only one notice on screen at a time.
+- Camera, audio and transcripts stay on this computer and are never saved.
+- Say "I could not read it" instead of guessing.
+- Never judge appearance ("well groomed") or "concentration" from the eyes. Eye contact and posture may only ever be an opt-in, the person's own goal, shown as plain data ("you looked at the camera 40% of the time"), with the note that many people do well in interviews without eye contact.
+
+**The ten conditions used as a design guide** (shown only as the optional shortcuts above, and not yet confirmed by the user): ADHD, autism, dyslexia, dyscalculia, dysgraphia, dyspraxia, Tourette, OCD, sensory processing, auditory processing. The ideas for the last five need checking with people who live them.
+
+**Done:**
+- Interview start in boxes (now Preparation: four boxes that show all their choices when picked, then Start; one-tap start was dropped at the user's request).
+- CV helper in Preparation: write from zero, tips, or fix one part.
+- Video call as a spoken meeting (Zoom-like, captions of the interviewer, a control bar, "Type instead").
+- Camera with a light tip and MediaPipe framing.
+- "I need a moment".
+- "For a real meeting": reminders, a tab-return nudge, a floating window and live captions.
+- Pictograms on sections, and progress in words instead of numbers.
+- Hey Constela by voice, with the "stop" command and the name-only wake word.
+- "Soft light" and "Calm mode" in Personalize.
+- Drafts of emails, cover letters and follow-ups, and "Check my writing" (Messages and letters in Preparation).
+- "What is hard for you?" at the start of the Profile, with "Decide later".
+- Dictate in Preparation, captions while the AI talks, and "Slower AI voice" (Kokoro speed 0.8).
+
+**Next:**
+1. Later: a summary after practice, meeting notes, documents with OpenCV and OCR in the Python backend (a photo of a CV or a letter turned into text and then "Translate a message"; read aloud). Also:
+   - A step timer and a "yesterday" summary.
+   - Support after a rejection.
+   - Pay in words, and workplace noise or layout info in Jobs.
+   - Bigger buttons and no drag and drop.
+   - "This step is finished".
+   - Optional gaze and posture data.
+   - Hand gestures, which must never trigger on involuntary movements (Tourette, OCD).
+
+**Still to ask the user:**
+- Is the list of ten conditions right?
+- Should meetings outside the browser (desktop Zoom or Teams) be covered? That needs a browser extension.
 
 ## Team Astralis
 

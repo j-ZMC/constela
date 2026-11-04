@@ -1,7 +1,6 @@
 "use client";
 
 import { useEffect, useState, type FormEvent, type ReactNode } from "react";
-import Link from "next/link";
 import { ArrowLeft } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { JobResults } from "@/components/jobs/job-results";
@@ -75,13 +74,7 @@ export function JobSearch({ internships = false, home }: { internships?: boolean
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-xl border bg-card p-5 sm:p-6">
-        {internships && (
-          <p className="mb-4">
-            An internship is a short job where you learn at work. Many are for students or people looking for their
-            first job. These come from companies with inclusion data, such as B Corps and Equidad MX.
-          </p>
-        )}
+      <div className="rounded-xl border bg-card p-4">
         <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="flex flex-1 flex-col gap-2 font-medium">
             {internships ? "What would you like to learn? (optional)" : "What job are you looking for?"}
@@ -99,12 +92,6 @@ export function JobSearch({ internships = false, home }: { internships?: boolean
             {loading ? "Searching…" : internships ? "Show internships" : "Find jobs"}
           </Button>
         </form>
-        <p className="mt-3 text-sm text-muted-foreground">
-          We point out what you asked us to watch for, and never hide a {noun}.{" "}
-          <Link href="/profile" className="font-medium underline underline-offset-4">Change what to watch for</Link>
-          {" · "}
-          <Link href="/privacy" className="font-medium underline underline-offset-4">How we keep your data private</Link>
-        </p>
       </div>
 
       {canGoBack && !loading && (
@@ -133,18 +120,7 @@ export function JobSearch({ internships = false, home }: { internships?: boolean
 
       {current && !loading && (
         <div className="flex flex-col gap-6" aria-live="polite">
-          <p className="text-sm text-muted-foreground">
-            {current.results.summary.visibleMatches} {current.results.summary.visibleMatches === 1 ? noun : `${noun}s`} found
-            {current.query !== ANY_INTERNSHIP && ` for “${current.query}”`}
-            {internships && current.query !== ANY_INTERNSHIP && ", closest first"}
-            {current.results.summary.blockedMatches > 0 && ` · ${current.results.summary.blockedMatches} to review`}
-            {current.results.summary.jobsExcludedByCompany > 0 && ` · ${current.results.summary.jobsExcludedByCompany} left out by company data`}
-          </p>
-          {current.results.summary.modalityFilterApplied && (
-            <p role="status" className="text-sm text-muted-foreground">
-              Showing {current.results.summary.requestedModalities.map((mode) => mode === "on_site" ? "on-site" : mode).join(", ")} jobs only. {current.results.summary.modalityExcludedMatches} other similar jobs left out.
-            </p>
-          )}
+          {current.query !== ANY_INTERNSHIP && <h2 className="text-xl font-semibold">Results for “{current.query}”</h2>}
 
           {/* key: a new page starts on its first page of results; the filters are kept (job-filters.ts). */}
           <JobResults

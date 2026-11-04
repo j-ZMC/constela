@@ -36,6 +36,12 @@ class SpeakTests(unittest.TestCase):
             first = int.from_bytes(audio.readframes(1), "little", signed=True)
         self.assertEqual(first, 32767)
 
+    def test_uses_a_chosen_speed_only_within_limits(self):
+        model = FakeKokoro()
+        speak_server.speak(model, "Hello.", self.path, 0.8)
+        speak_server.speak(model, "Hello.", self.path, 9)
+        self.assertEqual([call[2] for call in model.calls], [0.8, speak_server.SPEED])
+
     def test_refuses_empty_text(self):
         with self.assertRaises(ValueError):
             speak_server.speak(FakeKokoro(), "   ", self.path)

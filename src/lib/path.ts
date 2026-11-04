@@ -204,6 +204,14 @@ const GOALS: Record<Branch, { text: string; met: (c: Check) => boolean }> = {
   experience: { text: "This week: write down one thing you made or did", met: (c) => c.done("path-made") },
 };
 
+// How far along a plan or a branch is, in words instead of numbers: the stars on the map already show the count.
+export function progressWords(done: number, total: number): string {
+  if (total === 0 || done >= total) return "Every step done";
+  if (done === 0) return "Not started yet";
+  const part = done / total;
+  return part < 0.25 ? "Started" : part < 0.5 ? "On the way" : part < 0.75 ? "More than halfway" : "Almost done";
+}
+
 // ISO week, YYYY-Www, from the person's own calendar day.
 export function isoWeek(now: Date): string {
   const d = new Date(Date.UTC(now.getFullYear(), now.getMonth(), now.getDate()));

@@ -11,8 +11,27 @@ import { cn } from "@/lib/utils";
 const DUST = (() => {
   let seed = 11;
   const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
-  return Array.from({ length: 440 }, () => [rand() * 2 - 0.5, rand() * 2 - 0.5, 0.5 + rand() * 0.9, 0.12 + rand() * 0.3] as const);
+  return Array.from({ length: 640 }, () => [rand() * 2 - 0.5, rand() * 2 - 0.5, 0.6 + rand() * 1.1, 0.25 + rand() * 0.5] as const);
 })();
+
+type Point = [number, number];
+// Decoration only: one or two small stars beside each step, so every branch reads as a real constellation without
+// adding steps. Fixed per branch (seeded), never clickable, and hidden from screen readers with the rest of the picture.
+function satellites(slot: number, points: Point[], center: Point): { from: Point; at: Point; r: number }[] {
+  let seed = 97 + slot * 31;
+  const rand = () => (seed = (seed * 16807) % 2147483647) / 2147483647;
+  return points.flatMap(([x, y], i) => {
+    const [px, py] = i === 0 ? center : points[i - 1];
+    const len = Math.hypot(x - px, y - py) || 1;
+    const [ux, uy] = [(x - px) / len, (y - py) / len];
+    return Array.from({ length: 1 + Math.floor(rand() * 2) }, (_, j) => {
+      const side = j % 2 ? -1 : 1;
+      const d = 11 + rand() * 13;
+      const along = (rand() - 0.3) * 12;
+      return { from: [x, y] as Point, at: [x - uy * d * side + ux * along, y + ux * d * side + uy * along] as Point, r: 1.1 + rand() * 1 };
+    });
+  });
+}
 
 // On a screen taller than wide, the map grows this much taller, so it fills a phone instead of a strip of it.
 const TALL = 1.7;
@@ -56,13 +75,28 @@ export function PlanMap({
   });
   const tipNode = placed.flatMap((b) => b.nodes.map((n, k) => ({ id: `${b.branch}:${k}`, title: n.title, p: b.points[k] }))).find((n) => n.id === tip);
   const [cx, cy] = [CENTER[0], CENTER[1] * k];
+  // The outer stars of neighbouring branches, joined by a faint line: the branches read as one larger figure.
+  const rim = [...placed].sort((a, b) => a.slot - b.slot).map((b) => b.points.at(-1)!);
 
   return (
-    <div className="relative" style={{ aspectRatio: `${MAP_W} / ${H}`, width: `min(100cqw, ${(MAP_W / H) * 100}cqh)` }}>
+    // Wide screens: the figure sits in the middle of its picture, so a little zoom gives it the room around it.
+    <div className="relative lg:scale-110 xl:scale-125" style={{ aspectRatio: `${MAP_W} / ${H}`, width: `min(100cqw, ${(MAP_W / H) * 100}cqh)` }}>
       <svg aria-hidden viewBox={`0 0 ${MAP_W} ${H}`} className="absolute inset-0 size-full overflow-visible">
         {DUST.map(([x, y, r, o], i) => (
           <circle key={i} cx={x * MAP_W} cy={y * H} r={r} fill="white" opacity={o} />
         ))}
+        {rim.map(([x, y], i) => {
+          const [nx, ny] = rim[(i + 1) % rim.length];
+          return <line key={`rim-${i}`} x1={x} y1={y} x2={nx} y2={ny} stroke="white" strokeOpacity={0.1} strokeWidth={1} strokeDasharray="1 7" strokeLinecap="round" />;
+        })}
+        {placed.flatMap((b) =>
+          satellites(b.slot, b.points, [cx, cy]).map(({ from, at: [x, y], r }, i) => (
+            <g key={`sat-${b.branch}-${i}`}>
+              <line x1={from[0]} y1={from[1]} x2={x} y2={y} stroke="white" strokeOpacity={0.16} strokeWidth={0.8} />
+              <circle cx={x} cy={y} r={r} fill={b.status === "done" ? "var(--star)" : "white"} opacity={0.6} />
+            </g>
+          )),
+        )}
         {/* From the person to each branch: gold once the branch has a lit star. */}
         {placed.map((b) => {
           const [x, y] = b.points[0];
@@ -95,6 +129,7 @@ export function PlanMap({
                 <g key={n.key} className={glow ? "star-lit" : undefined}>
                   {glow && <circle cx={x} cy={y} r={5} fill="none" stroke="var(--star)" strokeWidth="2" className="star-ring" />}
                   <circle cx={x} cy={y} r={9} fill="var(--star)" opacity={0.16} />
+                  <path d={`M${x - 9} ${y}H${x + 9}M${x} ${y - 9}V${y + 9}`} stroke="var(--star)" strokeOpacity={0.55} strokeWidth={0.8} strokeLinecap="round" />
                   <circle cx={x} cy={y} r={4.5} fill="var(--star)" className="star-core" />
                 </g>
               ) : (

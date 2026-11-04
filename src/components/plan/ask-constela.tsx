@@ -10,6 +10,7 @@ import { buildInterviewContext } from "@/lib/interview-context";
 import { afterWakeWord, beforeStopWord, canListen, recordOnce, writeDown } from "@/lib/listen";
 import { loadResumeProfile } from "@/lib/local-profile";
 import type { Plan } from "@/lib/plan";
+import { calmMode, voiceSpeed } from "@/lib/personalization";
 import { useHydrated } from "@/lib/use-hydrated";
 import { cn } from "@/lib/utils";
 
@@ -35,7 +36,7 @@ function clip(text: string): Promise<Blob | null> {
   return fetch("/api/interview/speak", {
     method: "POST",
     headers: { "Content-Type": "application/json" },
-    body: JSON.stringify({ text }),
+    body: JSON.stringify({ text, speed: voiceSpeed() }),
     // The first start can download the voice; meanwhile the browser's voice reads instead of leaving silence.
     signal: AbortSignal.timeout(15_000),
   })
@@ -48,7 +49,7 @@ function browserSay(text: string): Promise<void> {
     if (!("speechSynthesis" in window)) return resolve();
     const u = new SpeechSynthesisUtterance(text);
     u.lang = "en-US";
-    u.rate = 0.95;
+    u.rate = voiceSpeed();
     u.onend = u.onerror = () => resolve();
     window.speechSynthesis.speak(u);
   });
@@ -145,7 +146,8 @@ export function AskConstela({
   // Sentence by sentence, as the answer is written: each one starts being made by Kokoro right away and they play in
   // order. The last one ends "speaking".
   function speak(text: string, last: boolean) {
-    const words = text.trim();
+    // Calm mode: the answer shows as text only, with no sound the person did not ask for.
+    const words = calmMode() ? "" : text.trim();
     const run = voiceRun.current;
     const audio = words ? clip(words) : Promise.resolve(null);
     playlist.current = playlist.current.then(async () => {

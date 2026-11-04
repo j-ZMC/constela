@@ -31,8 +31,8 @@ Personalize can override these with presets; build with tokens and it just works
 | Kind of page | Width | Examples |
 |---|---|---|
 | Task (one flow, forms, reading) | `max-w-xl` | Profile, My plan, Privacy |
-| Browse (lists of results) | `max-w-3xl` | Jobs |
-| Header and shell | `max-w-5xl` | `site-nav.tsx` |
+| Browse (lists of results) | `max-w-5xl` | Jobs, Learn |
+| Header and shell | a fixed bar on the left, `w-56`, on wide screens; a top bar and a bottom tab bar on phones | `site-nav.tsx` |
 | Intro card | `max-w-md` | `/` |
 
 Never wider than the header. Pages use `mx-auto w-full px-4 py-10`.
@@ -72,7 +72,7 @@ Two kinds of card only:
 - **The "now" card:** `rounded-2xl border border-primary/15 bg-card p-5 sm:p-7` plus the soft navy shadow. At most one per screen: the thing to do now (My plan's current step, stage complete, rest).
 - **Quiet card:** `rounded-xl border bg-card p-5`. Everything else.
 
-**Lists** (jobs, vacancies) are one quiet card with rows split by a line (`divide-y`), never a stack of separate boxes.
+**Lists** (jobs, internships, saved jobs, courses) are separate cards, a page at a time with numbered pages, never one endless scroll (`src/components/paged-grid.tsx`: `MASONRY` for jobs, like a pinboard; `GRID` for courses). Filters sit in a side panel that opens and closes with a "Filters" button and pushes the results over; each choice shows how many results it leaves (`FilterGroup`).
 
 Notes use `bg-secondary`; things to check use a thin `border-destructive/40`. No stat tiles, no colored left borders, no cards inside cards.
 
@@ -109,7 +109,7 @@ Read the profile with `toAdaptations(loadProfile() ?? {})` (`src/lib/profile.ts`
 ## The finishing details (calm, native-feeling)
 
 - **Press feedback:** anything you tap carries the `press` utility (in `globals.css`): it scales to 0.97 for 160 ms, eased out. `Button`, tabs, choice rows and the nav already have it. Reduce motion keeps the color change only.
-- **Translucent bars:** the header and the phone tab bar are `bg-background/85` with `backdrop-blur-xl`, so the page sky shows faintly as it scrolls under them. Blur is used only there.
+- **Dark bars:** the app menu (the bar on the left on wide screens; the top bar and tab bar on phones) uses `bg-sky` with white text, in every palette, so it never blends with the page. The selected item is `bg-white/15`.
 - **Depth:** the "now" card and grouped lists use a soft, offset shadow (`0 1px 2px` plus a wide, low blur). No colored halos.
 - **Browser surfaces:** selection, caret, scrollbars and native checkboxes take the palette (`globals.css`, `html`). The app is light unless a dark Personalize palette sets `data-pz-scheme="dark"`, which switches native controls too.
 - **Phones:** the viewport uses `interactive-widget=resizes-content`, and the bottom nav hides while a text field has focus, so the keyboard never covers what you type.

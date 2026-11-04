@@ -26,7 +26,19 @@ resume_parser.py/resumes/
 *.sqlite
 *.sqlite3
 *.db
-data/processed/
+data/processed/*
+*.ipynb_checkpoints/
+# Kept in git: what the job search reads at run time, so a fresh clone searches without rebuilding anything.
+# The vectors were computed on this computer with Qwen3-Embedding-0.6B (pretokenize_openai.py).
+!data/processed/embeddings/
+data/processed/embeddings/*
+!data/processed/embeddings/*_qwen3_embeddings.npy
+!data/processed/embeddings/*_qwen3_ids.json
+!data/processed/embeddings/neurodivergence_barriers_qwen3.npz
+!data/processed/company_inclusion.sqlite
+!data/processed/qualified_company_jobs.sqlite
+!data/raw/jobs/internships.json
+!data/reference/company_data/company_sizes.json
 *.ipynb_checkpoints/
 
 # Keep the OpenAI filter; ignore the legacy local-model filter.

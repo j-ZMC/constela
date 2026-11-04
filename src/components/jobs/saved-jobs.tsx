@@ -4,6 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { ExternalLink } from "lucide-react";
 import { JobCard } from "@/components/jobs/job-card";
+import { CARD, MASONRY_WIDE, Pager, pageCount, pageOf } from "@/components/paged-grid";
 import { Button } from "@/components/ui/button";
 import { companyFacts } from "@/lib/company-facts";
 import { companyResearch } from "@/lib/company-research";
@@ -12,8 +13,14 @@ import { postingSummary } from "@/lib/posting-summary";
 import { jobKey, markApplied, updateSaved, useSavedJobs, type SavedJob } from "@/lib/saved-jobs";
 import { useSingleFlight } from "@/lib/use-single-flight";
 
+const PAGE_SIZE = 12;
+
 export function SavedJobs() {
   const saved = useSavedJobs();
+  const [wanted, setPage] = useState(1);
+  // Removing the last job on the last page moves back a page instead of showing an empty one.
+  const pages = pageCount(saved.length, PAGE_SIZE);
+  const page = Math.min(wanted, pages);
   if (!saved.length) {
     return (
       <p role="status" className="rounded-xl border bg-card p-6 text-center text-sm text-muted-foreground">
@@ -22,9 +29,10 @@ export function SavedJobs() {
     );
   }
   return (
-    <ul aria-label="Saved jobs" className="divide-y overflow-hidden rounded-2xl border bg-card shadow-[0_1px_2px_rgb(36_59_83/0.05),0_8px_24px_-12px_rgb(36_59_83/0.12)]">
-      {saved.map((item) => (
-        <li key={jobKey(item.job)}>
+    <div className="flex flex-col gap-6">
+    <ul aria-label="Saved jobs" className={MASONRY_WIDE}>
+      {pageOf(saved, page, PAGE_SIZE).map((item) => (
+        <li key={jobKey(item.job)} className={CARD}>
           <JobCard job={item.job} flagged={item.job.blocked} compact>
             <CompanyGuide item={item} />
             <Applied item={item} />
@@ -32,6 +40,8 @@ export function SavedJobs() {
         </li>
       ))}
     </ul>
+    <Pager page={page} pages={pages} onPage={(n) => { setPage(n); window.scrollTo({ top: 0 }); }} label="Saved jobs" />
+    </div>
   );
 }
 

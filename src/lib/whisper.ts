@@ -12,3 +12,14 @@ export async function transcribe(path: string, options?: { readyMs?: number; tim
   const result = await worker.run({ path }, options);
   return String(result.text ?? "");
 }
+
+export type Tone = { neutral: number; happy: number; angry: number; sad: number };
+const TONE_KEYS = ["neutral", "happy", "angry", "sad"] as const;
+
+// The words, and how the voice sounds to a small model (see transcribe_server.py). Only for "Adjust the practice".
+export async function transcribeWithTone(path: string): Promise<{ text: string; tone?: Tone }> {
+  const result = await worker.run({ path, tone: true });
+  const raw = result.tone as Record<string, unknown> | undefined;
+  const tone = raw && TONE_KEYS.every((k) => typeof raw[k] === "number" && raw[k] >= 0 && raw[k] <= 1) ? (raw as Tone) : undefined;
+  return { text: String(result.text ?? ""), ...(tone ? { tone } : {}) };
+}

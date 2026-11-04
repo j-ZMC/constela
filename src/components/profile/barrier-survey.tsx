@@ -1,7 +1,7 @@
 "use client";
 
 import { useMemo, useState, type FormEvent } from "react";
-import { X } from "lucide-react";
+import { Flag, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
@@ -85,7 +85,8 @@ function Survey({ onNext }: { onNext: () => void }) {
   return (
     <section className="flex flex-col gap-6" aria-labelledby="barrier-heading">
       <header className="flex flex-col gap-2">
-        <h2 id="barrier-heading" className="text-2xl font-semibold text-balance">
+        <h2 id="barrier-heading" className="flex items-center gap-2 text-2xl font-semibold text-balance">
+          <Flag aria-hidden className="size-7 shrink-0 text-primary" />
           Which workplace conditions should we flag?
         </h2>
         <p className="text-muted-foreground">

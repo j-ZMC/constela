@@ -1,7 +1,7 @@
-"""Score and filter jobs using precomputed OpenAI embeddings.
+"""Score and filter jobs using precomputed Qwen3-Embedding-0.6B vectors (Ollama, on this computer).
 
 Run pretokenize_openai.py first to create/update the job and barrier caches.
-Each search request embeds the user's free-text query through the OpenAI API.
+Each search request embeds the user's free-text query with the same model through Ollama.
 
 Usage:
   python pretokenize_openai.py
@@ -33,8 +33,10 @@ from pretokenize_openai import (
     EMBEDDING_DIMENSIONS,
     EMBEDDINGS_PATH as DEFAULT_EMBEDDINGS_PATH,
     IDS_PATH as DEFAULT_IDS_PATH,
-    MODEL_NAME,
+    QUERY_TASK,
     clean_jobs,
+    ollama_embed,
+    with_task,
     expected_barriers,
     load_barrier_catalog,
 )
@@ -52,7 +54,9 @@ QUALIFIED_COMPANIES_DB = "data/processed/qualified_company_jobs.sqlite"
 # Exclude matched companies absent from the qualifying-company database; unmatched stay eligible.
 EXCLUDE_KNOWN_NON_INCLUSIVE = True
 SIMILARITY_THRESHOLD = 2.0  # Number of standard deviations above the mean.
-BLOCKED_THRESHOLD = 0.385
+# Qwen3-Embedding-0.6B: flags the same share of (condition, job) pairs, 0.78%, as OpenAI did at 0.385.
+# shortcut: matched by share, not checked against people's judgments; re-tune if conditions flag too much or too little.
+BLOCKED_THRESHOLD = 0.40
 
 
 def normalize_rows(vectors: np.ndarray) -> np.ndarray:
@@ -127,14 +131,8 @@ def load_embeddings(
 
 
 def embed_query(query: str) -> np.ndarray:
-    """Embed one search-bar query with OpenAI's configured embedding model."""
-    from openai import OpenAI
-
-    response = OpenAI().embeddings.create(
-        model=MODEL_NAME,
-        input=query.replace("\n", " "),
-    )
-    vector = np.asarray(response.data[0].embedding, dtype=np.float32)
+    """Embed one search-bar query with the same model and task as the job cache."""
+    vector = np.asarray(ollama_embed([with_task(QUERY_TASK, query.replace("\n", " "))])[0], dtype=np.float32)
     if vector.shape != (EMBEDDING_DIMENSIONS,):
         raise ValueError(
             f"Expected a {EMBEDDING_DIMENSIONS}-dimensional query embedding; "

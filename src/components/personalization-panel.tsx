@@ -7,8 +7,10 @@ import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle, Di
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
+import { DeleteMyData } from "@/components/delete-my-data";
+import { onSky as onSkyText } from "@/components/page-sky";
 import {
-  DEFAULT_PREFS, DEFAULT_ROLES, PRESETS, ROLE_LABELS, applyPrefs, checkContrast, loadPrefs, savePrefs,
+  DEFAULT_PREFS, DEFAULT_ROLES, PRESETS, ROLE_LABELS, applyPrefs, checkContrast, loadPrefs, savePrefs, starCheck,
   type Prefs, type Roles,
 } from "@/lib/personalization";
 import { setReadingOption } from "@/lib/reading";
@@ -43,7 +45,8 @@ function Slider({ id, label, value, min, max, step, shown, onChange }: { id: str
   );
 }
 
-export function PersonalizationPanel() {
+// onSky: the button sits on a dark bar (the app menu), so it is white on the sky color.
+export function PersonalizationPanel({ onSky = false }: { onSky?: boolean }) {
   const [p, setP] = useState<Prefs>(DEFAULT_PREFS);
   const [tab, setTab] = useState<Tab>("colors");
   const [name, setName] = useState("");
@@ -58,7 +61,7 @@ export function PersonalizationPanel() {
   }
 
   const roles: Roles = p.colors ?? DEFAULT_ROLES;
-  const checks = p.colors ? checkContrast(p.colors) : [];
+  const checks = p.colors ? [...checkContrast(p.colors), starCheck(p.colors)] : [];
   const setRole = (k: keyof Roles, v: string) => update({ colors: { ...roles, [k]: v }, preset: "custom" });
   const choosePreset = (id: string, colors: Roles | null) => update({ colors, preset: id });
 
@@ -85,13 +88,13 @@ export function PersonalizationPanel() {
       const dys = document.documentElement.classList.contains("dyslexic");
       setP({ ...l, font: dys ? "dyslexic" : l.font === "dyslexic" ? "default" : l.font });
     }}>
-      <DialogTrigger render={<Button variant="outline" />}>
+      <DialogTrigger render={<Button variant="outline" className={onSky ? `border-white/30 bg-transparent ${onSkyText}` : undefined} />}>
         <Palette aria-hidden data-pz-icon />
-        <span data-pz-label>Personalize</span>
+        <span data-pz-label>Settings</span>
       </DialogTrigger>
       <DialogContent className="max-h-[88vh] overflow-y-auto sm:max-w-xl">
         <DialogHeader>
-          <DialogTitle>Personalize</DialogTitle>
+          <DialogTitle>Settings</DialogTitle>
           <DialogDescription>Every option is independent and optional. Nothing is shared; it is saved on this device.</DialogDescription>
         </DialogHeader>
 
@@ -114,13 +117,19 @@ export function PersonalizationPanel() {
                 ))}
               </div>
               <div className="grid grid-cols-2 gap-3">
-                {(Object.keys(ROLE_LABELS) as (keyof Roles)[]).map((k) => (
+                {(Object.keys(ROLE_LABELS) as (keyof typeof ROLE_LABELS)[]).map((k) => (
                   <Label key={k} htmlFor={`pz-${k}`} className="flex items-center gap-2">
                     <input id={`pz-${k}`} type="color" value={roles[k]} onChange={(e) => setRole(k, e.target.value)} className="h-11 w-14 rounded border border-input bg-background" />
                     {ROLE_LABELS[k]}
                   </Label>
                 ))}
               </div>
+              <p className="text-sm font-medium">Soft light</p>
+              <Choice label="Soft light" value={String(p.soft)} onChange={(v) => update({ soft: Number(v) })}
+                options={[["0", "Off"], ["1", "A little"], ["2", "More"], ["3", "Most"]]} />
+              <p className="text-sm text-muted-foreground">
+                Makes the page warmer and less bright. Text stays easy to read. A page cannot change your screen&apos;s real brightness.
+              </p>
               <ul aria-live="polite" className="flex flex-col gap-1 text-sm">
                 {checks.map((c) => (
                   <li key={c.label}>{c.ok ? "OK" : "Low contrast"} · {c.label}: {c.ratio.toFixed(1)}:1 (needs {c.min}:1)</li>
@@ -207,6 +216,14 @@ export function PersonalizationPanel() {
           {tab === "use" && (
             <>
               <div className="flex items-center justify-between gap-4">
+                <Label htmlFor="pz-calm" className="flex flex-col items-start gap-0.5"><span>Calm mode</span><span className="text-sm font-normal text-muted-foreground">No movement, no glow, and Hey Constela answers in text instead of out loud</span></Label>
+                <Switch id="pz-calm" aria-label="Calm mode" checked={p.calm} onCheckedChange={(calm) => update({ calm })} />
+              </div>
+              <div className="flex items-center justify-between gap-4">
+                <Label htmlFor="pz-slow" className="flex flex-col items-start gap-0.5"><span>Slower AI voice</span><span className="text-sm font-normal text-muted-foreground">When the AI talks, it speaks more slowly</span></Label>
+                <Switch id="pz-slow" aria-label="Slower AI voice" checked={p.slowVoice} onCheckedChange={(slowVoice) => update({ slowVoice })} />
+              </div>
+              <div className="flex items-center justify-between gap-4">
                 <Label htmlFor="pz-focus" className="flex flex-col items-start gap-0.5"><span>Stronger keyboard focus</span><span className="text-sm font-normal text-muted-foreground">A thicker outline on the element you are on</span></Label>
                 <Switch id="pz-focus" aria-label="Stronger keyboard focus" checked={p.focus} onCheckedChange={(focus) => update({ focus })} />
               </div>
@@ -218,6 +235,14 @@ export function PersonalizationPanel() {
             </>
           )}
         </div>
+
+        <section aria-labelledby="pz-delete" className="flex flex-col gap-2 border-t pt-4">
+          <h3 id="pz-delete" className="font-semibold">Delete my data</h3>
+          <p className="text-sm text-muted-foreground">
+            Delete everything Constela knows about you on this device, and start again from the first questions.
+          </p>
+          <DeleteMyData restart />
+        </section>
       </DialogContent>
     </Dialog>
   );

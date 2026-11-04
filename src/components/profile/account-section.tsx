@@ -1,5 +1,6 @@
 "use client";
 
+import { Contact } from "lucide-react";
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { loadLocalAccount, saveLocalAccount } from "@/lib/local-profile";
@@ -19,7 +20,7 @@ export function AccountSection() {
   return (
     <section aria-labelledby="account-heading" className="flex max-w-xl flex-col gap-5">
       <div>
-        <h2 id="account-heading" className="text-2xl font-semibold">Contact details</h2>
+        <h2 id="account-heading" className="flex items-center gap-2 text-2xl font-semibold"><Contact aria-hidden className="size-7 shrink-0 text-primary" />Contact details</h2>
         <p className="mt-2 text-muted-foreground">Optional. These details stay on this device.</p>
       </div>
       <form onSubmit={save} className="flex flex-col gap-4">

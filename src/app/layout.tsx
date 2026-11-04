@@ -48,7 +48,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
           }}
         />
       </head>
-      <body className="min-h-full flex flex-col">
+      {/* Wide screens: the app menu is a fixed bar on the left (site-nav.tsx), so the page moves over by its width. */}
+      <body className="min-h-full flex flex-col lg:has-[[data-side-nav]]:pl-56">
         <BackgroundSky />
         <SiteNav />
         <div className="flex flex-1 flex-col pb-24 lg:pb-0">{children}</div>

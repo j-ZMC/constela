@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { Check } from "lucide-react";
+import { Check, CircleCheck, Wand2 } from "lucide-react";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Constellation } from "@/components/profile/constellation";
 import { ListenButton } from "@/components/listen-button";
@@ -36,17 +36,18 @@ export function ProfileSummary({ answers, onEdit, onNext }: { answers: Answers; 
       <div className="flex flex-col gap-4">
         <Constellation lit={answered} label={`${count} of ${QUESTIONS.length} questions answered`} />
         <div className="flex flex-col gap-2">
-          <h2 id="summary-heading" ref={heading} tabIndex={-1} className="text-2xl font-semibold outline-none">
+          <h2 id="summary-heading" ref={heading} tabIndex={-1} className="flex items-center gap-2 text-2xl font-semibold outline-none">
+            <CircleCheck aria-hidden className="size-7 shrink-0 text-primary" />
             Your needs are saved
           </h2>
           <p className="text-muted-foreground">
-            You answered {count} of {QUESTIONS.length}. It stays on this device, and you can change it anytime.
+            {count === QUESTIONS.length ? "You answered every question." : "You can answer the rest anytime."} It stays on this device, and you can change it anytime.
           </p>
         </div>
       </div>
 
       <div className="flex flex-col gap-3">
-        <h2 className="font-semibold">Here&apos;s how Constela will adapt</h2>
+        <h2 className="flex items-center gap-2 font-semibold"><Wand2 aria-hidden className="size-5 shrink-0 text-primary" />Here&apos;s how Constela will adapt</h2>
         {adaptations.listenButton && <ListenButton text={`Here's how Constela will adapt. ${lines.join(" ")}`} />}
         <ul className="flex flex-col gap-2">{lines.slice(0, UP_FRONT).map(line)}</ul>
         {lines.length > UP_FRONT && (
@@ -61,7 +62,7 @@ export function ProfileSummary({ answers, onEdit, onNext }: { answers: Answers; 
           <div className="flex flex-wrap items-center justify-between gap-3 rounded-lg bg-secondary p-4">
             <p className="text-sm">
               {aidsOn
-                ? "The dyslexia-friendly font and larger text are on. Change them in Personalize at the top."
+                ? "The dyslexia-friendly font and larger text are on. Change them in Settings, in the menu."
                 : "Long texts feel hard. Want the dyslexia-friendly font and larger text?"}
             </p>
             {!aidsOn && (

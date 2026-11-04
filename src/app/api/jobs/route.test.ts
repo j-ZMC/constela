@@ -40,7 +40,6 @@ function mockWorker(stdout: string, error: Error | null = null) {
 
 describe("POST /api/jobs", () => {
   beforeEach(() => {
-    vi.stubEnv("OPENAI_API_KEY", "test-key");
     execFileMock.mockReset();
     (globalThis as { __constelaJobsCache?: Map<string, unknown> }).__constelaJobsCache?.clear();
   });
@@ -144,9 +143,9 @@ describe("POST /api/jobs", () => {
       "--jobs",
       "data/raw/jobs/internships.json",
       "--emb",
-      "data/processed/embeddings/internships_openai_embeddings.npy",
+      "data/processed/embeddings/internships_qwen3_embeddings.npy",
       "--ids",
-      "data/processed/embeddings/internships_openai_ids.json",
+      "data/processed/embeddings/internships_qwen3_ids.json",
       "--threshold=-100",
     ]);
   });
@@ -155,15 +154,6 @@ describe("POST /api/jobs", () => {
     const response = await post({ query: " " });
 
     expect(response.status).toBe(400);
-    expect(execFileMock).not.toHaveBeenCalled();
-  });
-
-  it("returns not_configured if the OpenAI key is absent", async () => {
-    vi.stubEnv("OPENAI_API_KEY", "");
-
-    const response = await post({ query: "remote analyst" });
-
-    expect(response.status).toBe(503);
     expect(execFileMock).not.toHaveBeenCalled();
   });
 

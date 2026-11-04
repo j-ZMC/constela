@@ -1,5 +1,6 @@
 "use client";
 
+import { FileSearch, FileText } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
 import { Button, buttonVariants } from "@/components/ui/button";
@@ -66,7 +67,7 @@ export function CvSection() {
   return (
     <section aria-labelledby="cv-heading" className="flex flex-col gap-5">
       <div>
-        <h2 id="cv-heading" className="text-2xl font-semibold">Add your CV</h2>
+        <h2 id="cv-heading" className="flex items-center gap-2 text-2xl font-semibold"><FileText aria-hidden className="size-7 shrink-0 text-primary" />Add your CV</h2>
         <p className="mt-2 text-muted-foreground">
           We use it to pick jobs for you. Upload a PDF with real text, not a scan. We read it and do not save the file.
           What we find stays in this browser.
@@ -85,7 +86,7 @@ export function CvSection() {
       {profile && (
         <div className="rounded-xl border bg-card p-5">
           <div className="flex flex-wrap items-center justify-between gap-3">
-            <h3 className="font-semibold">What we found</h3>
+            <h3 className="flex items-center gap-2 font-semibold"><FileSearch aria-hidden className="size-5 shrink-0 text-primary" />What we found</h3>
             <Button type="button" variant="ghost" className={action} onClick={clear}>Clear CV</Button>
           </div>
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">

@@ -7,7 +7,8 @@ import type { InterviewErrorCode } from "@/lib/interview";
 import { VoiceError, speakToFile } from "@/lib/kokoro";
 
 // One sentence or one short reply at a time: the chat sends each sentence as soon as it is written.
-const request = z.object({ text: z.string().trim().min(1).max(600) }).strict();
+// speed: "Slower AI voice" in Personalize sends 0.8.
+const request = z.object({ text: z.string().trim().min(1).max(600), speed: z.number().min(0.5).max(1.5).optional() }).strict();
 
 const STATUS: Record<InterviewErrorCode, number> = { invalid_input: 400, unavailable: 503, timeout: 504, failed: 502 };
 
@@ -22,7 +23,7 @@ export async function POST(req: Request) {
   // A random name in the system's temp folder, deleted as soon as the audio is read back.
   const path = join(tmpdir(), `constela-speech-${randomUUID()}.wav`);
   try {
-    await speakToFile(parsed.data.text, path);
+    await speakToFile(parsed.data.text, path, parsed.data.speed);
     return new Response(await readFile(path), { headers: { "Content-Type": "audio/wav", "Cache-Control": "no-store" } });
   } catch (error) {
     return fail(error instanceof VoiceError ? error.code : "failed");

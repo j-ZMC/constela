@@ -2,7 +2,7 @@
 
 import { useRef, useState } from "react";
 import Link from "next/link";
-import { Check, ChevronRight, CircleHelp } from "lucide-react";
+import { CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { AddStep } from "@/components/plan/add-step";
 import { PlanMap } from "@/components/plan/plan-map";
@@ -12,7 +12,7 @@ import { EasierToday } from "@/components/plan/energy-check-in";
 import { PathDialog } from "@/components/plan/path-dialog";
 import { Tour, tourSeen, type TourStep } from "@/components/tour";
 import { firstSentence } from "@/components/summary";
-import { AllDone, CurrentStep, Duration, ICONS, NextStep, Pause, Removed, Rest, StageDone } from "@/components/plan/step-card";
+import { AllDone, CurrentStep, Pause, Removed, Rest, StageDone } from "@/components/plan/step-card";
 import { StepDetails } from "@/components/plan/step-details";
 import {
   addSteps,
@@ -128,15 +128,13 @@ function View() {
   const working = currentBranch(plan);
   const active = activeSteps(plan);
   const shown = visibleSteps({ ...plan, steps: active }, adaptations, energy);
-  const [current, ...upNext] = shown;
-  // importantFirst: only the current step stays on screen; everything else waits behind a count.
-  const next = adaptations.importantFirst ? [] : upNext;
-  const later = active.filter((s) => !s.done && s !== current && !next.includes(s));
+  // One step on screen; the rest are stars on the map and in All branches.
+  const [current] = shown;
   // Every branch on one sky; the count is every star on it.
   const map = pathMap(plan);
-  const stars = map.flatMap((b) => b.nodes);
-  const done = stars.filter((s) => s.done).length;
-  const goal = weekGoal(plan, now);
+  // Where the step for now sits: "step 2 of 4 in Find jobs", so it is clear how far along its branch is.
+  const here = map.find((b) => b.nodes.some((n) => n.step?.id === current?.id));
+  const position = here ? here.nodes.findIndex((n) => n.step?.id === current?.id) + 1 : 0;
   // "Stop for today" is saved with the date, so a reload keeps the rest screen; the next day starts fresh.
   const resting = plan.restingOn === localDate(now);
   const setResting = (on: boolean) => update({ ...plan, restingOn: on ? localDate(new Date()) : undefined });
@@ -209,7 +207,7 @@ function View() {
     <>
       {/* My plan is one sky: the title, the constellation as big as the screen allows, and today's step floating on it,
           beside the map on wide screens and under it on phones. Pressing Done lights its star in view. */}
-      <section aria-labelledby="plan-title" className="relative isolate flex flex-col overflow-hidden bg-sky text-white lg:min-h-[calc(100svh-5rem)]">
+      <section aria-labelledby="plan-title" className="relative isolate flex flex-col overflow-hidden bg-sky text-white lg:min-h-svh">
         <div className="mx-auto flex w-full max-w-6xl flex-col gap-1 px-4 pt-6 sm:pt-8">
           <div className="flex flex-wrap items-center justify-between gap-x-3">
             <h1 id="plan-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Today</h1>
@@ -223,38 +221,28 @@ function View() {
               </Button>
             </div>
           </div>
-          <p className="font-medium text-white/80">{working ? `Working on: ${branchName(working)}` : "Every step is done"}</p>
+          <p className="font-medium text-white/80">
+            {here && position
+              ? `Now: step ${position} of ${here.nodes.length} in ${branchName(here.branch)}`
+              : working
+                ? `Working on: ${branchName(working)}`
+                : "Every step is done"}
+          </p>
         </div>
 
         <p aria-live="polite" className="sr-only">
           {announcement}
         </p>
 
-        <div className="mx-auto grid min-h-0 w-full max-w-6xl flex-1 gap-6 px-4 pt-2 pb-8 lg:grid-cols-[minmax(0,1fr)_24rem] lg:grid-rows-[minmax(0,1fr)_auto]">
+        <div className="mx-auto grid min-h-0 w-full max-w-6xl flex-1 gap-6 px-4 pt-2 pb-8 lg:grid-cols-[minmax(0,1fr)_20rem] lg:grid-rows-[minmax(0,1fr)_auto]">
           {/* As tall as a phone's screen between its bars; on wide screens, all the height the sky has. */}
           <div className="flex min-h-0 flex-col items-center gap-2 max-lg:h-[calc(100svh-15rem)] max-lg:min-h-[24rem] lg:row-span-2">
             <div ref={stage} data-tour="stars" data-voice="idle" className="flex min-h-0 w-full flex-1 items-center justify-center [container-type:size]">
               <PlanMap branches={map} currentId={current?.id} glowId={justDone ?? undefined} highlight={talkedAbout} onSelect={setSelected} />
             </div>
-            {/* One small goal a week: when it is met it says so; when the week ends unmet, a new week brings a new goal. */}
-            <div className="flex flex-col gap-0.5 text-center">
-              <p className="text-white/80">
-                {done} of {stars.length} steps done.{" "}
-                <span data-detail="extra" className="text-sm max-sm:hidden">
-                  Tap a star to see a step.
-                </span>
-              </p>
-              <p className="flex items-center justify-center gap-2">
-                {goal.met && <Check className="size-5 shrink-0 text-star" aria-hidden />}
-                <span>
-                  {goal.text}
-                  {goal.met && <span className="text-white/70"> (done)</span>}
-                </span>
-              </p>
-            </div>
           </div>
 
-          <div className="flex flex-col gap-4 text-foreground max-lg:order-last lg:self-end">
+          <div className="relative z-10 flex flex-col gap-4 text-foreground max-lg:order-last lg:self-end">
             {stageDone ? (
               <StageDone
                 finished={branchName(stageDone)}
@@ -299,7 +287,7 @@ function View() {
             {removed && <Removed title={removed.title} onUndo={undoRemove} />}
           </div>
 
-          <div className="flex justify-center lg:col-start-2">
+          <div className="relative z-10 flex justify-center lg:col-start-2">
             <AskConstela plan={plan} stage={stage} onAnswer={(text) => setTalkedAbout(branchesIn(text, map))} />
           </div>
         </div>
@@ -314,46 +302,6 @@ function View() {
           </Link>{" "}
           to fit the plan to you.
         </p>
-      )}
-
-      {!paused && !resting && !stageDone && next.length > 0 && (
-        <section aria-labelledby="up-next" className="flex flex-col gap-3">
-          <h2 id="up-next" className="text-sm font-semibold text-muted-foreground">
-            Up next
-          </h2>
-          <ul className="flex flex-col">
-            {next.map((s) => (
-              <NextStep key={s.id} step={s} />
-            ))}
-          </ul>
-        </section>
-      )}
-
-      {/* A finished stage and the rest screen are quiet moments: no lists, no "add more". */}
-      {!resting && !stageDone && later.length > 0 && (
-        <details className="group">
-          <summary className="flex h-11 w-fit cursor-pointer items-center rounded-lg px-1 font-medium text-muted-foreground hover:text-foreground">
-            <ChevronRight className="size-4 transition-transform group-open:rotate-90" aria-hidden />
-            {adaptations.importantFirst
-              ? `${later.length} more ${later.length === 1 ? "step" : "steps"}, out of the way for now`
-              : `See what's next (${later.length})`}
-          </summary>
-          <ul className="flex flex-col divide-y">
-            {later.map((s) => {
-              const Icon = ICONS[s.icon];
-              return (
-              <li key={s.id} className="flex items-center gap-3 py-2 pl-1">
-                <Icon className="size-5 shrink-0 text-muted-foreground" aria-hidden />
-                <span className="flex-1">{s.title}</span>
-                <Duration minutes={s.minutes} />
-                <Button variant="ghost" className="h-11 px-4" onClick={() => remove(s)} aria-label={`Remove: ${s.title}`}>
-                  Remove
-                </Button>
-              </li>
-              );
-            })}
-          </ul>
-        </details>
       )}
 
       {!resting && !stageDone && (

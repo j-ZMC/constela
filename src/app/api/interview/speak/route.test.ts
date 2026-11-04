@@ -39,6 +39,7 @@ describe("POST /api/interview/speak", () => {
     ["empty text", { text: "   " }],
     ["very long text", { text: "x".repeat(601) }],
     ["extra fields", { text: "Hi", voice: "other" }],
+    ["a speed out of range", { text: "Hi", speed: 4 }],
   ])("rejects %s without running Kokoro", async (_, body) => {
     const res = await post(body);
     expect(res.status).toBe(400);

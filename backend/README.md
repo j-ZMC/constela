@@ -29,8 +29,6 @@ Pipeline: `[sources] -> [collect_bulk.py] -> [jobs_*.json] -> [pretokenize.py or
 | Path | Purpose |
 |------|---------|
 | `collect_bulk.py` | Main collector for 15+ sources; writes job data under `data/raw/jobs/` by default. |
-| `filter_jobs.py` | One-by-one semantic job filter; strips HTML and skips empty descriptions before embedding/scoring. |
-| `pretokenize.py` | Pre-encodes descriptions; stores vectors and URL index under `data/processed/embeddings/`. |
 | `pretokenize_openai.py` | Uses `text-embedding-3-small` to cache job and barrier-subtype vectors for the cleaned USA backup dataset. |
 | `filter_jobs_openai.py` | Filters from cached job/barrier vectors, embeds each search query with OpenAI, and excludes known non-qualifying companies using the two inclusion SQLite databases. |
 | `data/raw/jobs/jobs_usa_full_backup_cleaned.json` | Cleaned copy of `jobs_usa_full_backup.json`; empty descriptions removed and HTML cleaned. The backup source remains unchanged. |
@@ -111,7 +109,12 @@ Known bugs already fixed (do NOT reintroduce):
 - User demands NO batching. Cached embeddings via `pretokenize.ensure_embeddings`
   + `emb_by_url` dict; missing URLs encoded live on same device.
 
-### OpenAI API workflow
+### Embedding workflow (Qwen3-Embedding-0.6B on Ollama)
+
+> November 2026: the scripts keep their `_openai` names, but they now use `qwen3-embedding:0.6b` through Ollama on
+> this computer (`ollama pull qwen3-embedding:0.6b`; no API key). Caches are `*_qwen3_*`; vectors have 1024 numbers.
+> Searches and barrier texts get a one-line task in front (`QUERY_TASK`, `BARRIER_TASK`); job descriptions do not.
+> Where the text below says OpenAI or `OPENAI_API_KEY`, read Ollama.
 
 - Both scripts read `data/raw/jobs/jobs_usa_full_backup_cleaned.json` by default
   and print the path at startup. `--jobs` overrides this path.
@@ -260,7 +263,7 @@ afterwards, `--rediscover` looks again); later runs only download the boards it 
 
 ```powershell
 python collect_internships.py
-python pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_openai_embeddings.npy --ids data/processed/embeddings/internships_openai_ids.json
+python pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_qwen3_embeddings.npy --ids data/processed/embeddings/internships_qwen3_ids.json
 ```
 
 Only public board APIs are used. Companies on Workday or their own career sites are not covered yet.
@@ -295,16 +298,9 @@ job embeddings as well; that makes additional OpenAI API requests. CLI options
 are available with `python pretokenize_openai.py --help` and
 `python filter_jobs_openai.py --help`.
 
-### Local Qwen pipeline (optional; CUDA environment required)
+### Old local pipeline
 
-```powershell
-python pretokenize.py --jobs data/raw/jobs/jobs_usa.json
-python filter_jobs.py
-```
-
-`filter_jobs.py` uses the query and thresholds defined in the script; it does
-not currently provide command-line flags. Run it with the environment that has
-the local embedding model and CUDA dependencies installed.
+The first local filter (`pretokenize.py`, `filter_jobs.py`, PyTorch and sentence-transformers) was removed in November 2026; the app uses the Ollama pipeline above. It is in git history if needed.
 
 ### Preview the user barrier form
 

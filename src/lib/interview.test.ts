@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { ACTIVITIES, INTERVIEW_TYPES, buildMessages, interviewRequest, ollamaTextStream } from "@/lib/interview";
+import { ACTIVITIES, INTERVIEW_TYPES, LEVELS, buildMessages, interviewRequest, ollamaTextStream } from "@/lib/interview";
 
 const parse = (value: unknown) => interviewRequest.safeParse(value).success;
 const user = (content: string) => ({ role: "user" as const, content });
@@ -59,14 +59,61 @@ describe("buildMessages", () => {
     expect(system({ activity: "translate" })).toContain("paste the message");
     expect(system({ activity: "expect" })).toContain("step by step");
     expect(system({ activity: "questions" })).toContain("example answer");
+    expect(system({ activity: "cvWrite" })).toContain("what job they want this CV for");
+    expect(system({ activity: "cvReview" })).toContain("one part of it");
+    expect(system({ activity: "cvPart" })).toContain("Volunteering");
+  });
+
+  it("writes drafts with blanks instead of made-up facts, and proofreads kindly", () => {
+    for (const activity of ["email", "coverLetter", "followUp"]) {
+      expect(system({ activity })).toContain("leave a blank in square brackets");
+    }
+    expect(system({ activity: "proofread" })).toContain("Never call anything wrong");
+    expect(system({ activity: "proofread", role: "Cashier" })).not.toContain("Cashier");
+  });
+
+  it("uses the job for letters and CV help, and the interview type only for interviews", () => {
+    const letter = system({ activity: "coverLetter", type: "video", role: "Cashier" });
+    expect(letter).toContain('"Cashier"');
+    expect(letter).not.toContain(INTERVIEW_TYPES.video.rule);
+    expect(system({ activity: "cvReview", role: "Cashier" })).toContain('"Cashier"');
+    expect(system({ activity: "email", role: "Cashier" })).not.toContain("Cashier");
+  });
+
+  it("never lets the CV helper make up facts or ask for contact details", () => {
+    for (const activity of ["cvWrite", "cvReview", "cvPart"]) {
+      const prompt = system({ activity, type: "video", role: "Cashier" });
+      expect(prompt).toContain("Never make up jobs");
+      expect(prompt).toContain("Never ask for or write their name");
+      expect(prompt).not.toContain(INTERVIEW_TYPES.video.rule);
+    }
   });
 
   it("uses the interview type and job only where they change the questions", () => {
-    expect(system({ type: "phone" })).toContain(INTERVIEW_TYPES.phone.rule);
-    expect(system({ activity: "questions", type: "first" })).toContain(INTERVIEW_TYPES.first.rule);
-    const translate = system({ activity: "translate", type: "phone", role: "Cashier" });
-    expect(translate).not.toContain(INTERVIEW_TYPES.phone.rule);
+    expect(system({ type: "video" })).toContain(INTERVIEW_TYPES.video.rule);
+    expect(system({ activity: "questions", type: "experience" })).toContain(INTERVIEW_TYPES.experience.rule);
+    const translate = system({ activity: "translate", type: "video", role: "Cashier" });
+    expect(translate).not.toContain(INTERVIEW_TYPES.video.rule);
     expect(translate).not.toContain("Cashier");
+  });
+
+  it("sets how hard the interviewer is, and fits questions to the kind of job", () => {
+    expect(interviewRequest.parse({ messages: [] }).level).toBe("easy");
+    expect(system({ level: "hard" })).toContain(LEVELS.hard.rule);
+    expect(system({ activity: "translate", level: "hard" })).not.toContain(LEVELS.hard.rule);
+    expect(system({ role: "Data analyst" })).toContain("include technical questions");
+    expect(system({})).not.toContain("include technical questions");
+    expect(system({ type: "technical" })).toContain(INTERVIEW_TYPES.technical.rule);
+    expect(parse({ level: "impossible", messages: [] })).toBe(false);
+  });
+
+  it("eases the next question when the practice adjusts, without saying how the person seems", () => {
+    expect(interviewRequest.parse({ messages: [] }).ease).toBe(false);
+    const eased = system({ ease: true });
+    expect(eased).toContain("Make the next one easier");
+    expect(eased).toContain("never mention their voice, face or tone");
+    expect(system({})).not.toContain("Make the next one easier");
+    expect(system({ activity: "translate", ease: true })).not.toContain("Make the next one easier");
   });
 
   it("tells the model about speech recognition and reading aloud only in voice mode", () => {

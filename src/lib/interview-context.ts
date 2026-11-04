@@ -38,7 +38,7 @@ export function buildInterviewContext(cv: ResumeProfile | null, plan: Plan | nul
   return context;
 }
 
-// A saved job for the interview AI: the start of its posting and the web search lines that found something.
+// A saved job for the interview AI: the start of its posting and the Wikipedia lines that found something.
 export function buildJobContext(saved: SavedJob): NonNullable<InterviewContext["job"]> {
   const flat = (s: string) => s.replace(/\s+/g, " ").trim();
   return {

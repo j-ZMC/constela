@@ -4,7 +4,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Constellation } from "@/components/profile/constellation";
 import { useSummaryMode } from "@/components/summary";
-import { BRANCH_NAMES, BRANCH_PREVIEW, OWN_NAME, PRIORITY, branchProgress, currentBranch } from "@/lib/path";
+import { BRANCH_NAMES, BRANCH_PREVIEW, OWN_NAME, PRIORITY, branchProgress, currentBranch, progressWords } from "@/lib/path";
 import { stepKey, type Branch, type Plan } from "@/lib/plan";
 
 // Every branch at a glance: how far along it is, what it is for, and a way to work on it next.
@@ -37,7 +37,7 @@ export function PathDialog({ plan, onChoose, onClose }: { plan: Plan; onChoose: 
                 <div className="flex flex-wrap items-baseline justify-between gap-x-3">
                   <h3 className="font-semibold">{name}</h3>
                   <span className="text-sm text-muted-foreground">
-                    {done === total ? "Every step done" : `${done} of ${total} done`}
+                    {progressWords(done, total)}
                     {now && " · Working on this now"}
                   </span>
                 </div>

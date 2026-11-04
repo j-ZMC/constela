@@ -1,13 +1,14 @@
-// "Experience they ask for": open a saved job's posting, read its text, and have an AI list what it asks for.
-// The link comes from the browser, so the fetch refuses addresses inside this computer or its network.
+// "Experience they ask for": open a saved job's posting, read its text, and have the AI on this computer (Ollama) list
+// what it asks for. The link comes from the browser, so the fetch refuses addresses inside this computer or its network.
 import { lookup } from "node:dns/promises";
 import { isIP } from "node:net";
 import { z } from "zod";
+import { localJson, OllamaError } from "@/lib/ollama-tools";
 import type { PostingSummary } from "@/lib/posting-summary";
 
-const MODEL = "gpt-5-mini";
 const MAX_HTML = 3_000_000;
-const MAX_TEXT = 15_000;
+// About 2,500 tokens, so the posting fits in the local model's 8,192-token window with room for the answer.
+const MAX_TEXT = 10_000;
 
 export const postingRequest = z
   .object({
@@ -110,8 +111,6 @@ const clip = (items: unknown, max: number) =>
   (Array.isArray(items) ? items : []).filter((s): s is string => typeof s === "string" && s.trim().length > 0).map((s) => s.trim().slice(0, 300)).slice(0, max);
 
 export async function readPosting(r: PostingRequest, now = new Date()): Promise<PostingSummary> {
-  const key = process.env.OPENAI_API_KEY;
-  if (!key) throw new PostingError("not_configured");
   let text = "";
   try {
     text = postingText(await safeFetch(r.url));
@@ -122,30 +121,11 @@ export async function readPosting(r: PostingRequest, now = new Date()): Promise<
   const source = fromPage ? text : r.description.trim();
   if (!source) throw new PostingError("failed");
 
-  let res: Response;
+  let parsed: { required?: unknown; nice?: unknown } | null;
   try {
-    res = await fetch("https://api.openai.com/v1/responses", {
-      method: "POST",
-      headers: { "content-type": "application/json", authorization: `Bearer ${key}` },
-      body: JSON.stringify({
-        model: MODEL,
-        reasoning: { effort: "low" },
-        input: experiencePrompt(r.title, source),
-        text: { format: { type: "json_schema", name: "experience", strict: true, schema: SCHEMA } },
-      }),
-      signal: AbortSignal.timeout(60_000),
-    });
+    parsed = (await localJson(experiencePrompt(r.title, source), SCHEMA)) as typeof parsed;
   } catch (error) {
-    throw new PostingError(error instanceof DOMException && error.name === "TimeoutError" ? "timeout" : "failed");
+    throw new PostingError(error instanceof OllamaError ? error.code : "failed");
   }
-  if (!res.ok) throw new PostingError("failed");
-  const data = await res.json();
-  const output = (data?.output ?? []).flatMap((o: { content?: Array<{ type?: string; text?: string }> }) => o.content ?? []);
-  const raw = output.find((c: { type?: string }) => c.type === "output_text")?.text;
-  try {
-    const parsed = JSON.parse(raw ?? "");
-    return { required: clip(parsed.required, 8), nice: clip(parsed.nice, 6), from: fromPage ? "page" : "saved", at: now.toISOString() };
-  } catch {
-    throw new PostingError("failed");
-  }
+  return { required: clip(parsed?.required, 8), nice: clip(parsed?.nice, 6), from: fromPage ? "page" : "saved", at: now.toISOString() };
 }

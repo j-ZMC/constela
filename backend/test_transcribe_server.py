@@ -65,3 +65,48 @@ class DecodeTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class ToneTests(unittest.TestCase):
+    class FakeSession:
+        def __init__(self, logits):
+            self.logits = logits
+            self.seen = None
+
+        def run(self, _outputs, feeds):
+            import numpy as np
+
+            self.seen = feeds["input_values"]
+            return [np.array([self.logits], dtype=np.float32)]
+
+    def test_turns_the_model_output_into_shares_that_add_up_to_one(self):
+        import numpy as np
+
+        session = self.FakeSession([0.0, 0.0, 2.0, 0.0])
+        heard = transcribe_server.tone(np.zeros(32_000, dtype=np.float32), session)
+        self.assertEqual(list(heard), ["neutral", "happy", "angry", "sad"])
+        self.assertAlmostEqual(sum(heard.values()), 1.0, places=2)
+        self.assertGreater(heard["angry"], heard["neutral"])
+        self.assertEqual(session.seen.shape, (1, 32_000))
+
+    def test_skips_less_than_a_second_and_uses_only_the_last_20_seconds(self):
+        import numpy as np
+
+        session = self.FakeSession([1.0, 0.0, 0.0, 0.0])
+        self.assertIsNone(transcribe_server.tone(np.zeros(8_000, dtype=np.float32), session))
+        transcribe_server.tone(np.zeros(16_000 * 30, dtype=np.float32), session)
+        self.assertEqual(session.seen.shape, (1, 16_000 * 20))
+
+    def test_a_failing_tone_never_loses_the_words(self):
+        import numpy as np
+        from unittest import mock
+
+        class Model:
+            def transcribe(self, *_args, **_kwargs):
+                return [type("Segment", (), {"text": " Hello there "})()], None
+
+        with mock.patch.object(transcribe_server, "decode", return_value=np.ones(32_000, dtype=np.float32)),                 mock.patch.object(transcribe_server, "tone", side_effect=RuntimeError("no model")):
+            self.assertEqual(transcribe_server.handle(Model(), {"path": "x.webm", "tone": True}), {"text": "Hello there"})
+        with mock.patch.object(transcribe_server, "decode", return_value=np.ones(32_000, dtype=np.float32)),                 mock.patch.object(transcribe_server, "tone", return_value={"neutral": 1.0}) as heard:
+            self.assertEqual(transcribe_server.handle(Model(), {"path": "x.webm"}), {"text": "Hello there"})
+            heard.assert_not_called()

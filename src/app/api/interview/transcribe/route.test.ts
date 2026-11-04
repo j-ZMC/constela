@@ -2,18 +2,20 @@ import { existsSync } from "node:fs";
 import { readFile } from "node:fs/promises";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 
-const { transcribeMock } = vi.hoisted(() => ({ transcribeMock: vi.fn() }));
+const { transcribeMock, toneMock } = vi.hoisted(() => ({ transcribeMock: vi.fn(), toneMock: vi.fn() }));
 vi.mock("@/lib/whisper", async (original) => ({
   ...(await original<typeof import("@/lib/whisper")>()),
   transcribe: transcribeMock,
+  transcribeWithTone: toneMock,
 }));
 
 const { POST } = await import("@/app/api/interview/transcribe/route");
 const { WhisperError } = await import("@/lib/whisper");
 
-function post(file?: Blob, name = "answer.webm") {
+function post(file?: Blob, name = "answer.webm", tone = false) {
   const form = new FormData();
   if (file !== undefined) form.set("audio", file, name);
+  if (tone) form.set("tone", "1");
   return POST(new Request("http://localhost/api/interview/transcribe", { method: "POST", body: form }));
 }
 const voice = (bytes = 100, type = "audio/webm;codecs=opus") => new Blob([new Uint8Array(bytes).fill(7)], { type });
@@ -22,6 +24,18 @@ describe("POST /api/interview/transcribe", () => {
   // Braces matter: a function returned from beforeEach runs as cleanup, and mockReset() returns the mock itself.
   beforeEach(() => {
     transcribeMock.mockReset();
+    toneMock.mockReset();
+  });
+
+  it("asks for the tone only when the person turned it on, and still deletes the recording", async () => {
+    toneMock.mockResolvedValue({ text: "I don't know", tone: { neutral: 0.5, happy: 0.1, angry: 0.2, sad: 0.2 } });
+    const res = await post(voice(), "answer.webm", true);
+    expect(await res.json()).toMatchObject({ text: "I don't know", tone: { neutral: 0.5 } });
+    expect(transcribeMock).not.toHaveBeenCalled();
+    expect(existsSync(String(toneMock.mock.calls[0][0]))).toBe(false);
+    transcribeMock.mockResolvedValue("Hello");
+    await post(voice());
+    expect(toneMock).toHaveBeenCalledTimes(1);
   });
 
   it("gives Whisper the saved recording, returns the text, and deletes the recording afterwards", async () => {

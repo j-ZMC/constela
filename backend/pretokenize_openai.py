@@ -1,6 +1,7 @@
-"""Precompute job and user-selectable barrier embeddings with OpenAI.
+"""Precompute job and user-selectable barrier embeddings with Qwen3-Embedding-0.6B on Ollama.
 
-Requires OPENAI_API_KEY in the environment.
+Needs Ollama running (OLLAMA_URL, default http://127.0.0.1:11434) and `ollama pull qwen3-embedding:0.6b`.
+The file keeps its old name so the commands and imports elsewhere keep working.
 
 Usage:
   python pretokenize_openai.py
@@ -12,28 +13,31 @@ import argparse
 import json
 import os
 import sys
+import urllib.request
 from pathlib import Path
-from typing import Any
 
 import numpy as np
 import pandas as pd
 
 from collect_bulk import clean_html
 
-MODEL_NAME = "text-embedding-3-small"
-EMBEDDING_DIMENSIONS = 1536
+MODEL_NAME = "qwen3-embedding:0.6b"
+EMBEDDING_DIMENSIONS = 1024
+# Qwen3-Embedding reads a search and a workplace condition better with a one-line task in front; postings go in plain.
+QUERY_TASK = "Given a job search, retrieve job postings that match it"
+BARRIER_TASK = "Given a workplace condition, retrieve job postings that involve it"
 
 # Controls: edit these defaults, or override them with command-line options.
 JOBS_PATH = "data/raw/jobs/jobs_usa_full_backup_cleaned.json"
 BARRIERS_PATH = "config/neurodivergence_job_barriers.json"
 EMBEDDINGS_PATH = (
-    "data/processed/embeddings/usa_full_backup_cleaned_openai_embeddings.npy"
+    "data/processed/embeddings/usa_full_backup_cleaned_qwen3_embeddings.npy"
 )
-IDS_PATH = "data/processed/embeddings/usa_full_backup_cleaned_openai_ids.json"
+IDS_PATH = "data/processed/embeddings/usa_full_backup_cleaned_qwen3_ids.json"
 BARRIER_EMBEDDINGS_PATH = (
-    "data/processed/embeddings/neurodivergence_barriers_openai.npz"
+    "data/processed/embeddings/neurodivergence_barriers_qwen3.npz"
 )
-BATCH_SIZE = 100
+BATCH_SIZE = 32
 REBUILD_CACHE = False
 
 def load_barrier_catalog(path: str = BARRIERS_PATH) -> list[dict[str, str]]:
@@ -111,16 +115,32 @@ def clean_jobs(jobs: pd.DataFrame) -> pd.DataFrame:
     return jobs.drop_duplicates(subset="url", keep="first")
 
 
-def encode_texts(client: Any, texts: list[str], batch_size: int) -> np.ndarray:
+def with_task(task: str, text: str) -> str:
+    return f"Instruct: {task}\nQuery: {text}"
+
+
+def ollama_embed(texts: list[str]) -> list[list[float]]:
+    """One /api/embed call; Ollama keeps the model loaded for 30 minutes so the next search is quick."""
+    url = os.environ.get("OLLAMA_URL") or "http://127.0.0.1:11434"
+    # num_ctx: Ollama's default for this model is 32,768 tokens (4.6 GB of VRAM), too much next to llama3.1:8b on an
+    # 8 GB GPU. Descriptions are cut at 4,000 characters (about 1,000 tokens); longer text is truncated the same way
+    # for the cache and for each search, so the vectors stay comparable.
+    body = json.dumps(
+        {"model": MODEL_NAME, "input": texts, "keep_alive": "30m", "truncate": True, "options": {"num_ctx": 2048}}
+    ).encode("utf-8")
+    request = urllib.request.Request(f"{url}/api/embed", data=body, headers={"content-type": "application/json"})
+    with urllib.request.urlopen(request, timeout=300) as response:
+        return json.load(response)["embeddings"]
+
+
+def encode_texts(texts: list[str], batch_size: int) -> np.ndarray:
     if batch_size < 1 or batch_size > 2048:
         raise ValueError("--batch-size must be between 1 and 2048.")
 
     vectors: list[list[float]] = []
     for start in range(0, len(texts), batch_size):
         batch = [text.replace("\n", " ") for text in texts[start : start + batch_size]]
-        response = client.embeddings.create(model=MODEL_NAME, input=batch)
-        ordered = sorted(response.data, key=lambda item: item.index)
-        vectors.extend(item.embedding for item in ordered)
+        vectors.extend(ollama_embed(batch))
         completed = min(start + len(batch), len(texts))
         print(f"  {completed}/{len(texts)}", flush=True)
 
@@ -146,7 +166,6 @@ def save_job_cache(
 
 
 def ensure_job_embeddings(
-    client: Any,
     jobs: pd.DataFrame,
     emb_path: str,
     ids_path: str,
@@ -160,7 +179,7 @@ def ensure_job_embeddings(
 
     if rebuild or not cache_exists:
         print(f"Encoding {len(jobs)} jobs with {MODEL_NAME}...")
-        embeddings = encode_texts(client, jobs["description"].tolist(), batch_size)
+        embeddings = encode_texts(jobs["description"].tolist(), batch_size)
         save_job_cache(embeddings, current_ids, emb_path, ids_path)
         print("Job embeddings saved.")
         return embeddings, current_ids
@@ -174,7 +193,7 @@ def ensure_job_embeddings(
         or embeddings.shape[0] != len(saved_ids)
     ):
         raise ValueError(
-            "The job embedding cache does not match text-embedding-3-small. "
+            f"The job embedding cache does not match {MODEL_NAME}. "
             "Use separate --emb/--ids paths or pass --rebuild."
         )
 
@@ -182,9 +201,7 @@ def ensure_job_embeddings(
     new_jobs = jobs.loc[~jobs["url"].astype(str).isin(saved_id_set)]
     if not new_jobs.empty:
         print(f"Encoding {len(new_jobs)} new jobs with {MODEL_NAME}...")
-        new_embeddings = encode_texts(
-            client, new_jobs["description"].tolist(), batch_size
-        )
+        new_embeddings = encode_texts(new_jobs["description"].tolist(), batch_size)
         embeddings = np.concatenate((embeddings, new_embeddings), axis=0)
         saved_ids.extend(new_jobs["url"].astype(str).tolist())
         save_job_cache(embeddings, saved_ids, emb_path, ids_path)
@@ -195,7 +212,6 @@ def ensure_job_embeddings(
 
 
 def ensure_barrier_embeddings(
-    client: Any,
     barrier_embeddings_path: str,
     *,
     barriers_path: str = BARRIERS_PATH,
@@ -222,7 +238,7 @@ def ensure_barrier_embeddings(
             return embeddings
 
     print(f"Encoding {len(barrier_ids)} quiz barrier subtypes...")
-    embeddings = encode_texts(client, barrier_texts, batch_size)
+    embeddings = encode_texts([with_task(BARRIER_TASK, text) for text in barrier_texts], batch_size)
     Path(barrier_embeddings_path).parent.mkdir(parents=True, exist_ok=True)
     np.savez(
         barrier_embeddings_path,
@@ -236,8 +252,6 @@ def ensure_barrier_embeddings(
 
 
 def main() -> int:
-    from openai import OpenAI
-
     parser = argparse.ArgumentParser(
         description=f"Precompute job and quiz-barrier embeddings with {MODEL_NAME}"
     )
@@ -255,9 +269,7 @@ def main() -> int:
 
     print(f"Reading jobs JSON: {args.jobs}")
     jobs = clean_jobs(pd.read_json(args.jobs))
-    client = OpenAI()
     ensure_job_embeddings(
-        client,
         jobs,
         args.emb,
         args.ids,
@@ -265,7 +277,6 @@ def main() -> int:
         batch_size=args.batch_size,
     )
     ensure_barrier_embeddings(
-        client,
         args.barrier_emb,
         barriers_path=args.barriers,
         rebuild=args.rebuild,

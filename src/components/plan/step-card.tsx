@@ -32,7 +32,7 @@ export const ICONS: Record<StepIcon, LucideIcon> = {
 
 const action = "h-11 px-5 text-base";
 
-const DESTINATIONS: Record<string, string> = { "/profile": "Profile", "/jobs": "Jobs", "/interview": "Interview" };
+const DESTINATIONS: Record<string, string> = { "/profile": "Profile", "/jobs": "Jobs", "/interview": "Preparation" };
 
 // "Open Jobs", not a bare "Open": says where the link goes, also for screen readers.
 export function openLabel(href: string) {
@@ -76,14 +76,14 @@ export function CurrentStep({
     <article
       data-tour="step"
       aria-labelledby={`step-${step.id}`}
-      className="flex flex-col gap-5 rounded-2xl border border-primary/15 bg-card p-5 shadow-[0_10px_30px_-14px_rgb(36_59_83/0.35)] sm:p-7"
+      className="flex flex-col gap-4 rounded-2xl border border-primary/15 bg-card p-4 shadow-[0_10px_30px_-14px_rgb(36_59_83/0.35)] sm:p-5"
     >
       <div className="flex items-start gap-4">
-        <span className="grid size-12 shrink-0 place-items-center rounded-full bg-secondary text-primary">
-          <Icon className="size-6" aria-hidden />
+        <span className="grid size-10 shrink-0 place-items-center rounded-full bg-secondary text-primary">
+          <Icon className="size-5" aria-hidden />
         </span>
         <div className="flex flex-1 flex-col gap-1">
-          <h2 id={`step-${step.id}`} ref={heading} tabIndex={-1} className="text-2xl font-semibold text-balance outline-none">
+          <h2 id={`step-${step.id}`} ref={heading} tabIndex={-1} className="text-xl font-semibold text-balance outline-none">
             {step.title}
           </h2>
           <Duration

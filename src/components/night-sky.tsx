@@ -193,7 +193,7 @@ const FADE = "linear-gradient(to right, black 18%, rgb(0 0 0 / 0.35) 36%, rgb(0 
 // The whole page background: real constellations in soft gray, in the intro's style. Cards sit on top of it.
 export function BackgroundSky() {
   return (
-    <div aria-hidden data-background-sky className="pointer-events-none fixed inset-x-0 top-16 bottom-0 -z-10">
+    <div aria-hidden data-background-sky className="pointer-events-none fixed inset-x-0 top-16 bottom-0 -z-10 lg:top-0">
       <svg viewBox="0 0 1800 1000" preserveAspectRatio="xMidYMid slice" className="h-full w-full" style={{ maskImage: FADE }}>
         {/* The intro's motion, slower and in gray. The visible state is the default, so Reduce motion shows a still sky. */}
         <g fill="var(--foreground)" opacity="0.2">

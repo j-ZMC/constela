@@ -6,8 +6,8 @@ vi.mock("node:dns/promises", () => ({ lookup: lookupMock }));
 const { POST } = await import("@/app/api/jobs/posting/route");
 const { postingText, privateAddress } = await import("@/lib/job-posting");
 
-const openai = (value: object) =>
-  new Response(JSON.stringify({ output: [{ type: "message", content: [{ type: "output_text", text: JSON.stringify(value) }] }] }));
+// What Ollama /api/chat answers with a JSON format.
+const ollama = (value: object) => new Response(JSON.stringify({ message: { role: "assistant", content: JSON.stringify(value) } }));
 const page = `<html><body><nav>Menu</nav><h1>Support intern</h1><p>${"You will help people with laptops. ".repeat(12)}</p>
 <p>Requirements: 1+ years of IT support.</p><script>var x = "noise"</script></body></html>`;
 const post = (body: unknown) => POST(new Request("http://localhost/api/jobs/posting", { method: "POST", body: JSON.stringify(body) }));
@@ -37,7 +37,6 @@ describe("POST /api/jobs/posting", () => {
   const fetchMock = vi.fn();
   beforeEach(() => {
     vi.stubGlobal("fetch", fetchMock);
-    vi.stubEnv("OPENAI_API_KEY", "test-key");
     fetchMock.mockReset();
     lookupMock.mockReset();
     lookupMock.mockResolvedValue([{ address: "104.18.0.1" }]);
@@ -48,26 +47,26 @@ describe("POST /api/jobs/posting", () => {
   });
 
   it("reads the job's page and returns what it asks for", async () => {
-    fetchMock.mockResolvedValueOnce(new Response(page)).mockResolvedValueOnce(openai({ required: ["1+ years of IT support"], nice: [] }));
+    fetchMock.mockResolvedValueOnce(new Response(page)).mockResolvedValueOnce(ollama({ required: ["1+ years of IT support"], nice: [] }));
     const res = await post({ url: "https://jobs.example.com/1", title: "Support intern" });
     expect(await res.json()).toMatchObject({ required: ["1+ years of IT support"], nice: [], from: "page" });
-    expect(JSON.parse(fetchMock.mock.calls[1][1].body).input).toContain("1+ years of IT support");
+    expect(JSON.parse(fetchMock.mock.calls[1][1].body).messages[0].content).toContain("1+ years of IT support");
   });
 
   it("never opens an address inside the network, and uses the saved text instead", async () => {
     lookupMock.mockResolvedValue([{ address: "10.0.0.5" }]);
-    fetchMock.mockResolvedValueOnce(openai({ required: ["A driver's license"], nice: [] }));
+    fetchMock.mockResolvedValueOnce(ollama({ required: ["A driver's license"], nice: [] }));
     const res = await post({ url: "http://intranet.example/", description: "You need a driver's license." });
     expect((await res.json()).from).toBe("saved");
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock.mock.calls[0][0]).toBe("https://api.openai.com/v1/responses");
+    expect(fetchMock.mock.calls[0][0]).toBe("http://127.0.0.1:11434/api/chat");
   });
 
   it("checks every redirect too", async () => {
     lookupMock.mockResolvedValueOnce([{ address: "104.18.0.1" }]).mockResolvedValueOnce([{ address: "127.0.0.1" }]);
     fetchMock
       .mockResolvedValueOnce(new Response(null, { status: 302, headers: { location: "http://localhost:3000/admin" } }))
-      .mockResolvedValueOnce(openai({ required: [], nice: [] }));
+      .mockResolvedValueOnce(ollama({ required: [], nice: [] }));
     const res = await post({ url: "https://jobs.example.com/1", description: "Some saved text." });
     expect((await res.json()).from).toBe("saved");
     expect(fetchMock.mock.calls.map((c) => String(c[0]))).not.toContain("http://localhost:3000/admin");

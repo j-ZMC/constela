@@ -3,8 +3,13 @@
 The Next.js server starts this once and keeps it running (src/lib/whisper.ts), so the model loads only once.
 Uses the protocol in worker_protocol.py:
   ready:    {"ready": true, "device": "cuda" | "cpu"}
-  request:  {"id": "...", "path": "C:/.../recording.webm"}
-  result:   {"id": "...", "text": "..."}
+  request:  {"id": "...", "path": "C:/.../recording.webm", "tone": true}
+  result:   {"id": "...", "text": "...", "tone": {"neutral": 0.7, "happy": 0.1, "angry": 0.1, "sad": 0.1}}
+
+"tone" is only asked for when the person turned on "Adjust the practice to how it is going". It comes from a
+wav2vec2 model (onnx-community/wav2vec2-base-superb-er-ONNX, Apache 2.0) run with ONNX Runtime on the CPU, on the same
+samples Whisper reads. It is weak evidence: trained on acted speech, it hears a calm synthetic voice as "angry". The
+app only compares it with the same person's earlier answers (src/lib/practice-signals.ts), and never shows or keeps it.
 
 Set WHISPER_MODEL to use another model (default: small.en). The model is downloaded once from
 Hugging Face the first time it runs; recordings never leave this computer.
@@ -73,7 +78,10 @@ def decode(path: str, sampling_rate: int = 16_000) -> Any:
 
 
 def transcribe(model: Any, path: str) -> str:
-    samples = decode(path)
+    return transcribe_samples(model, decode(path))
+
+
+def transcribe_samples(model: Any, samples: Any) -> str:
     if samples.size == 0:
         return ""
     # vad_filter skips the silence before and after speaking; beam_size 1 is fast and good enough for answers.
@@ -81,10 +89,53 @@ def transcribe(model: Any, path: str) -> str:
     return " ".join(segment.text.strip() for segment in segments).strip()
 
 
+TONE_REPO = "onnx-community/wav2vec2-base-superb-er-ONNX"
+# The model's id2label order: neu, hap, ang, sad.
+TONE_LABELS = ("neutral", "happy", "angry", "sad")
+_tone_session: Any = None
+
+
+def tone_session() -> Any:
+    """Loaded the first time a tone is asked for (about 380 MB, downloaded once into the Hugging Face cache)."""
+    global _tone_session
+    if _tone_session is None:
+        import onnxruntime as ort
+        from huggingface_hub import hf_hub_download
+
+        _tone_session = ort.InferenceSession(hf_hub_download(TONE_REPO, "onnx/model.onnx"), providers=["CPUExecutionProvider"])
+    return _tone_session
+
+
+def tone(samples: Any, session: Any = None) -> dict[str, float] | None:
+    """How the voice sounds to the model, as shares that add up to 1. None for less than a second of speech."""
+    import numpy as np
+
+    if samples.size < 16_000:
+        return None
+    clip = samples[-16_000 * 20 :]  # the last 20 seconds are enough, and keep it fast
+    logits = (session or tone_session()).run(None, {"input_values": clip[None, :].astype(np.float32)})[0][0]
+    shares = np.exp(logits - logits.max())
+    shares /= shares.sum()
+    return {label: round(float(v), 3) for label, v in zip(TONE_LABELS, shares)}
+
+
+def handle(model: Any, request: dict[str, Any]) -> dict[str, Any]:
+    samples = decode(str(request["path"]))
+    result: dict[str, Any] = {"text": transcribe_samples(model, samples)}
+    if request.get("tone") is True:
+        try:
+            heard = tone(samples)
+            if heard:
+                result["tone"] = heard
+        except Exception as error:  # noqa: BLE001 - the words matter; a tone that fails is simply left out
+            print(f"Tone failed: {error}", file=sys.stderr)
+    return result
+
+
 def main() -> int:
     add_cuda_dll_dirs()
     model, device = load_model()
-    serve(lambda request: {"text": transcribe(model, str(request["path"]))}, {"device": device}, sys.stdin, sys.stdout)
+    serve(lambda request: handle(model, request), {"device": device}, sys.stdin, sys.stdout)
     return 0
 
 

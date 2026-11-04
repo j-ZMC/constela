@@ -336,10 +336,24 @@
 
 .reduce-motion *,
 .reduce-motion *::before,
-.reduce-motion *::after {
+.reduce-motion *::after,
+html[data-pz-calm] *,
+html[data-pz-calm] *::before,
+html[data-pz-calm] *::after {
   animation: none !important;
   transition: none !important;
   scroll-behavior: auto !important;
+}
+/* Calm mode (Personalize): no glow either. The halo, the ring around a lit star and the gold rings go; the state
+   they show is still said in words (labels, "speaking", "done"). */
+html[data-pz-calm] :is(.voice-halo, .star-ring, .sky-trail) {
+  display: none;
+}
+html[data-pz-calm] :is(.ring-star, .ring-star\/60, .ring-star\/70) {
+  --tw-ring-color: transparent;
+}
+html[data-pz-calm] .press:active {
+  transform: none;
 }
 
 @media (prefers-reduced-motion: reduce) {

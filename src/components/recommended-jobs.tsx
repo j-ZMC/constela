@@ -1,5 +1,6 @@
 "use client";
 
+import { FileText } from "lucide-react";
 import { useEffect, useState } from "react";
 import Link from "next/link";
 import { JobResults } from "@/components/jobs/job-results";
@@ -64,7 +65,7 @@ function RecommendedJobsContent() {
   if (!profile) {
     return (
       <section className="rounded-xl border bg-card p-6" aria-labelledby="recommended-empty-heading">
-        <h2 id="recommended-empty-heading" className="text-xl font-semibold">Add your CV to get recommendations</h2>
+        <h2 id="recommended-empty-heading" className="flex items-center gap-2 text-xl font-semibold"><FileText aria-hidden className="size-6 shrink-0 text-primary" />Add your CV to get recommendations</h2>
         <p className="mt-2 text-muted-foreground">We pick jobs from your skills and experience. You can also search above without a CV.</p>
         <Link href="/profile" className={buttonVariants({ className: "mt-5 h-11 px-5 text-base" })}>Go to Profile</Link>
       </section>
@@ -73,24 +74,14 @@ function RecommendedJobsContent() {
 
   return (
     <section className="flex flex-col gap-6" aria-labelledby="for-you-heading">
-      <div className="flex flex-wrap items-start justify-between gap-4">
-        <div className="flex max-w-2xl flex-col gap-1">
+      <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 id="for-you-heading" className="text-xl font-semibold">Jobs for you</h2>
-        <p className="text-muted-foreground">
-          Picked from your skills, experience and the way you want to work. Your name and contact details are never used.{" "}
-          <Link href="/privacy" className="font-medium text-foreground underline underline-offset-4">How we keep your data private</Link>
-        </p>
-        </div>
         <Button type="button" variant="outline" onClick={refresh} disabled={loading} className="h-11 px-5 text-base">{loading ? "Loading…" : "Refresh"}</Button>
       </div>
       {loading && <div role="status" aria-busy="true" className="rounded-xl border bg-card p-6 text-sm text-muted-foreground">Finding jobs for your profile…</div>}
       {error && <p role="alert" className="rounded-lg border border-destructive/30 bg-card p-4 text-sm">{error}</p>}
       {results && (
         <>
-          <p className="text-sm text-muted-foreground">
-            {results.summary.visibleMatches} {results.summary.visibleMatches === 1 ? "job" : "jobs"} found
-            {results.summary.blockedMatches > 0 && ` · ${results.summary.blockedMatches} to review`}
-          </p>
           <JobResults
             key={version}
             results={results}
