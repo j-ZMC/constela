@@ -75,9 +75,10 @@ USA (rich descriptions): `greenhouse` (34 verified boards), `ashby` (45), `lever
 (needs `USAJOBS_KEY`), `dice` (optional `DICE_API_KEY`; `--dice-details` reads the full description), `yc` (yc-oss +
 ATS resolve + SSR fallback), `ziprss` (may hit Cloudflare).
 Remote/global: `remoteok`, `remotive`, `workingnomads`, `wwr`.
-Mexico in person: `computrabajo`, `occ`, `bumeran`, `getonboard` (18 categories), `empleo-gob`, `linkedin` guest.
-Not used: Torre (401), Talenteca (descriptions too short), Wellfound / ZipRecruiter / Indeed (need Playwright), JSearch
-(paid key).
+Mexico in person: `computrabajo`, `occ`, `bumeran`, `getonboard` (18 categories), `empleo-gob`.
+Not used: LinkedIn and Indeed (their terms do not allow collecting their postings, so the collector has no code for
+them and none of the jobs in this repository come from them), Torre (401), Talenteca (descriptions too short),
+Wellfound / ZipRecruiter (need Playwright), JSearch (paid key).
 
 Bugs already fixed in the collectors (do not reintroduce): item building stays inside `for job in jobs`; `page += 1`
 stays inside `while`; `return collected` stays outside `for category`.

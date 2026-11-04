@@ -3,7 +3,7 @@
 MX-first: computrabajo, occ, bumeran (rich descriptions, paged),
 getonboard (18 categories, no-tech included). Remote: remotive,
 remoteok, dice, workingnomads, wwr, arbeitnow, greenhouse, yc, torre.
-Weak sources (empleo-gob, linkedin-guest) kept but off by default.
+Weak source (empleo-gob) kept. LinkedIn and Indeed are not collected: their terms do not allow it.
 Talenteca REMOVED (poor descriptions, not useful for NLP).
 Each source has a time budget (default 5 min). Paginates each API until
 --limit per source. Dedupes by URL across all sources.
@@ -33,7 +33,7 @@ BULK_SOURCES = ("computrabajo", "occ", "bumeran", "getonboard",
                 "remotive", "remoteok", "dice", "yc", "torre",
                 "workingnomads", "wwr", "arbeitnow", "greenhouse",
                 "lever", "ashby", "usajobs", "ziprss",
-                "linkedin", "empleo-gob")
+                "empleo-gob")
 MX_SOURCES = ("computrabajo", "occ", "bumeran")
 PAGE_PAUSE = 2
 SAVE_EVERY = 10
@@ -1076,50 +1076,6 @@ def collect_occ(limit: int, query: str, pause: float, out: str,
         MX_MAX_PAGES, MX_MAX_DETAILS)
 
 
-def collect_linkedin(limit: int, query: str, pause: float, out: str,
-                     all_jobs: list[dict]) -> int:
-    q = (split_queries(query) or ["python"])[0]
-    print(f"  [linkedin:{q}] guest search...", flush=True)
-    list_url = ("https://www.linkedin.com/jobs-guest/jobs/api/seeMoreJobPostings/search"
-                "?keywords=" + urllib.parse.quote(q) + "&location=Mexico&start=0")
-    try:
-        raw = fetch(list_url)
-    except Exception as exc:  # noqa: BLE001
-        print(f"  [linkedin] ERROR: {exc}", file=sys.stderr)
-        return 0
-    cards = re.findall(
-        r'data-entity-urn="urn:li:jobPosting:(\d+)"(.*?)</li>',
-        raw.decode("utf-8", errors="replace"), flags=re.S)
-    count = 0
-    for job_id, card in cards[:limit]:
-        title = re.search(r'class="base-search-card__title"[^>]*>(.*?)</',
-                          card, flags=re.S)
-        comp = re.search(r'class="base-search-card__subtitle"[^>]*>.*?<a[^>]*>(.*?)</a>',
-                         card, flags=re.S)
-        loc = re.search(r'class="job-search-card__location"[^>]*>(.*?)</',
-                        card, flags=re.S)
-        ok = add_job(out, all_jobs, normalize({
-            "title": clean_html(title.group(1)) if title else "",
-            "company": clean_html(comp.group(1)) if comp else "",
-            "location": clean_html(loc.group(1)) if loc else "",
-            "modality": "",
-            "salary_min": None,
-            "salary_max": None,
-            "currency": "",
-            "description": "",
-            "url": f"https://www.linkedin.com/jobs/view/{job_id}/",
-            "date": "",
-            "source": "linkedin",
-            "tags": [],
-        }))
-        if ok:
-            count += 1
-        time.sleep(0.5)
-    save_json(out, all_jobs)
-    print(f"  [linkedin] +{count} new", flush=True)
-    return count
-
-
 def collect_empleo_gob(limit: int, query: str, pause: float, out: str,
                        all_jobs: list[dict]) -> int:
     print("  [empleo-gob] listing...", flush=True)
@@ -1464,10 +1420,6 @@ def main() -> int:
     if "occ" in sources:
         run_source("occ", "occ",
                    collect_occ, args.limit, args.query,
-                   max(args.pause, 2.0), args.out, all_jobs)
-    if "linkedin" in sources:
-        run_source("linkedin", "linkedin",
-                   collect_linkedin, args.limit, args.query,
                    max(args.pause, 2.0), args.out, all_jobs)
     if "empleo-gob" in sources:
         run_source("empleo-gob", "empleo-gob",
