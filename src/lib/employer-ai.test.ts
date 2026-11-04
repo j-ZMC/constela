@@ -336,6 +336,30 @@ describe("rewrite", () => {
     });
   });
 
+  it("accepts another form of the same word: it is not a new fact", async () => {
+    await expect(rewrite("Team player who reviews code with other developers", { text: "Review code with other developers" })).resolves.toEqual({
+      text: "Review code with other developers",
+    });
+    await expect(rewrite("A people person who greets visitors at the front desk", { text: "Greet visitors at the front desk" })).resolves.toEqual({
+      text: "Greet visitors at the front desk",
+    });
+  });
+
+  it("accepts grammar words, which can't carry a fact on their own", async () => {
+    await expect(rewrite("SQL ninja to maintain our reporting database", { text: "Maintain our reporting database using SQL" })).resolves.toEqual({
+      text: "Maintain our reporting database using SQL",
+    });
+  });
+
+  it.each([
+    ["a new word next to a known one", "Self-starter who builds Power BI dashboards", "Build Power BI dashboards independently"],
+    ["a new duty", "A people person who greets visitors at the front desk", "Greet visitors at the front desk and answer the phone"],
+    ["a short word that only looks like part of a longer one", "Team player who takes care of customers", "Take car of customers"],
+    ["a vague phrase swapped for another vague one", "Must be able to multitask", "Perform several tasks simultaneously"],
+  ])("still refuses %s", async (_, line, text) => {
+    await expect(rewrite(line, { text })).rejects.toMatchObject({ code: "failed" });
+  });
+
   it("accepts new words next to a bracket: the employer still has to fill in the fact", async () => {
     await expect(rewrite("Team player", { text: "Work with [who] on [which tasks]" })).resolves.toEqual({ text: "Work with [who] on [which tasks]" });
   });
@@ -388,6 +412,33 @@ describe("one more try", () => {
     const model = modelAnswering({ text: "Handle about 20 orders a day" }, { text: "Handle about [number] orders a day" });
     await expect(runEmployerAi({ task: "rewrite", text: VAGUE }, model)).resolves.toEqual({ text: "Handle about [number] orders a day" });
     expect(model.doGenerateCalls).toHaveLength(2);
+  });
+
+  it("tells the model why a rewrite was refused, so the second try can fix it", async () => {
+    const line = "Team player who reviews code with other developers";
+    const model = modelAnswering({ text: "Review code collaboratively with other developers" }, { text: "Review code with other developers" });
+    await expect(runEmployerAi({ task: "rewrite", text: line }, model)).resolves.toEqual({ text: "Review code with other developers" });
+    const [first, second] = model.doGenerateCalls.map((call) => JSON.stringify(call.prompt));
+    expect(first).not.toContain("was not used");
+    expect(second).toContain(`Your last answer was \\"Review code collaboratively with other developers\\". It was not used.`);
+    expect(second).toContain("It added words the line doesn't have: collaboratively.");
+  });
+
+  it.each([
+    [{ text: "Handle about 20 orders a day" }, "It added numbers the line doesn't have: 20."],
+    [{ text: "Be a real team player" }, "It added words the line doesn't have: real, player."],
+    [{ text: "Work in a fast-paced team" }, `It still had a vague phrase: \\"fast-paced\\".`],
+    [{ text: "Work with others ".repeat(10) }, "It was longer than 120 characters."],
+  ])("names the rule that refused %o", async (output, reason) => {
+    const model = modelAnswering(output, { text: "Handle about [number] orders a day" });
+    await runEmployerAi({ task: "rewrite", text: VAGUE }, model);
+    expect(JSON.stringify(model.doGenerateCalls[1].prompt)).toContain(reason);
+  });
+
+  it("asks again plainly after a broken answer, which has nothing to explain", async () => {
+    const model = modelAnswering("not json", { text: "Handle about [number] orders a day" });
+    await runEmployerAi({ task: "rewrite", text: VAGUE }, model);
+    expect(JSON.stringify(model.doGenerateCalls[1].prompt)).not.toContain("was not used");
   });
 
   it("gives up after the second try", async () => {

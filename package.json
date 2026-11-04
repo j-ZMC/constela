@@ -10,7 +10,8 @@
     "start": "next start",
     "lint": "eslint",
     "test": "vitest run",
-    "eval:ai": "vitest run --config vitest.eval.config.mts"
+    "eval:ai": "vitest run --config vitest.eval.config.mts employer-ai",
+    "eval:replay": "vitest run --config vitest.eval.config.mts replay"
   },
   "dependencies": {
     "@ai-sdk/groq": "^4.0.71",

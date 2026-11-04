@@ -1,12 +1,13 @@
 // Measures the employer AI against the real provider: what the model tries, and what reaches the employer after our
 // guards. It calls runEmployerAi exactly as /api/employer-ai does; a recording middleware only watches.
 // Run: npm run eval:ai (about 15 minutes, paced under Groq's token limit). Writes evals/REPORT.md and evals/results/latest.json.
-import { mkdirSync, writeFileSync } from "node:fs";
+import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { setTimeout as sleep } from "node:timers/promises";
 import { createGroq } from "@ai-sdk/groq";
 import { APICallError, wrapLanguageModel, type LanguageModelMiddleware } from "ai";
 import { describe, expect, it } from "vitest";
 import { EXTRACT_CASES, INTERVIEW_CASES, REWRITE_CASES, type ExtractGold } from "./cases";
+import { json, numbersIn, rewriteIssues, statedIn } from "./checks";
 import { percentile, share } from "./stats";
 import { EmployerAiError, runEmployerAi, type EmployerAiRequest, type InterviewQuestion, type VacancyDraft } from "@/lib/employer-ai";
 import { checkQuestion } from "@/lib/interview-questions";
@@ -81,42 +82,6 @@ async function run<T>(request: EmployerAiRequest, model: Parameters<typeof runEm
     }
     return { value, error, attempts, ms, limited };
   }
-}
-
-const digits = (text: string) => text.match(/\d+/g) ?? [];
-const GLUE = new Set(["a", "an", "the", "and", "or", "of", "to", "with"]);
-const words = (text: string) => text.toLowerCase().match(/[\p{L}\p{N}]+/gu) ?? [];
-const json = (text: string): Record<string, unknown> | null => {
-  try {
-    return JSON.parse(text);
-  } catch {
-    return null;
-  }
-};
-
-// Checked here again, written apart from the guards, on what the model said and on what the employer got.
-function rewriteIssues(line: string, text: string): string[] {
-  const said = new Set(words(line));
-  const issues: string[] = [];
-  if (!text.trim()) issues.push("empty");
-  if (findExclusionaryPhrases(text).length > 0) issues.push("keeps a vague phrase");
-  if (digits(text).some((n) => !line.includes(n))) issues.push("adds a number");
-  if (!text.includes("[") && words(text).some((w) => !said.has(w) && !GLUE.has(w))) issues.push("adds a fact with no [bracket]");
-  if (text.length > (line.length > 120 ? 400 : 120)) issues.push("too long");
-  return issues;
-}
-
-const statedIn = (posting: string) => {
-  const said = posting.replace(/[\s,.]/g, "");
-  return (n: unknown) => typeof n !== "number" || said.includes(String(n).replace(/[\s,.]/g, ""));
-};
-
-// Every number a draft carries: the salary, each duration and the answer time.
-function numbersIn(draft: { salary?: unknown; process?: unknown; responseDays?: unknown } | null): unknown[] {
-  if (!draft) return [];
-  const salary = draft.salary as { min?: unknown; max?: unknown } | null | undefined;
-  const steps = Array.isArray(draft.process) ? (draft.process as { minutes?: unknown }[]) : [];
-  return [salary?.min, salary?.max, ...steps.map((s) => s.minutes), draft.responseDays].filter((n) => n !== null && n !== undefined);
 }
 
 function draftText(d: VacancyDraft) {
@@ -227,11 +192,29 @@ describe("employer AI against the real provider", () => {
     const examples = delivered.filter((r) => r.keep.length > 0).slice(0, 4);
     const caught = rewrites.flatMap((r) => r.raw.filter((a) => a.issues.length > 0 && a.text).map((a) => ({ line: r.line, ...a }))).slice(0, 4);
     const date = new Date().toISOString().slice(0, 10);
+    // The run kept from before the guards learned word forms and the second try learned why: the same cases, so they compare.
+    const BASELINE = "evals/results/baseline.json";
+    type Kept = { date: string; rewrites: { line: string; delivered?: string; raw: { issues: string[] }[] }[] };
+    const kept = existsSync(BASELINE) ? (JSON.parse(readFileSync(BASELINE, "utf8")) as Kept) : null;
+    const keptRaw = kept?.rewrites.flatMap((r) => r.raw) ?? [];
+    const compared = kept
+      ? `## Compared with the baseline
+
+The same cases, run on ${kept.date} before two changes: the guards now accept another form of the same word ("reviews", "review") and grammar words ("at", "using"), and a refused rewrite goes back to the model with the reason.
+
+| Measure | Baseline | This run |
+| --- | --- | --- |
+| A rewrite reached the employer | ${share(kept.rewrites.filter((r) => r.delivered !== undefined).length, kept.rewrites.length)} | ${share(delivered.length, rewrites.length)} |
+| Answers from the model that the guards refused | ${share(keptRaw.filter((a) => a.issues.length > 0).length, keptRaw.length)} | ${share(rejected.length, rawAnswers.length)} |
+| Rewrites with an invented fact or a vague phrase that reached the employer | ${kept.rewrites.filter((r) => r.delivered !== undefined && rewriteIssues(r.line, r.delivered).length > 0).length} | ${unsafe.length} |
+
+`
+      : "";
 
     const report = `# Employer AI evaluation
 
 Model \`${MODEL}\` on Groq, ${date}. ${all.length} cases, ${rawAnswers.length} rewrite answers read one by one, ${tokens.toLocaleString("en-US")} tokens, ${Math.round((Date.now() - started) / 60000)} minutes.
-Run it again with \`npm run eval:ai\`. Every rate has a 95% Wilson interval, because the samples are small.
+Run it again with \`npm run eval:ai\`, or replay these recorded answers through the current guards, offline and free, with \`npm run eval:replay\`. Every rate has a 95% Wilson interval, because the samples are small.
 
 ## What reaches the employer
 
@@ -242,7 +225,7 @@ Run it again with \`npm run eval:ai\`. Every rate has a 95% Wilson interval, bec
 
 The evaluation fails if either is above zero.
 
-## Rewrites (${REWRITE_CASES.length} lines, 2 for each of the 16 vague phrases)
+${compared}## Rewrites (${REWRITE_CASES.length} lines, 2 for each of the 16 vague phrases)
 
 | Measure | Result |
 | --- | --- |

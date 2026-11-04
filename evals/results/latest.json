@@ -1,15 +1,15 @@
 {
   "model": "openai/gpt-oss-20b",
   "date": "2026-11-04",
-  "tokens": 61066,
+  "tokens": 65705,
   "rewrites": [
     {
       "line": "Work in a fast-paced environment",
       "keep": [],
       "delivered": "Handle about [number] tasks a [day or week]",
-      "ms": 976.2666000000002,
+      "ms": 1331.2902,
       "limited": 0,
-      "tokens": 666,
+      "tokens": 939,
       "raw": [
         {
           "text": "Handle about [number] tasks a [day or week]",
@@ -27,9 +27,9 @@
         "emails"
       ],
       "delivered": "Answer 20 customer emails a day in a team",
-      "ms": 1480.1009000000004,
+      "ms": 916.7155000000002,
       "limited": 0,
-      "tokens": 775,
+      "tokens": 916,
       "raw": [
         {
           "text": "Answer 20 customer emails a day in a team",
@@ -45,13 +45,13 @@
       "keep": [
         "data"
       ],
-      "delivered": "Join our team of data analysts",
-      "ms": 1699.5918000000001,
+      "delivered": "Join our team of data analysts.",
+      "ms": 710.7155000000002,
       "limited": 0,
-      "tokens": 810,
+      "tokens": 813,
       "raw": [
         {
-          "text": "Join our team of data analysts",
+          "text": "Join our team of data analysts.",
           "issues": []
         }
       ],
@@ -65,37 +65,36 @@
         "weekly",
         "releases"
       ],
-      "error": "failed",
-      "ms": 2202.4981000000007,
+      "delivered": "Work in an environment with weekly releases",
+      "ms": 1466.3818,
       "limited": 0,
-      "tokens": 2182,
+      "tokens": 1807,
       "raw": [
         {
-          "text": "Work on tasks with weekly releases.",
+          "text": "Handle weekly releases in a changing environment",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Manage work that releases weekly",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "Work in an environment with weekly releases",
+          "issues": []
         }
       ],
       "issues": [],
+      "keptFacts": true,
       "bracket": false
     },
     {
       "line": "Be a team player",
       "keep": [],
-      "delivered": "Collaborate with [who] on [tasks]",
-      "ms": 515.1956,
+      "delivered": "Collaborate with [colleagues] on [tasks]",
+      "ms": 780.2294000000002,
       "limited": 0,
-      "tokens": 713,
+      "tokens": 770,
       "raw": [
         {
-          "text": "Collaborate with [who] on [tasks]",
+          "text": "Collaborate with [colleagues] on [tasks]",
           "issues": []
         }
       ],
@@ -108,34 +107,27 @@
       "keep": [
         "code"
       ],
-      "error": "failed",
-      "ms": 1190.562,
+      "delivered": "Review code with other developers",
+      "ms": 984.7177000000011,
       "limited": 0,
-      "tokens": 1414,
+      "tokens": 692,
       "raw": [
         {
-          "text": "Review code collaboratively with other developers",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        },
-        {
           "text": "Review code with other developers",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "issues": []
         }
       ],
       "issues": [],
+      "keptFacts": true,
       "bracket": false
     },
     {
       "line": "Excellent communication skills",
       "keep": [],
       "delivered": "Write [what] for [who] and talk with [who] about [what]",
-      "ms": 1169.6255999999994,
+      "ms": 1000.5757999999987,
       "limited": 0,
-      "tokens": 862,
+      "tokens": 814,
       "raw": [
         {
           "text": "Write [what] for [who] and talk with [who] about [what]",
@@ -153,18 +145,18 @@
         "reports"
       ],
       "error": "failed",
-      "ms": 1959.4425000000047,
+      "ms": 1431.642200000002,
       "limited": 0,
-      "tokens": 1537,
+      "tokens": 1855,
       "raw": [
         {
-          "text": "Write client reports and talk with clients about them",
+          "text": "Write client reports and speak with clients about them",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Write client reports and discuss them with clients",
+          "text": "Write client reports and verbally communicate about them",
           "issues": [
             "adds a fact with no [bracket]"
           ]
@@ -177,9 +169,9 @@
       "line": "Good interpersonal skills",
       "keep": [],
       "delivered": "Talk with [who] about [what], [how often]",
-      "ms": 1003.3542999999918,
+      "ms": 738.8387999999977,
       "limited": 0,
-      "tokens": 758,
+      "tokens": 835,
       "raw": [
         {
           "text": "Talk with [who] about [what], [how often]",
@@ -195,37 +187,30 @@
       "keep": [
         "visitors"
       ],
-      "error": "failed",
-      "ms": 3568.4377999999997,
+      "delivered": "Greet visitors at the front desk",
+      "ms": 469.1405000000086,
       "limited": 0,
-      "tokens": 1534,
+      "tokens": 602,
       "raw": [
         {
           "text": "Greet visitors at the front desk",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        },
-        {
-          "text": "Greet visitors at the front desk, welcoming them and directing inquiries.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "issues": []
         }
       ],
       "issues": [],
+      "keptFacts": true,
       "bracket": false
     },
     {
       "line": "Highly organized",
       "keep": [],
-      "delivered": "Keep track of [what] on your own.",
-      "ms": 577.7954999999929,
+      "delivered": "Work on [tasks] and keep track of [details]",
+      "ms": 1476.7773000000016,
       "limited": 0,
-      "tokens": 731,
+      "tokens": 1423,
       "raw": [
         {
-          "text": "Keep track of [what] on your own.",
+          "text": "Work on [tasks] and keep track of [details]",
           "issues": []
         }
       ],
@@ -239,13 +224,19 @@
         "3",
         "calendars"
       ],
-      "delivered": "Manage 3 project calendars",
-      "ms": 727.4030000000057,
+      "delivered": "Manage 3 project calendars.",
+      "ms": 1692.9180000000051,
       "limited": 0,
-      "tokens": 715,
+      "tokens": 1655,
       "raw": [
         {
-          "text": "Manage 3 project calendars",
+          "text": "Manage three project calendars.",
+          "issues": [
+            "adds a fact with no [bracket]"
+          ]
+        },
+        {
+          "text": "Manage 3 project calendars.",
           "issues": []
         }
       ],
@@ -256,13 +247,19 @@
     {
       "line": "Able to work under pressure",
       "keep": [],
-      "delivered": "Work under [stress]",
-      "ms": 969.8018000000011,
+      "delivered": "Able to work under [pressure]",
+      "ms": 2258.375,
       "limited": 0,
-      "tokens": 1029,
+      "tokens": 2193,
       "raw": [
         {
-          "text": "Work under [stress]",
+          "text": "Handle tasks in high-demand situations",
+          "issues": [
+            "adds a fact with no [bracket]"
+          ]
+        },
+        {
+          "text": "Able to work under [pressure]",
           "issues": []
         }
       ],
@@ -276,9 +273,9 @@
         "warehouse"
       ],
       "delivered": "Meet tight deadlines in a warehouse",
-      "ms": 516.3742000000057,
+      "ms": 941.4689999999973,
       "limited": 0,
-      "tokens": 738,
+      "tokens": 766,
       "raw": [
         {
           "text": "Meet tight deadlines in a warehouse",
@@ -292,26 +289,19 @@
     {
       "line": "Must be able to multitask",
       "keep": [],
-      "error": "failed",
-      "ms": 1461.6989999999932,
+      "delivered": "Handle multiple [tasks] simultaneously",
+      "ms": 1435.7455000000045,
       "limited": 0,
-      "tokens": 1578,
+      "tokens": 806,
       "raw": [
         {
-          "text": "Perform several tasks simultaneously.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        },
-        {
-          "text": "Able to manage multiple tasks simultaneously.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "Handle multiple [tasks] simultaneously",
+          "issues": []
         }
       ],
       "issues": [],
-      "bracket": false
+      "keptFacts": true,
+      "bracket": true
     },
     {
       "line": "Multitasking between phone calls and data entry in Excel",
@@ -319,43 +309,42 @@
         "phone",
         "Excel"
       ],
-      "error": "failed",
-      "ms": 1307.2706999999937,
+      "delivered": "Phone calls and data entry in Excel",
+      "ms": 1364.9759000000195,
       "limited": 0,
-      "tokens": 1520,
+      "tokens": 1426,
       "raw": [
         {
-          "text": "Handle phone calls while entering data into Excel",
+          "text": "Handle phone calls and perform data entry in Excel.",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Answer phone calls and enter data in Excel.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "Phone calls and data entry in Excel",
+          "issues": []
         }
       ],
       "issues": [],
+      "keptFacts": true,
       "bracket": false
     },
     {
       "line": "Self-starter who needs little supervision",
       "keep": [],
-      "delivered": "Work on [which tasks] with little supervision and keep track of [what]",
-      "ms": 1916.860799999995,
+      "delivered": "Perform [tasks] with little supervision.",
+      "ms": 3296.986499999999,
       "limited": 0,
-      "tokens": 2010,
+      "tokens": 3131,
       "raw": [
         {
-          "text": "Work with minimal supervision",
+          "text": "Work independently, requiring minimal supervision.",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Work on [which tasks] with little supervision and keep track of [what]",
+          "text": "Perform [tasks] with little supervision.",
           "issues": []
         }
       ],
@@ -368,50 +357,42 @@
       "keep": [
         "Power BI"
       ],
-      "error": "failed",
-      "ms": 1415.2131000000227,
+      "delivered": "Build Power BI dashboards",
+      "ms": 1547.0679999999993,
       "limited": 0,
-      "tokens": 1340,
+      "tokens": 862,
       "raw": [
         {
-          "text": "Build Power BI dashboards independently.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        },
-        {
-          "text": "Build Power BI dashboards independently",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "Build Power BI dashboards",
+          "issues": []
         }
       ],
       "issues": [],
+      "keptFacts": true,
       "bracket": false
     },
     {
       "line": "Wear many hats in a small startup",
       "keep": [],
-      "error": "failed",
-      "ms": 1534.313999999984,
+      "delivered": "Perform [multiple] roles in a small startup.",
+      "ms": 3378.1356000000087,
       "limited": 0,
-      "tokens": 1660,
+      "tokens": 2648,
       "raw": [
         {
-          "text": "Handle multiple roles in a small startup.",
+          "text": "Work in a small startup, performing diverse tasks.",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Perform diverse responsibilities in a small startup",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "Perform [multiple] roles in a small startup.",
+          "issues": []
         }
       ],
       "issues": [],
-      "bracket": false
+      "keptFacts": true,
+      "bracket": true
     },
     {
       "line": "Wear multiple hats: bookkeeping, payroll and scheduling",
@@ -420,34 +401,33 @@
         "payroll",
         "scheduling"
       ],
-      "error": "failed",
-      "ms": 1072.768000000011,
+      "delivered": "Bookkeeping, payroll, and scheduling.",
+      "ms": 1595.725999999995,
       "limited": 0,
-      "tokens": 1449,
+      "tokens": 1860,
       "raw": [
         {
-          "text": "Perform bookkeeping, payroll, and scheduling duties",
+          "text": "Bookkeep, process payroll, and schedule staff shifts.",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Handle bookkeeping, payroll, and scheduling.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "Bookkeeping, payroll, and scheduling.",
+          "issues": []
         }
       ],
       "issues": [],
+      "keptFacts": true,
       "bracket": false
     },
     {
       "line": "Other duties as assigned",
       "keep": [],
       "delivered": "[each other duty]",
-      "ms": 847.2538999999815,
+      "ms": 360.2300000000105,
       "limited": 0,
-      "tokens": 952,
+      "tokens": 575,
       "raw": [
         {
           "text": "[each other duty]",
@@ -464,9 +444,9 @@
         "inventory"
       ],
       "delivered": "Update inventory counts and [each other duty]",
-      "ms": 417.4563999999955,
+      "ms": 664.4379999999946,
       "limited": 0,
-      "tokens": 656,
+      "tokens": 711,
       "raw": [
         {
           "text": "Update inventory counts and [each other duty]",
@@ -482,13 +462,58 @@
       "keep": [
         "developer"
       ],
-      "delivered": "Seeking a developer to [task]",
-      "ms": 773.0348999999987,
+      "delivered": "Looking for a developer",
+      "ms": 1494.3598999999813,
       "limited": 0,
-      "tokens": 777,
+      "tokens": 1584,
       "raw": [
         {
-          "text": "Seeking a developer to [task]",
+          "text": "Seeking a developer",
+          "issues": [
+            "adds a fact with no [bracket]"
+          ]
+        },
+        {
+          "text": "Looking for a developer",
+          "issues": []
+        }
+      ],
+      "issues": [],
+      "keptFacts": true,
+      "bracket": false
+    },
+    {
+      "line": "SQL ninja to maintain our reporting database",
+      "keep": [
+        "SQL",
+        "database"
+      ],
+      "delivered": "Maintain our reporting database using SQL",
+      "ms": 1423.205100000021,
+      "limited": 0,
+      "tokens": 726,
+      "raw": [
+        {
+          "text": "Maintain our reporting database using SQL",
+          "issues": []
+        }
+      ],
+      "issues": [],
+      "keptFacts": true,
+      "bracket": false
+    },
+    {
+      "line": "Outgoing personality to work with customers",
+      "keep": [
+        "customers"
+      ],
+      "delivered": "Talk with customers about [what]",
+      "ms": 1021.7308000000194,
+      "limited": 0,
+      "tokens": 1199,
+      "raw": [
+        {
+          "text": "Talk with customers about [what]",
           "issues": []
         }
       ],
@@ -497,44 +522,24 @@
       "bracket": true
     },
     {
-      "line": "SQL ninja to maintain our reporting database",
+      "line": "High-energy sales associate for our retail store",
       "keep": [
-        "SQL",
-        "database"
+        "sales",
+        "retail"
       ],
-      "error": "failed",
-      "ms": 923.835699999996,
+      "delivered": "Sales associate for our retail store",
+      "ms": 1127.9086999999708,
       "limited": 0,
-      "tokens": 1326,
+      "tokens": 1370,
       "raw": [
         {
-          "text": "Maintain our reporting database using SQL",
+          "text": "Work as a sales associate in our retail store",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Maintain our reporting database using SQL.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        }
-      ],
-      "issues": [],
-      "bracket": false
-    },
-    {
-      "line": "Outgoing personality to work with customers",
-      "keep": [
-        "customers"
-      ],
-      "delivered": "Work with customers",
-      "ms": 712.6157999999996,
-      "limited": 0,
-      "tokens": 666,
-      "raw": [
-        {
-          "text": "Work with customers",
+          "text": "Sales associate for our retail store",
           "issues": []
         }
       ],
@@ -543,42 +548,15 @@
       "bracket": false
     },
     {
-      "line": "High-energy sales associate for our retail store",
-      "keep": [
-        "sales",
-        "retail"
-      ],
-      "error": "failed",
-      "ms": 2726.747699999978,
-      "limited": 0,
-      "tokens": 2664,
-      "raw": [
-        {
-          "text": "Sales associate at our retail store",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        },
-        {
-          "text": "Work as a sales associate for a retail store",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        }
-      ],
-      "issues": [],
-      "bracket": false
-    },
-    {
       "line": "Must be a culture fit",
       "keep": [],
-      "delivered": "Must fit into [the company's] culture",
-      "ms": 756.0276000000304,
+      "delivered": "Must fit into [culture]",
+      "ms": 1559.2626000000164,
       "limited": 0,
-      "tokens": 749,
+      "tokens": 1642,
       "raw": [
         {
-          "text": "Must fit into [the company's] culture",
+          "text": "Must fit into [culture]",
           "issues": []
         }
       ],
@@ -592,20 +570,20 @@
         "honesty"
       ],
       "error": "failed",
-      "ms": 1360.9890000000014,
+      "ms": 3558.2061000000103,
       "limited": 0,
-      "tokens": 1624,
+      "tokens": 1012,
       "raw": [
         {
-          "text": "Demonstrate alignment with our values of honesty and care",
+          "text": "Interact with colleagues and customers in a way that reflects honesty and care.",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Demonstrate honesty and care in your work",
+          "text": "",
           "issues": [
-            "adds a fact with no [bracket]"
+            "broken answer"
           ]
         }
       ],
@@ -615,13 +593,46 @@
     {
       "line": "Comfortable with ambiguity",
       "keep": [],
-      "delivered": "Handle [tasks] with unclear details.",
-      "ms": 922.9286999999895,
+      "error": "failed",
+      "ms": 2112.473100000003,
       "limited": 0,
-      "tokens": 1087,
+      "tokens": 2391,
       "raw": [
         {
-          "text": "Handle [tasks] with unclear details.",
+          "text": "Work on projects where objectives and requirements evolve over time.",
+          "issues": [
+            "adds a fact with no [bracket]"
+          ]
+        },
+        {
+          "text": "Comfortable with ambiguity [project]",
+          "issues": [
+            "keeps a vague phrase"
+          ]
+        }
+      ],
+      "issues": [],
+      "bracket": false
+    },
+    {
+      "line": "Think on your feet when a delivery route changes",
+      "keep": [
+        "delivery",
+        "route"
+      ],
+      "delivered": "When a delivery route changes, [ ].",
+      "ms": 2135.8167999999714,
+      "limited": 0,
+      "tokens": 2401,
+      "raw": [
+        {
+          "text": "Respond quickly when a delivery route changes",
+          "issues": [
+            "adds a fact with no [bracket]"
+          ]
+        },
+        {
+          "text": "When a delivery route changes, [ ].",
           "issues": []
         }
       ],
@@ -630,89 +641,60 @@
       "bracket": true
     },
     {
-      "line": "Think on your feet when a delivery route changes",
-      "keep": [
-        "delivery",
-        "route"
-      ],
-      "error": "failed",
-      "ms": 1184.797099999967,
-      "limited": 0,
-      "tokens": 1521,
-      "raw": [
-        {
-          "text": "Adjust delivery route promptly when it changes",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        },
-        {
-          "text": "Adjust delivery routes promptly when changes occur",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
-        }
-      ],
-      "issues": [],
-      "bracket": false
-    },
-    {
       "line": "Hit the ground running from day one",
       "keep": [],
-      "error": "failed",
-      "ms": 1230.694300000032,
+      "delivered": "Hit the [task] from day one.",
+      "ms": 2695.5447000000277,
       "limited": 0,
-      "tokens": 1319,
+      "tokens": 2521,
       "raw": [
         {
-          "text": "Start work immediately from day one",
+          "text": "Begin work immediately from day one",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Start work immediately from day one",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "Hit the [task] from day one.",
+          "issues": []
         }
       ],
       "issues": [],
-      "bracket": false
+      "keptFacts": true,
+      "bracket": true
     },
     {
       "line": "Hit the ground running with our Zendesk support queue",
       "keep": [
         "Zendesk"
       ],
-      "error": "failed",
-      "ms": 1246.0256999999983,
+      "delivered": "[ ] with our Zendesk support queue",
+      "ms": 2258.2088999999687,
       "limited": 0,
-      "tokens": 1387,
+      "tokens": 2382,
       "raw": [
         {
-          "text": "Handle tickets in our Zendesk support queue from day one.",
+          "text": "Manage Zendesk support queue tickets from day one.",
           "issues": [
             "adds a fact with no [bracket]"
           ]
         },
         {
-          "text": "Work on our Zendesk support queue from day one.",
-          "issues": [
-            "adds a fact with no [bracket]"
-          ]
+          "text": "[ ] with our Zendesk support queue",
+          "issues": []
         }
       ],
       "issues": [],
-      "bracket": false
+      "keptFacts": true,
+      "bracket": true
     }
   ],
   "extracts": [
     {
       "title": "Junior Data Analyst, Ceiba Foods (Guadalajara, hybrid)",
-      "ms": 1675.6328000000212,
+      "ms": 1927.3792999999714,
       "limited": 0,
-      "tokens": 2472,
+      "tokens": 2886,
       "rawNumbers": 6,
       "rawInvented": [],
       "deliveredInvented": [],
@@ -727,9 +709,9 @@
     },
     {
       "title": "Warehouse Assistant",
-      "ms": 1962.1199999999953,
+      "ms": 1574.7362999999896,
       "limited": 0,
-      "tokens": 2396,
+      "tokens": 2425,
       "rawNumbers": 0,
       "rawInvented": [],
       "deliveredInvented": [],
@@ -744,9 +726,9 @@
     },
     {
       "title": "Customer Support Agent at Northwind Help (remote)",
-      "ms": 4712.572500000009,
+      "ms": 1603.1223000000464,
       "limited": 0,
-      "tokens": 2935,
+      "tokens": 2392,
       "rawNumbers": 5,
       "rawInvented": [],
       "deliveredInvented": [],
@@ -761,9 +743,9 @@
     },
     {
       "title": "Bookkeeper - Lumen Dental, Monterrey (on-site)",
-      "ms": 2715.3682000000263,
+      "ms": 1617.6949999999488,
       "limited": 0,
-      "tokens": 2950,
+      "tokens": 2516,
       "rawNumbers": 2,
       "rawInvented": [],
       "deliveredInvented": [],
@@ -778,9 +760,9 @@
     },
     {
       "title": "QA Tester for a dynamic team at Bright Apps",
-      "ms": 1882.1051000000443,
+      "ms": 1557.9269000000786,
       "limited": 0,
-      "tokens": 2737,
+      "tokens": 2316,
       "rawNumbers": 1,
       "rawInvented": [
         7
@@ -797,9 +779,9 @@
     },
     {
       "title": "Graphic Designer, Kite Studio (remote)",
-      "ms": 2605.0762000000104,
+      "ms": 2226.9189999999944,
       "limited": 0,
-      "tokens": 3107,
+      "tokens": 3058,
       "rawNumbers": 3,
       "rawInvented": [],
       "deliveredInvented": [],
@@ -816,90 +798,90 @@
   "interviews": [
     {
       "title": "Junior Data Analyst",
-      "ms": 1518.9875000000466,
+      "ms": 2883.1198999999324,
       "limited": 0,
-      "tokens": 1550,
+      "tokens": 1599,
       "essential": 3,
       "covered": 3,
       "questions": [
         {
           "requirement": "Write basic SQL queries",
-          "question": "Describe how you wrote the SQL query to pull last week's sales data for the dashboard.",
+          "question": "How did you pull last week's sales data using SQL, and what key clauses or functions did you use?",
           "flags": []
         },
         {
           "requirement": "Use Excel formulas and pivot tables",
-          "question": "Explain how you used Excel pivot tables to analyze sales by region.",
+          "question": "Describe the Excel formulas and pivot table you created to summarize sales, including any key functions you used.",
           "flags": []
         },
         {
           "requirement": "Build simple charts and dashboards",
-          "question": "Describe how you built a sales trend chart in Power BI for the dashboard.",
+          "question": "Explain how you built a simple dashboard in Power BI to visualize sales trends, mentioning any visuals or filters added.",
           "flags": []
         }
       ]
     },
     {
       "title": "Customer Support Agent",
-      "ms": 1534.0845999999437,
+      "ms": 2225.8951999999117,
       "limited": 0,
-      "tokens": 1538,
+      "tokens": 1082,
       "essential": 2,
       "covered": 2,
       "questions": [
         {
           "requirement": "Answer customers in writing",
-          "question": "Describe a time you answered a customer chat in writing, detailing the issue, your response, and the outcome.",
+          "question": "Explain how you handled 40 written chat interactions in a single day and the result for the customers.",
           "flags": []
         },
         {
           "requirement": "Use a help desk tool such as Zendesk",
-          "question": "Explain how you used Zendesk to log a customer case, including the steps you took and the outcome.",
+          "question": "Give an example of how you logged a case and its outcome in Zendesk.",
           "flags": []
         }
       ]
     },
     {
       "title": "Bookkeeper",
-      "ms": 1662.7817000000505,
+      "ms": 761.0514999999432,
       "limited": 0,
-      "tokens": 1472,
+      "tokens": 1025,
       "essential": 3,
       "covered": 3,
       "questions": [
         {
           "requirement": "Reconcile bank accounts",
-          "question": "Describe a time when you reconciled bank accounts, the steps you took, and the outcome.",
+          "question": "Describe a week when you reconciled bank accounts, steps you followed, and any issues you resolved.",
           "flags": []
         },
         {
           "requirement": "Use QuickBooks",
-          "question": "Explain how you used QuickBooks to reconcile accounts during a week, including any reports you generated.",
+          "question": "Explain how you used QuickBooks to reconcile accounts, including features or reports you used.",
           "flags": []
         },
         {
           "requirement": "Prepare payroll",
-          "question": "Outline the process you followed to prepare monthly payroll, including data verification and final payroll run.",
+          "question": "Tell me about a month you processed payroll, including calculations, deadlines, and any compliance checks.",
           "flags": []
         }
       ]
     },
     {
       "title": "QA Tester",
-      "ms": 1170.8892999999225,
+      "ms": 973.7532000000356,
       "limited": 0,
-      "tokens": 1160,
+      "tokens": 1079,
       "essential": 2,
       "covered": 2,
       "questions": [
         {
           "requirement": "Write clear bug reports",
-          "question": "Describe a bug report you wrote in Jira for a mobile app issue.",
+          "question": "Describe a time you wrote a bug report in Jira that helped your team quickly resolve the issue.",
           "flags": []
         },
         {
           "requirement": "Test mobile apps by hand",
-          "question": "Explain how you performed manual testing on a mobile app feature before a release.",
+          "question": "Explain how you performed manual testing on a mobile app before a recent release, including test coverage and any critical issues found.",
           "flags": []
         }
       ]

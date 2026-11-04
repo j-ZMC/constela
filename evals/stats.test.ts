@@ -32,5 +32,6 @@ describe("share", () => {
   it("says the count, the rate and its interval", () => {
     expect(share(0, 32)).toBe("0 of 32 (0%, 95% CI 0–11%)");
     expect(share(16, 32)).toBe("16 of 32 (50%, 95% CI 34–66%)");
+    expect(share(0, 2729)).toBe("0 of 2729 (0%, 95% CI 0–0.1%)"); // a small upper bound doesn't round to 0
   });
 });

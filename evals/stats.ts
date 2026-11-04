@@ -17,7 +17,8 @@ export function percentile(values: number[], p: number): number {
   return sorted[Math.max(0, Math.ceil((p / 100) * sorted.length) - 1)];
 }
 
-const percent = (x: number) => Math.round(x * 100);
+// Whole numbers, with one decimal below 1% so a small upper bound doesn't round to 0.
+const percent = (x: number) => (x > 0 && x < 0.01 ? (x * 100).toFixed(1) : String(Math.round(x * 100)));
 
 // "3 of 32 (9%, 95% CI 3–24%)"
 export function share(k: number, n: number): string {
