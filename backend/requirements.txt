@@ -9,5 +9,5 @@ nvidia-cublas-cu12
 nvidia-cudnn-cu12>=9,<10
 # The interview AI's voice: Kokoro-82M on this computer, without PyTorch (backend/speak_server.py).
 kokoro-onnx
-# The voice tone for "Adjust the practice" (transcribe_server.py), a wav2vec2 model in ONNX.
+# Runs the Kokoro model (speak_server.py).
 onnxruntime

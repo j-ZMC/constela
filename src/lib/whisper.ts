@@ -13,13 +13,13 @@ export async function transcribe(path: string, options?: { readyMs?: number; tim
   return String(result.text ?? "");
 }
 
-export type Tone = { neutral: number; happy: number; angry: number; sad: number };
-const TONE_KEYS = ["neutral", "happy", "angry", "sad"] as const;
+// Seconds from the first sound to the last, and the share of that time spent in pauses (0 to 1).
+export type Voice = { seconds: number; pauses: number };
 
-// The words, and how the voice sounds to a small model (see transcribe_server.py). Only for "Adjust the practice".
-export async function transcribeWithTone(path: string): Promise<{ text: string; tone?: Tone }> {
-  const result = await worker.run({ path, tone: true });
-  const raw = result.tone as Record<string, unknown> | undefined;
-  const tone = raw && TONE_KEYS.every((k) => typeof raw[k] === "number" && raw[k] >= 0 && raw[k] <= 1) ? (raw as Tone) : undefined;
-  return { text: String(result.text ?? ""), ...(tone ? { tone } : {}) };
+// The words, and how the answer was spoken, measured without a model (see transcribe_server.py). Only for "Adjust the practice".
+export async function transcribeWithVoice(path: string): Promise<{ text: string; voice?: Voice }> {
+  const result = await worker.run({ path, voice: true });
+  const { seconds, pauses } = (result.voice ?? {}) as Record<string, unknown>;
+  const ok = typeof seconds === "number" && seconds > 0 && typeof pauses === "number" && pauses >= 0 && pauses <= 1;
+  return { text: String(result.text ?? ""), ...(ok ? { voice: { seconds, pauses } } : {}) };
 }

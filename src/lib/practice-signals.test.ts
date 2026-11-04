@@ -1,8 +1,9 @@
 import { describe, expect, it } from "vitest";
 import { countWords, needsEasier, soundsUnsure, type AnswerSignals } from "@/lib/practice-signals";
 
-const calm = { neutral: 0.8, happy: 0.1, angry: 0.05, sad: 0.05 };
-const tense = { neutral: 0.3, happy: 0.0, angry: 0.5, sad: 0.2 };
+// With the default 25 words: 2.5 words per second.
+const steady = { seconds: 10, pauses: 0.05 };
+const halting = { seconds: 10, pauses: 0.4 };
 const answer = (over: Partial<AnswerSignals> = {}): AnswerSignals => ({ words: 25, unsure: false, paused: false, ...over });
 
 describe("adjust the practice to how it is going", () => {
@@ -14,19 +15,21 @@ describe("adjust the practice to how it is going", () => {
   });
 
   it("never eases on the voice or the face alone", () => {
-    expect(needsEasier([answer({ tone: calm }), answer({ tone: tense })])).toBe(false);
+    expect(needsEasier([answer({ voice: steady }), answer({ voice: halting })])).toBe(false);
     expect(needsEasier([answer({ tension: 0.1 }), answer({ tension: 0.6 })])).toBe(false);
   });
 
   it("counts voice and face only as a change from the same person's earlier answers", () => {
-    // A short answer plus a voice that sounds more strained than before: ease.
-    expect(needsEasier([answer({ tone: calm }), answer({ words: 3, tone: tense })])).toBe(true);
-    // Someone the model always hears as "angry": no change, no effect.
-    expect(needsEasier([answer({ tone: tense }), answer({ words: 3, tone: tense })])).toBe(false);
+    // A short answer with more pauses than before: ease.
+    expect(needsEasier([answer({ voice: steady }), answer({ words: 3, voice: { seconds: 1.2, pauses: 0.3 } })])).toBe(true);
+    // A short answer spoken much slower than before (1 word per second): ease.
+    expect(needsEasier([answer({ voice: steady }), answer({ words: 3, voice: { seconds: 3, pauses: 0.05 } })])).toBe(true);
+    // Someone who always pauses a lot, at their usual pace: no change, no effect.
+    expect(needsEasier([answer({ voice: halting }), answer({ words: 3, voice: { seconds: 1.2, pauses: 0.4 } })])).toBe(false);
     // The first answer has nothing to compare with.
-    expect(needsEasier([answer({ words: 3, tone: tense, tension: 0.9 })])).toBe(false);
-    // Voice and face rising together.
-    expect(needsEasier([answer({ tone: calm, tension: 0.1 }), answer({ tone: tense, tension: 0.5 })])).toBe(true);
+    expect(needsEasier([answer({ words: 3, voice: halting, tension: 0.9 })])).toBe(false);
+    // Voice and face changing together.
+    expect(needsEasier([answer({ voice: steady, tension: 0.1 }), answer({ voice: halting, tension: 0.5 })])).toBe(true);
   });
 
   it("hears unsure answers and counts words", () => {

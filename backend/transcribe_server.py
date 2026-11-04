@@ -3,13 +3,13 @@
 The Next.js server starts this once and keeps it running (src/lib/whisper.ts), so the model loads only once.
 Uses the protocol in worker_protocol.py:
   ready:    {"ready": true, "device": "cuda" | "cpu"}
-  request:  {"id": "...", "path": "C:/.../recording.webm", "tone": true}
-  result:   {"id": "...", "text": "...", "tone": {"neutral": 0.7, "happy": 0.1, "angry": 0.1, "sad": 0.1}}
+  request:  {"id": "...", "path": "C:/.../recording.webm", "voice": true}
+  result:   {"id": "...", "text": "...", "voice": {"seconds": 12.4, "pauses": 0.18}}
 
-"tone" is only asked for when the person turned on "Adjust the practice to how it is going". It comes from a
-wav2vec2 model (onnx-community/wav2vec2-base-superb-er-ONNX, Apache 2.0) run with ONNX Runtime on the CPU, on the same
-samples Whisper reads. It is weak evidence: trained on acted speech, it hears a calm synthetic voice as "angry". The
-app only compares it with the same person's earlier answers (src/lib/practice-signals.ts), and never shows or keeps it.
+"voice" is only asked for when the person turned on "Adjust the practice to how it is going". It is measured straight
+from the samples Whisper reads, with no model: how long the person spoke, and what share of that was pauses. It does
+not guess feelings. The app only compares it with the same person's earlier answers (src/lib/practice-signals.ts), and
+never shows or keeps it.
 
 Set WHISPER_MODEL to use another model (default: small.en). The model is downloaded once from
 Hugging Face the first time it runs; recordings never leave this computer.
@@ -89,46 +89,42 @@ def transcribe_samples(model: Any, samples: Any) -> str:
     return " ".join(segment.text.strip() for segment in segments).strip()
 
 
-TONE_REPO = "onnx-community/wav2vec2-base-superb-er-ONNX"
-# The model's id2label order: neu, hap, ang, sad.
-TONE_LABELS = ("neutral", "happy", "angry", "sad")
-_tone_session: Any = None
+FRAME = 480  # 30 ms at 16 kHz
+# A silence of 270 ms or more counts as a pause; shorter gaps are normal between words.
+LONG_PAUSE = 9
 
 
-def tone_session() -> Any:
-    """Loaded the first time a tone is asked for (about 380 MB, downloaded once into the Hugging Face cache)."""
-    global _tone_session
-    if _tone_session is None:
-        import onnxruntime as ort
-        from huggingface_hub import hf_hub_download
-
-        _tone_session = ort.InferenceSession(hf_hub_download(TONE_REPO, "onnx/model.onnx"), providers=["CPUExecutionProvider"])
-    return _tone_session
-
-
-def tone(samples: Any, session: Any = None) -> dict[str, float] | None:
-    """How the voice sounds to the model, as shares that add up to 1. None for less than a second of speech."""
+def voice(samples: Any) -> dict[str, float] | None:
+    """Seconds from the first sound to the last, and the share of that time spent in pauses. None under a second."""
     import numpy as np
 
-    if samples.size < 16_000:
+    frames = samples[: samples.size // FRAME * FRAME].reshape(-1, FRAME)
+    if len(frames) == 0:
         return None
-    clip = samples[-16_000 * 20 :]  # the last 20 seconds are enough, and keep it fast
-    logits = (session or tone_session()).run(None, {"input_values": clip[None, :].astype(np.float32)})[0][0]
-    shares = np.exp(logits - logits.max())
-    shares /= shares.sum()
-    return {label: round(float(v), 3) for label, v in zip(TONE_LABELS, shares)}
+    level = np.sqrt((frames**2).mean(axis=1))
+    # Relative to this recording's loud parts, so a quiet microphone works too; the floor keeps room noise out.
+    is_loud = level > max(0.003, 0.1 * float(np.percentile(level, 95)))
+    loud = np.flatnonzero(is_loud)
+    if loud.size == 0 or loud[-1] - loud[0] + 1 < 16_000 // FRAME:
+        return None
+    spoken = is_loud[loud[0] : loud[-1] + 1]
+    # Start and end of each run of quiet frames, then the frames in runs long enough to be pauses.
+    edges = np.diff(np.concatenate(([0], (~spoken).astype(np.int8), [0])))
+    runs = np.flatnonzero(edges == -1) - np.flatnonzero(edges == 1)
+    paused = int(runs[runs >= LONG_PAUSE].sum())
+    return {"seconds": round(spoken.size * FRAME / 16_000, 2), "pauses": round(paused / spoken.size, 3)}
 
 
 def handle(model: Any, request: dict[str, Any]) -> dict[str, Any]:
     samples = decode(str(request["path"]))
     result: dict[str, Any] = {"text": transcribe_samples(model, samples)}
-    if request.get("tone") is True:
+    if request.get("voice") is True:
         try:
-            heard = tone(samples)
+            heard = voice(samples)
             if heard:
-                result["tone"] = heard
-        except Exception as error:  # noqa: BLE001 - the words matter; a tone that fails is simply left out
-            print(f"Tone failed: {error}", file=sys.stderr)
+                result["voice"] = heard
+        except Exception as error:  # noqa: BLE001 - the words matter; a measurement that fails is simply left out
+            print(f"Voice measurement failed: {error}", file=sys.stderr)
     return result
 
 

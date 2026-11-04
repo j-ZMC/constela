@@ -2,8 +2,8 @@
 
 1. A Python environment in `.venv` at the project root, with backend/requirements.txt.
 2. The models that would otherwise download the first time someone uses them, so the first voice reply already uses
-   Kokoro instead of the browser's voice: Whisper small.en (about 500 MB) and the voice-tone model for "Adjust the
-   practice" (about 380 MB). The Kokoro voice comes with the repository; this only checks it is there.
+   Kokoro instead of the browser's voice: Whisper small.en (about 500 MB). The Kokoro voice comes with the repository;
+   this only checks it is there.
 3. The Ollama models (llama3.1:8b and qwen3-embedding:0.6b), when Ollama is installed.
 
 Safe to run again: everything already in place is skipped. Uses only the standard library, so any Python 3.10+ runs it.
@@ -30,10 +30,8 @@ READY = os.path.join(VENV, ".constela-setup-done")
 PRELOAD = """
 import speak_server, transcribe_server
 from faster_whisper import download_model
-from huggingface_hub import hf_hub_download
 speak_server.download_model(); print("  Kokoro voice: ready", flush=True)
 download_model(transcribe_server.MODEL_NAME); print("  Whisper " + transcribe_server.MODEL_NAME + ": ready", flush=True)
-hf_hub_download(transcribe_server.TONE_REPO, "onnx/model.onnx"); print("  Voice tone model: ready", flush=True)
 """
 
 

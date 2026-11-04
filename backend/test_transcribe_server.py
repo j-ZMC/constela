@@ -67,46 +67,48 @@ if __name__ == "__main__":
     unittest.main()
 
 
-class ToneTests(unittest.TestCase):
-    class FakeSession:
-        def __init__(self, logits):
-            self.logits = logits
-            self.seen = None
-
-        def run(self, _outputs, feeds):
-            import numpy as np
-
-            self.seen = feeds["input_values"]
-            return [np.array([self.logits], dtype=np.float32)]
-
-    def test_turns_the_model_output_into_shares_that_add_up_to_one(self):
+class VoiceTests(unittest.TestCase):
+    @staticmethod
+    def speech(*parts):
+        """A recording: positive numbers are seconds of sound, negative numbers seconds of silence."""
         import numpy as np
 
-        session = self.FakeSession([0.0, 0.0, 2.0, 0.0])
-        heard = transcribe_server.tone(np.zeros(32_000, dtype=np.float32), session)
-        self.assertEqual(list(heard), ["neutral", "happy", "angry", "sad"])
-        self.assertAlmostEqual(sum(heard.values()), 1.0, places=2)
-        self.assertGreater(heard["angry"], heard["neutral"])
-        self.assertEqual(session.seen.shape, (1, 32_000))
+        chunks = []
+        for seconds in parts:
+            n = int(abs(seconds) * 16_000)
+            chunks.append(0.3 * np.sin(2 * np.pi * 220 * np.arange(n) / 16_000) if seconds > 0 else np.zeros(n))
+        return np.concatenate(chunks).astype(np.float32)
 
-    def test_skips_less_than_a_second_and_uses_only_the_last_20_seconds(self):
+    def test_measures_the_time_spoken_and_the_share_of_pauses(self):
+        heard = transcribe_server.voice(self.speech(-0.5, 1, -1, 1, -0.5))
+        self.assertAlmostEqual(heard["seconds"], 3, delta=0.05)
+        self.assertAlmostEqual(heard["pauses"], 1 / 3, delta=0.02)
+
+    def test_short_gaps_between_words_are_not_pauses(self):
+        self.assertEqual(transcribe_server.voice(self.speech(1, -0.1, 1))["pauses"], 0)
+
+    def test_a_quiet_microphone_is_measured_the_same(self):
+        loud = transcribe_server.voice(self.speech(1, -1, 1))
+        quiet = transcribe_server.voice(self.speech(1, -1, 1) * 0.05)
+        self.assertEqual(loud, quiet)
+
+    def test_skips_silence_and_less_than_a_second(self):
         import numpy as np
 
-        session = self.FakeSession([1.0, 0.0, 0.0, 0.0])
-        self.assertIsNone(transcribe_server.tone(np.zeros(8_000, dtype=np.float32), session))
-        transcribe_server.tone(np.zeros(16_000 * 30, dtype=np.float32), session)
-        self.assertEqual(session.seen.shape, (1, 16_000 * 20))
+        self.assertIsNone(transcribe_server.voice(self.speech(-2)))
+        self.assertIsNone(transcribe_server.voice(self.speech(-1, 0.5, -1)))
+        self.assertIsNone(transcribe_server.voice(np.zeros(0, dtype=np.float32)))
 
-    def test_a_failing_tone_never_loses_the_words(self):
-        import numpy as np
+    def test_measures_only_when_asked_and_a_failure_never_loses_the_words(self):
         from unittest import mock
 
         class Model:
             def transcribe(self, *_args, **_kwargs):
                 return [type("Segment", (), {"text": " Hello there "})()], None
 
-        with mock.patch.object(transcribe_server, "decode", return_value=np.ones(32_000, dtype=np.float32)),                 mock.patch.object(transcribe_server, "tone", side_effect=RuntimeError("no model")):
-            self.assertEqual(transcribe_server.handle(Model(), {"path": "x.webm", "tone": True}), {"text": "Hello there"})
-        with mock.patch.object(transcribe_server, "decode", return_value=np.ones(32_000, dtype=np.float32)),                 mock.patch.object(transcribe_server, "tone", return_value={"neutral": 1.0}) as heard:
+        recording = self.speech(1, -1, 1)
+        with mock.patch.object(transcribe_server, "decode", return_value=recording):
+            self.assertEqual(set(transcribe_server.handle(Model(), {"path": "x.webm", "voice": True})), {"text", "voice"})
             self.assertEqual(transcribe_server.handle(Model(), {"path": "x.webm"}), {"text": "Hello there"})
-            heard.assert_not_called()
+            with mock.patch.object(transcribe_server, "voice", side_effect=RuntimeError("bad audio")):
+                self.assertEqual(transcribe_server.handle(Model(), {"path": "x.webm", "voice": True}), {"text": "Hello there"})

@@ -3,7 +3,7 @@ import { rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import type { InterviewErrorCode } from "@/lib/interview";
-import { WhisperError, transcribe, transcribeWithTone } from "@/lib/whisper";
+import { WhisperError, transcribe, transcribeWithVoice } from "@/lib/whisper";
 
 // About 5 minutes of speech from the browser's recorder; an answer is much shorter.
 const MAX_BYTES = 5 * 1024 * 1024;
@@ -27,8 +27,8 @@ export async function POST(req: Request) {
   const path = join(tmpdir(), `constela-voice-${randomUUID()}.${ext}`);
   try {
     await writeFile(path, Buffer.from(await audio.arrayBuffer()));
-    // tone=1: "Adjust the practice to how it is going" is on. The tone goes back to this browser only, never saved.
-    return Response.json(form?.get("tone") === "1" ? await transcribeWithTone(path) : { text: await transcribe(path) });
+    // voice=1: "Adjust the practice to how it is going" is on. The measurement goes back to this browser only, never saved.
+    return Response.json(form?.get("voice") === "1" ? await transcribeWithVoice(path) : { text: await transcribe(path) });
   } catch (error) {
     return fail(error instanceof WhisperError ? error.code : "failed");
   } finally {

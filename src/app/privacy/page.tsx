@@ -107,7 +107,7 @@ export default function PrivacyPage() {
           <li>If you use &quot;Shortcuts by type&quot;, we keep only the screen settings it turns on, never which type you chose.</li>
           <li>
             If you turn on &quot;Adjust the practice to how it is going&quot;, Constela looks at your answers and, on this computer
-            only, at the tone of your voice and your face (with the camera on). It only makes the next question easier. It never
+            only, at your pauses and pace when you speak and at your face (with the camera on). It only makes the next question easier. It never
             shows, saves or sends what it read.
           </li>
           <li>We do not use ads or tracking.</li>

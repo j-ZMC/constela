@@ -3,15 +3,15 @@
 // next request to the interview AI on this computer.
 //
 // The task counts most: an "I don't know", a pause the person asked for, a very short answer. Voice and face are weak
-// evidence (the voice model hears a calm synthetic voice as "angry"), so they never decide alone, and they count only
-// as a change from this same person's earlier answers in this practice, never against anyone else.
-import type { Tone } from "@/lib/whisper";
+// evidence (people pause and speak at very different paces), so they never decide alone, and they count only as a
+// change from this same person's earlier answers in this practice, never against anyone else.
+import type { Voice } from "@/lib/whisper";
 
 export type AnswerSignals = {
   words: number;
   unsure: boolean; // "I don't know", "can you repeat", "I'm stuck"...
   paused: boolean; // pressed "I need a moment" (or raised a hand) since the last answer
-  tone?: Tone; // from the voice, Talk mode only
+  voice?: Voice; // seconds spoken and share of pauses, Talk mode only
   tension?: number; // 0 to 1, from the face, camera on only
 };
 
@@ -20,14 +20,21 @@ export const soundsUnsure = (text: string) => UNSURE.test(text);
 export const countWords = (text: string) => text.trim().split(/\s+/).filter(Boolean).length;
 
 const mean = (values: number[]) => (values.length ? values.reduce((a, b) => a + b, 0) / values.length : undefined);
-// How strained the voice sounds to the model.
-const strain = (s: AnswerSignals) => (s.tone ? s.tone.angry + s.tone.sad : undefined);
+const pauses = (s: AnswerSignals) => s.voice?.pauses;
+const pace = (s: AnswerSignals) => (s.voice ? s.words / s.voice.seconds : undefined); // words per second
 
-// Rises above this person's own earlier answers: voice by a quarter, face by 0.15.
-function risen(history: AnswerSignals[], read: (s: AnswerSignals) => number | undefined, margin: number): boolean {
+// The last answer next to the mean of this person's earlier answers in this practice.
+function compared(history: AnswerSignals[], read: (s: AnswerSignals) => number | undefined) {
   const now = read(history[history.length - 1]);
   const before = mean(history.slice(0, -1).map(read).filter((v): v is number => v !== undefined));
-  return now !== undefined && before !== undefined && now - before > margin;
+  return now !== undefined && before !== undefined ? { now, before } : undefined;
+}
+
+// The voice counts when pauses take 15 points more of the answer, or the pace drops by a quarter.
+function voiceHarder(history: AnswerSignals[]): boolean {
+  const paused = compared(history, pauses);
+  const speed = compared(history, pace);
+  return (paused !== undefined && paused.now - paused.before > 0.15) || (speed !== undefined && speed.now < speed.before * 0.75);
 }
 
 export function needsEasier(history: AnswerSignals[]): boolean {
@@ -37,7 +44,8 @@ export function needsEasier(history: AnswerSignals[]): boolean {
   if (last.unsure) score += 0.5;
   if (last.paused) score += 0.5;
   if (last.words < 6) score += 0.25;
-  if (risen(history, strain, 0.25)) score += 0.25;
-  if (risen(history, (s) => s.tension, 0.15)) score += 0.25;
+  if (voiceHarder(history)) score += 0.25;
+  const face = compared(history, (s) => s.tension);
+  if (face && face.now - face.before > 0.15) score += 0.25;
   return score >= 0.5;
 }

@@ -16,7 +16,7 @@ import { buildJobContext, loadInterviewContext } from "@/lib/interview-context";
 import { voiceSpeed } from "@/lib/personalization";
 import { markEvent } from "@/lib/plan";
 import { countWords, needsEasier, soundsUnsure, type AnswerSignals } from "@/lib/practice-signals";
-import type { Tone } from "@/lib/whisper";
+import type { Voice } from "@/lib/whisper";
 import { jobKey, useSavedJobs } from "@/lib/saved-jobs";
 import { useHydrated } from "@/lib/use-hydrated";
 import { cn } from "@/lib/utils";
@@ -190,7 +190,7 @@ export function InterviewChat() {
   const [adapt, setAdapt] = useState(false);
   const signals = useRef<AnswerSignals[]>([]);
   const paused = useRef(false);
-  const heardTone = useRef<Tone | undefined>(undefined);
+  const heardVoice = useRef<Voice | undefined>(undefined);
   const tensions = useRef<number[]>([]);
   // Video call practice with the person's own camera: off unless they turn it on.
   const [camera, setCamera] = useState(false);
@@ -465,13 +465,13 @@ export function InterviewChat() {
         words: countWords(words),
         unsure: soundsUnsure(words),
         paused: paused.current,
-        tone: heardTone.current,
+        voice: heardVoice.current,
         tension: face.length ? face.reduce((a, b) => a + b, 0) / face.length : undefined,
       });
       ease = needsEasier(signals.current);
     }
     paused.current = false;
-    heardTone.current = undefined;
+    heardVoice.current = undefined;
     tensions.current = [];
     ask(next, activity, ease);
   }
@@ -563,7 +563,7 @@ export function InterviewChat() {
     setRecording("transcribing");
     const form = new FormData();
     form.set("audio", audio, "answer");
-    if (adapt && USES_TYPE.includes(activity) && !dictating.current) form.set("tone", "1");
+    if (adapt && USES_TYPE.includes(activity) && !dictating.current) form.set("voice", "1");
     try {
       const res = await fetch("/api/interview/transcribe", { method: "POST", body: form });
       const data = await res.json().catch(() => null);
@@ -587,7 +587,7 @@ export function InterviewChat() {
         answer.current?.focus();
         return;
       }
-      heardTone.current = data?.tone;
+      heardVoice.current = data?.voice;
       // Anything already typed in the box goes first, then what was said.
       sendText(`${answer.current?.value.trim() ?? ""} ${text}`);
     } catch {
@@ -769,7 +769,7 @@ export function InterviewChat() {
                   <span>Adjust the practice to how it is going</span>
                   <span className="text-sm text-muted-foreground">
                     If a question seems hard, the next one is easier, with an example or a break. It looks at your answers and,
-                    only on this computer, at the tone of your voice and your face when the camera is on. Nothing is shown or saved.
+                    only on this computer, at your pauses and pace when you speak and at your face when the camera is on. Nothing is shown or saved.
                   </span>
                 </span>
               </label>
