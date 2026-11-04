@@ -1,8 +1,7 @@
-# NLP_Astralis — AI Context README
+# Constela backend
 
-> Read this file first if you are an AI continuing work on this project.
-> Project language: English for user-facing text, code, identifiers, schema, and documentation.
-> Rules: do NOT run commands without asking. Do NOT modify code unless asked.
+The Python side of Constela: job collectors, company inclusion data, the job filter on local embeddings, and the voice
+workers (Whisper and Kokoro). The Next.js app runs these scripts itself; see the main [README](../README.md) to set up.
 
 ## 1. What this project is — and WHY
 
@@ -50,14 +49,11 @@ Pipeline: `[sources] -> [collect_bulk.py] -> [jobs_*.json] -> [pretokenize.py or
 | `.vscode/` | Workspace Python environment settings. |
 | `__pycache__/` | Existing generated Python cache; left untouched. |
 
-## 3. Environment (two Pythons exist)
+## 3. Environment
 
-- **Notebook env (use this):** conda `base` (miniconda3), Python 3.14.6,
-  `torch 2.11+cu128`, `sentence-transformers 6.0`, `huggingface_hub 1.x`,
-  `faiss-gpu 1.14`. GPU: RTX 5070 Laptop 8 GB, CUDA 12.8.
-- **Terminal env (fragile):** Windows Store Python 3.12.10. Do NOT use for
-  embeddings.
-- Local Qwen embeddings run in the notebook kernel. The OpenAI embedding scripts can run from the terminal with `OPENAI_API_KEY` set. Collectors use stdlib `urllib`.
+Python 3.12 in a `.venv` at the project root, with `backend/requirements.txt`. Embeddings come from Ollama
+(`qwen3-embedding:0.6b`) on the same computer; an NVIDIA GPU makes Whisper and Ollama faster but is not required.
+Collectors use the standard library (`urllib`).
 
 ## 4. Job schema (all English keys)
 

@@ -1,4 +1,4 @@
-// "Break it down for me": the request contract, the prompt and the AI call. See SPEC-plan.md.
+// "Break it down for me": the request contract, the prompt and the AI call.
 // Only the task text, three instruction flags and an optional starter-step id reach the server; .strict() rejects
 // anything else. The id maps to fixed app text below, so no free text beyond the task reaches the provider.
 import { generateText, Output, type LanguageModel } from "ai";

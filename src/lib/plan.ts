@@ -1,4 +1,4 @@
-// My plan: the starter path, how steps are stored, and which steps to show now. See SPEC-plan.md.
+// My plan: the starter path, how steps are stored, and which steps to show now.
 // Components render and call these; teammates add steps from their modules with addStepToPlan().
 import type { Adaptations } from "@/lib/profile";
 

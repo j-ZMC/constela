@@ -48,3 +48,12 @@ next-env.d.ts
 /backend/resume_parser.py/
 # Third-party reports (B Corp, Equidad MX, HRC), 22 MB; the app does not read them
 /backend/data/reference/source_docs/
+
+# Local development tooling and working notes, kept out of the delivered repo
+/CLAUDE.md
+/AGENTS.md
+/.claude/
+/.impeccable/
+/tasks/
+/skills-lock.json
+/SPEC-*.md

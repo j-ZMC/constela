@@ -1,5 +1,5 @@
 // Profile: the onboarding questions, how answers are stored, and how they become app settings.
-// Other modules should only use loadProfile() + toAdaptations(), never raw answers. See SPEC-profile.md.
+// Other modules should only use loadProfile() + toAdaptations(), never raw answers.
 
 export const QUESTIONS = [
   {
