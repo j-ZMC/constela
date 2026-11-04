@@ -1,14 +1,14 @@
 """Score and filter jobs using precomputed Qwen3-Embedding-0.6B vectors (Ollama, on this computer).
 
-Run pretokenize_openai.py first to create/update the job and barrier caches.
+Run embed_jobs.py first to create/update the job and barrier caches.
 Each search request embeds the user's free-text query with the same model through Ollama.
 
 Usage:
-  python pretokenize_openai.py
-  python filter_jobs_openai.py --query "remote data analyst"
+  python embed_jobs.py
+  python filter_jobs.py --query "remote data analyst"
 
 For a web backend:
-  from filter_jobs_openai import filter_jobs
+  from filter_jobs import filter_jobs
   payload = filter_jobs(
       query="remote data analyst",
       user_blockers=["autism_spectrum:sensory_load"],
@@ -27,7 +27,7 @@ from typing import Any
 import numpy as np
 import pandas as pd
 
-from pretokenize_openai import (
+from embed_jobs import (
     BARRIERS_PATH as DEFAULT_BARRIERS_PATH,
     BARRIER_EMBEDDINGS_PATH as DEFAULT_BARRIER_EMBEDDINGS_PATH,
     EMBEDDING_DIMENSIONS,
@@ -54,7 +54,7 @@ QUALIFIED_COMPANIES_DB = "data/processed/qualified_company_jobs.sqlite"
 # Exclude matched companies absent from the qualifying-company database; unmatched stay eligible.
 EXCLUDE_KNOWN_NON_INCLUSIVE = True
 SIMILARITY_THRESHOLD = 2.0  # Number of standard deviations above the mean.
-# Qwen3-Embedding-0.6B. At 0.40 (OpenAI's share of flags) 12 of 33 conditions flagged under 10 jobs ("sound": 3).
+# Qwen3-Embedding-0.6B. At 0.40 (the threshold used with OpenAI's vectors) 12 of 33 conditions flagged under 10 jobs ("sound": 3).
 # 0.35 sets apart about 3.6% of (condition, job) pairs, every condition at least 10 jobs ("sound": 58); below it,
 # jobs with no clear link start to show.
 # shortcut: tuned on what the flagged jobs look like, not checked with people; re-tune if it sets apart too much or too little.
@@ -77,7 +77,7 @@ def load_embeddings(
         if not os.path.exists(path):
             raise FileNotFoundError(
                 f"Embedding cache not found: {path}\n"
-                "Create/update the caches first with: python pretokenize_openai.py"
+                "Create/update the caches first with: python embed_jobs.py"
             )
 
     job_vectors = np.load(emb_path)
@@ -90,7 +90,7 @@ def load_embeddings(
     ):
         raise ValueError(
             "The job embedding cache is invalid or uses another model. "
-            "Recreate it with pretokenize_openai.py --rebuild."
+            "Recreate it with embed_jobs.py --rebuild."
         )
 
     expected_ids, expected_texts, expected_metadata = expected_barriers(barriers_path)
@@ -107,7 +107,7 @@ def load_embeddings(
     ):
         raise ValueError(
             "Quiz-barrier vectors are missing or outdated. "
-            "Recreate them with pretokenize_openai.py."
+            "Recreate them with embed_jobs.py."
         )
 
     needed_ids = set(jobs["url"].astype(str))
@@ -115,7 +115,7 @@ def load_embeddings(
     if missing_ids:
         raise ValueError(
             f"The cache is missing {len(missing_ids)} job(s). "
-            "Update it with pretokenize_openai.py before filtering."
+            "Update it with embed_jobs.py before filtering."
         )
 
     job_vectors_by_url = {

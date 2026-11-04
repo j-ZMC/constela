@@ -1,11 +1,10 @@
 """Precompute job and user-selectable barrier embeddings with Qwen3-Embedding-0.6B on Ollama.
 
 Needs Ollama running (OLLAMA_URL, default http://127.0.0.1:11434) and `ollama pull qwen3-embedding:0.6b`.
-The file keeps its old name so the commands and imports elsewhere keep working.
 
 Usage:
-  python pretokenize_openai.py
-  python pretokenize_openai.py --rebuild
+  python embed_jobs.py
+  python embed_jobs.py --rebuild
 """
 from __future__ import annotations
 
@@ -105,7 +104,7 @@ def clean_jobs(jobs: pd.DataFrame) -> pd.DataFrame:
     )
     empty = jobs["description"].str.strip().eq("")
     if empty.any():
-        # stderr: filter_jobs_openai.py --json shares this, and its stdout must be only the JSON result.
+        # stderr: filter_jobs.py --json shares this, and its stdout must be only the JSON result.
         if "source" in jobs.columns:
             print(f"Skipping {int(empty.sum())} jobs with empty descriptions:", file=sys.stderr)
             print(jobs.loc[empty].groupby("source").size().to_string(), file=sys.stderr)

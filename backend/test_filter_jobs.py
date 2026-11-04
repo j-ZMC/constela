@@ -7,7 +7,7 @@ from unittest.mock import patch
 
 import pandas as pd
 
-import filter_jobs_openai
+import filter_jobs
 
 
 class JsonCliTests(unittest.TestCase):
@@ -19,12 +19,12 @@ class JsonCliTests(unittest.TestCase):
             patch.object(
                 sys,
                 "argv",
-                ["filter_jobs_openai.py", "--query", "remote analyst", "--json"],
+                ["filter_jobs.py", "--query", "remote analyst", "--json"],
             ),
-            patch.object(filter_jobs_openai, "filter_jobs", return_value=expected),
+            patch.object(filter_jobs, "filter_jobs", return_value=expected),
             contextlib.redirect_stdout(output),
         ):
-            status = filter_jobs_openai.main()
+            status = filter_jobs.main()
 
         self.assertEqual(status, 0)
         self.assertEqual(json.loads(output.getvalue()), expected)
@@ -35,18 +35,18 @@ class JsonCliTests(unittest.TestCase):
             patch.object(
                 sys,
                 "argv",
-                ["filter_jobs_openai.py", "--query", "x", "--json", "--custom-blocker=-night shift"],
+                ["filter_jobs.py", "--query", "x", "--json", "--custom-blocker=-night shift"],
             ),
             patch.object(
-                filter_jobs_openai,
+                filter_jobs,
                 "filter_jobs",
                 return_value={"jobs": [], "blocked_jobs": [], "summary": {}},
-            ) as filter_jobs,
+            ) as searched,
             contextlib.redirect_stdout(io.StringIO()),
         ):
-            filter_jobs_openai.main()
+            filter_jobs.main()
 
-        self.assertEqual(filter_jobs.call_args.kwargs["custom_blockers"], ["-night shift"])
+        self.assertEqual(searched.call_args.kwargs["custom_blockers"], ["-night shift"])
 
 
 class CustomBlockerTests(unittest.TestCase):
@@ -55,23 +55,23 @@ class CustomBlockerTests(unittest.TestCase):
     )
 
     def test_flags_whole_words_ignoring_case(self):
-        reasons = filter_jobs_openai.custom_blocker_reasons(self.job, ["night shift", "open office"])
+        reasons = filter_jobs.custom_blocker_reasons(self.job, ["night shift", "open office"])
         self.assertEqual([reason["barrier_id"] for reason in reasons], ["custom:night shift", "custom:open office"])
         self.assertEqual(reasons[0]["label"], 'Mentions "night shift"')
         self.assertIsInstance(reasons[0]["score"], float)
 
     def test_does_not_match_inside_other_words_or_when_absent(self):
-        self.assertEqual(filter_jobs_openai.custom_blocker_reasons(self.job, ["shift", "ice", "remote"])[0]["subtype_id"], "shift")
-        self.assertEqual(len(filter_jobs_openai.custom_blocker_reasons(self.job, ["ice", "remote"])), 0)
+        self.assertEqual(filter_jobs.custom_blocker_reasons(self.job, ["shift", "ice", "remote"])[0]["subtype_id"], "shift")
+        self.assertEqual(len(filter_jobs.custom_blocker_reasons(self.job, ["ice", "remote"])), 0)
 
     def test_matches_words_with_symbols(self):
         job = pd.Series({"title": "C++ Developer", "description": "Open 24/7 support."})
-        reasons = filter_jobs_openai.custom_blocker_reasons(job, ["c++", "24/7"])
+        reasons = filter_jobs.custom_blocker_reasons(job, ["c++", "24/7"])
         self.assertEqual(len(reasons), 2)
 
 
 class PayFromTextTests(unittest.TestCase):
-    pay = staticmethod(filter_jobs_openai.pay_from_text)
+    pay = staticmethod(filter_jobs.pay_from_text)
 
     def test_reads_ranges_with_their_period_and_currency(self):
         self.assertEqual(
@@ -95,7 +95,7 @@ class PayFromTextTests(unittest.TestCase):
 
 
 class WorkModeTests(unittest.TestCase):
-    mode = staticmethod(lambda description="", **job: filter_jobs_openai.work_mode({"description": description, **job}))
+    mode = staticmethod(lambda description="", **job: filter_jobs.work_mode({"description": description, **job}))
 
     def test_fields_title_and_location_come_first(self):
         self.assertEqual(self.mode(modality="Remote"), "remote")
@@ -124,7 +124,7 @@ class CompanyPayTests(unittest.TestCase):
             {"title": "Other company", "url": "d", "salary_min": 1.0, "salary_max": 2.0, "currency": "USD", "description": ""},
         ])
         keys = pd.Series(["databricks", "databricks", "databricks", "acme"])
-        examples = filter_jobs_openai.company_pay_examples(jobs, keys, "databricks")
+        examples = filter_jobs.company_pay_examples(jobs, keys, "databricks")
         self.assertEqual([e["title"] for e in examples], ["Intern SF", "Engineer"])
         self.assertEqual(examples[0]["salary_period"], "hour")
         self.assertEqual(examples[1]["salary_max"], 120000.0)
@@ -145,11 +145,11 @@ class CompanyFactsTests(unittest.TestCase):
 
         with tempfile.TemporaryDirectory() as folder:
             path = str(Path(folder) / "qualified.sqlite")
-            row = {column: None for column in filter_jobs_openai.FACT_COLUMNS}
+            row = {column: None for column in filter_jobs.FACT_COLUMNS}
             row.update(firm_clean="acme", glassdoor_inclusion_mean=4.2, glassdoor_reviews=31)
             with contextlib.closing(sqlite3.connect(path)) as connection:
                 pd.DataFrame([row]).to_sql("selected_companies", connection, index=False)
-            facts = filter_jobs_openai.load_company_facts(path)
+            facts = filter_jobs.load_company_facts(path)
 
         self.assertEqual(facts["acme"]["glassdoor_inclusion_mean"], 4.2)
         self.assertIsNone(facts["acme"]["bcorp_score"])

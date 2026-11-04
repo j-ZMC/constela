@@ -91,7 +91,7 @@ describe("POST /api/jobs", () => {
     });
     expect(execFile).toHaveBeenCalledWith(
       expect.any(String),
-      ["filter_jobs_openai.py", "--json", "--query", "remote analyst"],
+      ["filter_jobs.py", "--json", "--query", "remote analyst"],
       expect.objectContaining({ timeout: 120_000 }),
       expect.any(Function),
     );
@@ -106,7 +106,7 @@ describe("POST /api/jobs", () => {
     });
 
     expect(execFileMock.mock.calls[0][1]).toEqual([
-      "filter_jobs_openai.py",
+      "filter_jobs.py",
       "--json",
       "--query",
       "remote analyst",
@@ -121,7 +121,7 @@ describe("POST /api/jobs", () => {
     await post({ query: "remote analyst", customBlockers: ["night shift", "-rf"] });
 
     expect(execFileMock.mock.calls[0][1]).toEqual([
-      "filter_jobs_openai.py",
+      "filter_jobs.py",
       "--json",
       "--query",
       "remote analyst",
@@ -136,7 +136,7 @@ describe("POST /api/jobs", () => {
     await post({ query: "marketing", internships: true });
 
     expect(execFileMock.mock.calls[0][1]).toEqual([
-      "filter_jobs_openai.py",
+      "filter_jobs.py",
       "--json",
       "--query",
       "marketing",

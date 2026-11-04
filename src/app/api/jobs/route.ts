@@ -4,7 +4,7 @@ import { parseJobSearchRequest, parseWorkerResult } from "@/lib/jobs";
 import { pythonExecutable } from "@/lib/python";
 
 const TIMEOUT_MS = 120_000;
-// The same search within 10 minutes answers at once: no Python run, no OpenAI call. Job data changes only when the
+// The same search within 10 minutes answers at once: no Python run, no embedding call. Job data changes only when the
 // backend files are rebuilt, so a short cache never shows stale jobs for long.
 // shortcut: in memory, per server process, emptied on restart; use a shared store if Constela runs on several servers.
 const CACHE_MS = 10 * 60_000;
@@ -51,7 +51,7 @@ export async function POST(request: Request) {
 
   const python = pythonExecutable();
   const args = [
-    "filter_jobs_openai.py",
+    "filter_jobs.py",
     "--json",
     "--query",
     parsed.query,

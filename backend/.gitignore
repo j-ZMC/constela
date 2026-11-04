@@ -29,7 +29,7 @@ resume_parser.py/resumes/
 data/processed/*
 *.ipynb_checkpoints/
 # Kept in git: what the job search reads at run time, so a fresh clone searches without rebuilding anything.
-# The vectors were computed on this computer with Qwen3-Embedding-0.6B (pretokenize_openai.py).
+# The vectors were computed on this computer with Qwen3-Embedding-0.6B (embed_jobs.py).
 !data/processed/embeddings/
 data/processed/embeddings/*
 !data/processed/embeddings/*_qwen3_embeddings.npy
@@ -41,8 +41,6 @@ data/processed/embeddings/*
 !data/reference/company_data/company_sizes.json
 *.ipynb_checkpoints/
 
-# Keep the OpenAI filter; ignore the legacy local-model filter.
-/filter_jobs.py
 
 # OS / editor
 .vscode/
