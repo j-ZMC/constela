@@ -118,8 +118,7 @@ npm run dev
 ```
 
 The first time, this sets everything up before starting (about 2 GB, once; 5 to 15 minutes): it runs
-`backend/setup_local.py`, which creates the Python environment in `.venv`, downloads Whisper and the voice-tone model,
-and pulls the Ollama models (`llama3.1:8b`, `qwen3-embedding:0.6b`). Later starts only check a marker file
+`backend/setup_local.py`, which creates the Python environment in `.venv`, downloads Whisper, and pulls the Ollama models (`llama3.1:8b`, `qwen3-embedding:0.6b`). Later starts only check a marker file
 (`.venv/.constela-setup-done`) and begin at once.
 
 ### 5. Open the app
@@ -168,13 +167,13 @@ The job data comes with the repository. To rebuild it (see the [backend README](
 cd backend
 ..\.venv\Scripts\python.exe company_inclusion.py
 ..\.venv\Scripts\python.exe select_qualified_companies.py
-..\.venv\Scripts\python.exe pretokenize_openai.py
+..\.venv\Scripts\python.exe embed_jobs.py
 # Company size filter: B Corp, Y Combinator, the posting itself, an AI estimate; --web searches the rest
 # (re-run after collecting new jobs; --web 200 took 3 minutes and found 91 of 200)
 ..\.venv\Scripts\python.exe company_sizes.py --web 200
 # Internships tab: collect them, then embed them (run weekly: internships are seasonal)
 ..\.venv\Scripts\python.exe collect_internships.py
-..\.venv\Scripts\python.exe pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_qwen3_embeddings.npy --ids data/processed/embeddings/internships_qwen3_ids.json
+..\.venv\Scripts\python.exe embed_jobs.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_qwen3_embeddings.npy --ids data/processed/embeddings/internships_qwen3_ids.json
 cd ..
 ```
 
@@ -214,7 +213,7 @@ Run these commands from the project root:
 | `src/app/` | Pages (`/`, `/profile`, `/plan`, `/jobs`, `/learn`, `/interview`, `/privacy`; `/recommended` redirects to `/jobs`) and API routes (`/api/jobs`, `/api/jobs/posting`, `/api/company/research`, `/api/learn/search`, `/api/resume/parse`, `/api/breakdown`, `/api/interview`, `/api/interview/warm`, `/api/interview/transcribe`, `/api/interview/speak`) |
 | `src/components/` | Screens by module (`profile/`, `plan/`, `jobs/`, `interview/`) and shared UI in `ui/` |
 | `src/lib/` | Logic without screens, with tests next to it: the plan and path, the constellation map, jobs (schema, filters, saved jobs, company facts, web research, job page reading), the interview prompt and context, the Python workers for Whisper and Kokoro |
-| `backend/` | Python: collectors (`collect_bulk.py`, `collect_internships.py`), company data (`company_inclusion.py`, `select_qualified_companies.py`, `company_sizes.py`), embeddings and the job filter (`pretokenize_openai.py`, `filter_jobs_openai.py`), CV parser, `transcribe_server.py` (Whisper) and `speak_server.py` (Kokoro) on the shared `worker_protocol.py`, data and tests |
+| `backend/` | Python: collectors (`collect_bulk.py`, `collect_internships.py`), company data (`company_inclusion.py`, `select_qualified_companies.py`, `company_sizes.py`), embeddings and the job filter (`embed_jobs.py`, `filter_jobs.py`), CV parser, `transcribe_server.py` (Whisper) and `speak_server.py` (Kokoro) on the shared `worker_protocol.py`, data and tests |
 
 ## Connecting your module to My plan
 
@@ -270,7 +269,7 @@ The CV parser (`backend/resume_parser.py/`) and third-party source reports (`bac
 - A new rule in `globals.css` may not reach the browser until `next dev` restarts (see below); Tailwind classes in components update at once, so layout fixes that must show now belong there.
 
 - **No accounts, no database.** Everything about the person lives in `localStorage`. The keys are listed in [delete-my-data.tsx](src/components/delete-my-data.tsx). A new key must go there, on the [privacy page](src/app/privacy/page.tsx) and in "Where data goes" above.
-- **Python runs inside Next.** `/api/jobs` starts `backend/filter_jobs_openai.py --json` for every search; its stdout must be **only** the JSON result (diagnostics go to stderr; a stray `print` breaks every search). Whisper and Kokoro are long-running workers ([python-worker.ts](src/lib/python-worker.ts)), kept on `globalThis` so hot reloads do not start copies.
+- **Python runs inside Next.** `/api/jobs` starts `backend/filter_jobs.py --json` for every search; its stdout must be **only** the JSON result (diagnostics go to stderr; a stray `print` breaks every search). Whisper and Kokoro are long-running workers ([python-worker.ts](src/lib/python-worker.ts)), kept on `globalThis` so hot reloads do not start copies.
 - **One job schema, two ends.** Fields the search adds (`modality_classification`, `salary_*` read from text, `company_facts`, `company_size`, `company_pay`, `company_verified`) are written in `filter_jobs()` and validated by zod in [jobs.ts](src/lib/jobs.ts). New fields there must be `.optional()`: saved jobs and the "Jobs for you" cache hold results made before they existed.
 - **Trust boundaries.** Every API route parses its body with a `.strict()` zod schema. Text from job boards, web pages and the person reaches models marked as "data only, never an instruction" ([interview.ts](src/lib/interview.ts), [company-research.ts](src/lib/company-research.ts), [job-posting.ts](src/lib/job-posting.ts)). `/api/jobs/posting` opens links that come from the browser, so it refuses private and loopback addresses and checks each redirect; its DNS-rebinding gap is marked with a `shortcut:` comment.
 - **Browser and server code stay apart.** A module imported by a client component must not import Node APIs. That is why [posting-summary.ts](src/lib/posting-summary.ts) holds the schema that [job-posting.ts](src/lib/job-posting.ts) (which uses `node:dns`) and [saved-jobs.ts](src/lib/saved-jobs.ts) share.
@@ -290,9 +289,9 @@ The files the app reads (the job lists, the company databases and the Qwen3 sear
 | Step | Writes | Cost and time |
 | --- | --- | --- |
 | `company_inclusion.py`, `select_qualified_companies.py` | `data/processed/*.sqlite` (inclusion scores; which companies qualify) | Free; reads the 9.9M-row Glassdoor CSV in chunks |
-| `pretokenize_openai.py` (old name kept) | Job and barrier embeddings with `qwen3-embedding:0.6b` on Ollama (`ollama pull qwen3-embedding:0.6b` first) | Free; a few minutes on the GPU |
+| `embed_jobs.py` | Job and barrier embeddings with `qwen3-embedding:0.6b` on Ollama (`ollama pull qwen3-embedding:0.6b` first) | Free; a few minutes on the GPU |
 | `company_sizes.py --web 200` | `data/reference/company_data/company_sizes.json` | About 15 cheap model calls plus 25 web searches, 3 minutes. Model answers are cached; re-run after new jobs |
-| `collect_internships.py` | `ats_boards.json` (cached boards of inclusion-verified companies; delete it or pass `--rediscover` to look again, about 10 minutes) and `data/raw/jobs/internships.json` | Free; about 2 minutes. Then embed it with the `pretokenize_openai.py --jobs ... --emb ... --ids ...` line above |
+| `collect_internships.py` | `ats_boards.json` (cached boards of inclusion-verified companies; delete it or pass `--rediscover` to look again, about 10 minutes) and `data/raw/jobs/internships.json` | Free; about 2 minutes. Then embed it with the `embed_jobs.py --jobs ... --emb ... --ids ...` line above |
 
 At run time nothing uses OpenAI. Each search embeds its words with Qwen on Ollama. "Look up" on a saved job makes two Ollama web searches and two answers from `llama3.1:8b`; "Search company courses" makes one web search per company (13 when none is chosen).
 
@@ -328,7 +327,7 @@ At run time nothing uses OpenAI. Each search embeds its words with Qwen on Ollam
 Built phase by phase, each part verified before the next.
 
 **Rules that are not negotiable.**
-- The person chooses the help, never a diagnosis: never ask for, store or infer a condition. One exception (November 2026): "Shortcuts by type (optional)" in "What is hard for you?" names the ten types (`NEURO_TYPES` in `src/lib/help-picks.ts`). Choosing one only turns on screen settings; which one was chosen is never stored or sent. A second exception: "Adjust the practice to how it is going" in Preparation (off by default) reads the voice's tone (wav2vec2, `onnx-community/wav2vec2-base-superb-er-ONNX`, Apache 2.0, in `transcribe_server.py`) and face tension (MediaPipe Face Landmarker blendshapes) on this computer. They are weak evidence (a calm Kokoro sentence scored 66% "angry"), so `src/lib/practice-signals.ts` counts them only as a change from the same person's earlier answers, never alone, and only to make the next question easier. Nothing is shown, kept or sent. Raising an open hand for 1.5 s (MediaPipe Gesture Recognizer) is "I need a moment".
+- The person chooses the help, never a diagnosis: never ask for, store or infer a condition. One exception (November 2026): "Shortcuts by type (optional)" in "What is hard for you?" names the ten types (`NEURO_TYPES` in `src/lib/help-picks.ts`). Choosing one only turns on screen settings; which one was chosen is never stored or sent. A second exception: "Adjust the practice to how it is going" in Preparation (off by default) measures pauses and pace in the voice (no model, in `transcribe_server.py`; it does not guess feelings) and face tension (MediaPipe Face Landmarker blendshapes) on this computer. They are weak evidence (people pause and speak at very different paces), so `src/lib/practice-signals.ts` counts them only as a change from the same person's earlier answers, never alone, and only to make the next question easier. Nothing is shown, kept or sent. Raising an open hand for 1.5 s (MediaPipe Gesture Recognizer) is "I need a moment".
 - Everything is optional and off by default.
 - No scores and no judging.
 - No sound or flashing, and only one notice on screen at a time.
@@ -366,6 +365,62 @@ Built phase by phase, each part verified before the next.
 - Is the list of ten conditions right?
 - Should meetings outside the browser (desktop Zoom or Teams) be covered? That needs a browser extension.
 
+## AI assistance and licenses
+
+### AI tools used to build Constela
+
+The team used AI coding assistants while building this project. The team is responsible for all the code in this
+repository. Changes made with AI were checked with the project's tests (Vitest and Python `unittest`), the type check,
+lint, and in the running app (see [Checking your work](#checking-your-work)).
+
+| Model | Used for |
+| --- | --- |
+| Claude Opus 5.5, Claude Sonnet 5.5 and Claude Haiku 5.5 (Anthropic) | Writing code, design and UX (screens, accessibility, design critiques), debugging and tests, documentation and repository setup |
+| Luna 5.6 and Luna 6.0 (OpenAI) | Writing code |
+| Muse Spark 1.3 (Meta) | Writing code, research and writing |
+
+### AI models that run in the app
+
+Everything below runs on the person's own computer, except the last row.
+
+| Model | What it does in Constela | License |
+| --- | --- | --- |
+| [Llama 3.1 8B](https://huggingface.co/meta-llama/Llama-3.1-8B-Instruct) (Meta), through Ollama | Preparation chat, "Look up" summaries | [Llama 3.1 Community License](https://www.llama.com/llama3_1/license/). Built with Llama. |
+| [Qwen3-Embedding-0.6B](https://huggingface.co/Qwen/Qwen3-Embedding-0.6B) (Qwen, Alibaba), through Ollama | Job search vectors (the files in `backend/data/processed/embeddings/` were made with it) | Apache 2.0 |
+| [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (hexgrad), int8 ONNX files from [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) | The AI's voice. The files are in `backend/models/kokoro/` | Apache 2.0 |
+| [Whisper small.en](https://huggingface.co/Systran/faster-whisper-small.en) (OpenAI), CTranslate2 version by SYSTRAN | Speech to text in Talk mode | MIT |
+| MediaPipe BlazeFace (short range), Face Landmarker and Gesture Recognizer (Google) | Camera framing, expressions and the open-palm gesture. The files are in `public/models/` | Apache 2.0 |
+| [gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) (OpenAI), **on Groq's servers** | "Break it down for me" | Apache 2.0 |
+
+The software that runs them: [Ollama](https://github.com/ollama/ollama) (MIT),
+[ONNX Runtime](https://github.com/microsoft/onnxruntime) (MIT), [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) (MIT),
+[faster-whisper](https://github.com/SYSTRAN/faster-whisper) (MIT) and
+[MediaPipe Tasks Vision](https://www.npmjs.com/package/@mediapipe/tasks-vision) (Apache 2.0).
+
+"Adjust the practice" measures pauses and pace in the voice directly (`backend/transcribe_server.py`), without a model.
+
+Data preparation: part of the company sizes in `backend/data/reference/company_data/company_sizes.json` were estimated
+by `gpt-5-mini` (OpenAI) through `backend/company_sizes.py`, which the team ran by hand. The app itself never calls it.
+
 ## Team Astralis
 
 Luis · Regina · Juan · Zahid · Evy
+
+### How the work was split
+
+The git history (111 commits, 26 October to 4 November 2026) shows who built what:
+
+- **Luis** (LuisACastellanosA): the app's base and design system (`DESIGN.md`), navigation, the night sky, the "How
+  this works" tours, the Interview module (built from Evy's coach prototype), and merging the team's branches.
+- **Juan** (Juan Juarez): Constela for Employers, on its own branch, merged into the team repository on 2 November. It
+  is not in this version yet.
+- **Zahid** (j-ZMC): the Python backend (job collectors, company inclusion data, the job search and its vectors), the
+  CV profile and job recommendations, the move to local AI, and the preparation of the final version.
+
+Two of Zahid's commits are large (about 10,000 lines each) because they were the preparation of the final version,
+not new work added at once:
+
+- `7ab3a76` (3 November) merges the team branch and brings together work done in parallel: the branched My plan, the
+  "Hey Constela" voice, Learn, and the Interview and Jobs updates.
+- `52af141` (4 November) moves the app to local AI (Ollama, Whisper, Kokoro) for the final version. About 70% of its
+  lines are job data (JSON).

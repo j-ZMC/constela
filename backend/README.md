@@ -1,59 +1,60 @@
 # Constela backend
 
-The Python side of Constela: job collectors, company inclusion data, the job filter on local embeddings, and the voice
-workers (Whisper and Kokoro). The Next.js app runs these scripts itself; see the main [README](../README.md) to set up.
+The Python side of Constela: job collectors, company inclusion data, the job search on local embeddings, and the voice
+workers (Whisper and Kokoro). The Next.js app runs these scripts itself; there is no separate backend server. See the
+main [README](../README.md) to set up.
 
-## 1. What this project is — and WHY
+## 1. What it is for
 
-Job board + NLP filter as the backend for an **app that helps neurodivergent
-people find work** (autism, ADHD, dyslexia, etc.). Job portals are hostile to
-them: vague postings, hidden sensory/social load, unstructured interviews.
+Job portals are hard to use for neurodivergent people: vague postings, hidden sensory and social load, unstructured
+interviews. The backend does what general job boards do not:
 
-The NLP must do what OCC/LinkedIn never will:
-- **Extract what matters:** async vs calls, remote vs open office, clear vs
-  vague tasks, fixed vs flexible schedule, selection process type.
-- **Translate to plain language:** "rockstar self-starter" -> actual tasks.
-- **Block/flag:** user-blocked words AND semantic blocking (embeddings catch
-  "cold calling" when user blocked "phone calls"). Strike-through display
-  with reason tooltip.
-- **Reduce overload:** top-N explained results, never infinite lists.
-- **Company inclusion score:** Glassdoor Diversity & Inclusion rating joined
-  to each vacancy (see §7).
+- **Find what matters in a posting:** remote or in person, pay, company size, and whether the company has an inclusion
+  signal.
+- **Flag conditions the person chose to avoid:** semantic matching, so "cold calling" is caught when the person chose
+  "phone calls". Flagged jobs are shown apart, with the reason.
+- **Reduce overload:** the closest matches first, never an endless list.
 
-Pipeline: `[sources] -> [collect_bulk.py] -> [jobs_*.json] -> [pretokenize.py or pretokenize_openai.py]
--> [filter_jobs.py or filter_jobs_openai.py] -> [ranked + blocked + scored jobs]`
+Pipeline:
 
-## 2. Repository layout
+```
+collect_bulk.py ─> data/raw/jobs/*.json ─> embed_jobs.py (Qwen3-Embedding-0.6B on Ollama) ─> vectors in data/processed/embeddings/
+company_inclusion.py ─> select_qualified_companies.py ─> data/processed/*.sqlite
+                                      └──────────────> filter_jobs.py (one run per search, from /api/jobs) ─> jobs + flagged jobs
+```
+
+Everything runs on this computer. The only script that calls an online AI is `company_sizes.py` (OpenAI `gpt-5-mini`),
+which the team ran by hand; its answers are stored in `company_sizes.json` and the app never calls it.
+
+## 2. Files
 
 | Path | Purpose |
-|------|---------|
-| `collect_bulk.py` | Main collector for 15+ sources; writes job data under `data/raw/jobs/` by default. |
-| `pretokenize_openai.py` | Uses `text-embedding-3-small` to cache job and barrier-subtype vectors for the cleaned USA backup dataset. |
-| `filter_jobs_openai.py` | Filters from cached job/barrier vectors, embeds each search query with OpenAI, and excludes known non-qualifying companies using the two inclusion SQLite databases. |
-| `data/raw/jobs/jobs_usa_full_backup_cleaned.json` | Cleaned copy of `jobs_usa_full_backup.json`; empty descriptions removed and HTML cleaned. The backup source remains unchanged. |
-| `01_test.ipynb` | Embedding experiments. Kept in the root so existing workspace-relative paths continue to work. |
-| `02_test.ipynb` | Original exploratory inclusion-score notebook; retained as a reference. |
-| `company_inclusion.py` | Reproducible company-matching pipeline; compares both Glassdoor datasets and writes source-specific company scores to `data/processed/company_inclusion.sqlite` (`matched_companies` table). |
-| `select_qualified_companies.py` | Exports employers meeting the Glassdoor threshold or matching another inclusion source, plus related jobs, to `data/processed/qualified_company_jobs.sqlite` (`selected_companies` and `related_jobs` tables). |
-| `collect_internships.py` | Finds which inclusion-verified companies (same sources as `company_inclusion.py`) publish a Greenhouse, Lever or Ashby board, caches them in `data/reference/company_data/ats_boards.json`, and writes only their internships to `data/raw/jobs/internships.json`. |
-| `company_sizes.py` | Writes `data/reference/company_data/company_sizes.json` (small / medium / large per company) for the app's size filter. Sources, best first: B Corp's size band, Y Combinator's `team_size` (yc-oss), the size a company's own posting states, a `gpt-5-mini` estimate, and with `--web N` a web search for the N unknown companies with most jobs. Model answers are cached; `--redo` asks again. |
-| `requirements.txt` | Direct third-party Python dependencies used by the project scripts. |
-| `config/neurodivergence_job_barriers.json` | User-selected job-environment barrier terms and subtypes. |
-| `data/raw/jobs/` | USA and Mexico job datasets. |
-| `data/raw/research/` | LinkedIn dataset used for embedding experiments. |
-| `data/raw/glassdoor/legacy/` | Older UK Glassdoor dataset. |
-| `data/raw/glassdoor/current/` | Current Glassdoor reviews dataset (large; use `usecols` and `low_memory=False`). |
-| `data/reference/company_data/` | B Corp and DEI reference JSON files. |
-| `data/reference/source_docs/Temp_data/` | Source reports and reference documents formerly in `Temp_data/`. |
-| `data/processed/embeddings/` | Cached USA job embeddings and URL index; includes the OpenAI cache for `jobs_usa_full_backup_cleaned.json`. |
-| `.vscode/` | Workspace Python environment settings. |
-| `__pycache__/` | Existing generated Python cache; left untouched. |
+| --- | --- |
+| `collect_bulk.py` | Collects jobs from 15+ sources into `data/raw/jobs/`. |
+| `collect_internships.py` | Finds which inclusion-verified companies publish a Greenhouse, Lever or Ashby board, caches them in `data/reference/company_data/ats_boards.json`, and writes their internships to `data/raw/jobs/internships.json`. |
+| `company_inclusion.py` | Matches employers against Glassdoor (two datasets), B Corp and DEI lists; writes `data/processed/company_inclusion.sqlite`. |
+| `select_qualified_companies.py` | Keeps the employers that meet the inclusion bar, and their jobs: `data/processed/qualified_company_jobs.sqlite`. |
+| `company_sizes.py` | Small / medium / large per company for the size filter (`data/reference/company_data/company_sizes.json`). Sources, best first: B Corp size band, Y Combinator `team_size`, the size the posting states, a `gpt-5-mini` estimate, and with `--web N` a web search for the N unknown companies with the most jobs. Needs `OPENAI_API_KEY`. |
+| `embed_jobs.py` | Vectors for every job and every selectable workplace condition, with `qwen3-embedding:0.6b` on Ollama. |
+| `filter_jobs.py` | One search: embeds the search words, ranks jobs, flags the conditions the person chose, adds pay, work mode and company facts. `--json` prints the result for `/api/jobs`. |
+| `transcribe_server.py` | Whisper speech to text, plus the pauses and pace of an answer (no model) for "Adjust the practice". |
+| `speak_server.py` | The AI's voice with Kokoro-82M (the model is in `models/kokoro/`). |
+| `worker_protocol.py` | The JSON-lines protocol the two voice workers share with Next.js. |
+| `setup_local.py` | One-command setup: `.venv`, Python packages, Whisper and the Ollama models. |
+| `config/neurodivergence_job_barriers.json` | The workplace conditions a person can choose, with example wording from job ads. |
+| `user_barriers.html` | A standalone prototype of the conditions picker (see section 7). |
+| `test_*.py` | Tests: `..\.venv\Scripts\python.exe -m unittest discover -p "test_*.py"`. |
+
+What the app reads at run time is in git: the job files in `data/raw/jobs/`, the two SQLite databases, the Qwen3
+vectors and `company_sizes.json`. The Glassdoor datasets (`data/raw/glassdoor/`), research data (`data/raw/research/`)
+and source reports (`data/reference/source_docs/`) are large third-party files kept out of git; they are only needed to
+rebuild the company databases.
 
 ## 3. Environment
 
-Python 3.12 in a `.venv` at the project root, with `backend/requirements.txt`. Embeddings come from Ollama
-(`qwen3-embedding:0.6b`) on the same computer; an NVIDIA GPU makes Whisper and Ollama faster but is not required.
-Collectors use the standard library (`urllib`).
+Python 3.10 or newer in `.venv` at the project root, with `requirements.txt` (`npm run setup` does it). Embeddings come
+from Ollama (`qwen3-embedding:0.6b`) on the same computer; no API key. An NVIDIA GPU makes Whisper and Ollama faster
+but is not required. Collectors use the standard library (`urllib`).
 
 ## 4. Job schema (all English keys)
 
@@ -67,242 +68,97 @@ Collectors use the standard library (`urllib`).
 }
 ```
 
-Talenteca REMOVED (descriptions too short for NLP). Dice list descriptions
-are salary-only; `collect_dice` has detail-fetch mode (`--dice-details`)
-extracting real descriptions via `jobDescription...` pattern.
-
 ## 5. Collector sources (`collect_bulk.py`)
 
-USA (rich descriptions): `greenhouse` (34 verified boards), `ashby` (45),
-`lever` (only `spotify` alive), `usajobs` (needs `USAJOBS_KEY` env var),
-`dice` (optional `DICE_API_KEY` env var; +details mode), `yc` (yc-oss + ATS resolve + SSR fallback),
-`ziprss` (may hit Cloudflare).
-Remote/global: `remoteok` (?tag=), `remotive`, `workingnomads`, `wwr`.
-Mexico in-person: `computrabajo`, `occ`, `bumeran` (paged list+detail,
-company/location extraction, <100char descriptions dropped),
-`getonboard` (18 categories), `empleo-gob`, `linkedin` guest.
-Excluded: Torre 401, Talenteca (removed), Wellfound/ZipRecruiter/Indeed
-(need Playwright), JSearch (needs paid key).
+USA (rich descriptions): `greenhouse` (34 verified boards), `ashby` (45), `lever` (only `spotify` alive), `usajobs`
+(needs `USAJOBS_KEY`), `dice` (optional `DICE_API_KEY`; `--dice-details` reads the full description), `yc` (yc-oss +
+ATS resolve + SSR fallback), `ziprss` (may hit Cloudflare).
+Remote/global: `remoteok`, `remotive`, `workingnomads`, `wwr`.
+Mexico in person: `computrabajo`, `occ`, `bumeran`, `getonboard` (18 categories), `empleo-gob`, `linkedin` guest.
+Not used: Torre (401), Talenteca (descriptions too short), Wellfound / ZipRecruiter / Indeed (need Playwright), JSearch
+(paid key).
 
-Known bugs already fixed (do NOT reintroduce):
-- Indentation: item-building MUST stay inside `for job in jobs`.
-- `print/page += 1` MUST stay inside `while`.
-- `return collected` MUST stay outside `for category`.
-- `model.encode(str)` iterates chars — always pass a list.
-- Tensors for `similarity()` MUST share device (all CUDA).
+Bugs already fixed in the collectors (do not reintroduce): item building stays inside `for job in jobs`; `page += 1`
+stays inside `while`; `return collected` stays outside `for category`.
 
-## 6. Semantic filter (current state)
+## 6. Job search with Qwen3-Embedding-0.6B
 
-- Model: `Qwen/Qwen3-Embedding-0.6B`, `device="cuda"`, fp16. 8B does NOT fit
-  8GB VRAM (OOM); 8-bit path unsupported by sentence-transformers here.
-- Affinity: English-only long query (flexible, written instructions,
-  structured tasks, accommodations...), threshold `> 0.4` (was 0.35).
-- Block dict, 8 categories, all-English keys (`social_overload`,
-  `ambiguity`, `sensory`, `inflexibility`, `sales_pressure`,
-  `exclusionary_hiring`, `physical_demand`, `financial_risk`), threshold 0.6.
-- Pattern: `prompt_name="query"` for queries/blocks, docs plain;
-  `similarity[0][0].item()` before `>` and f-strings; loop index from `-1`.
-- User demands NO batching. Cached embeddings via `pretokenize.ensure_embeddings`
-  + `emb_by_url` dict; missing URLs encoded live on same device.
-
-### Embedding workflow (Qwen3-Embedding-0.6B on Ollama)
-
-> November 2026: the scripts keep their `_openai` names, but they now use `qwen3-embedding:0.6b` through Ollama on
-> this computer (`ollama pull qwen3-embedding:0.6b`; no API key). Caches are `*_qwen3_*`; vectors have 1024 numbers.
-> Searches and barrier texts get a one-line task in front (`QUERY_TASK`, `BARRIER_TASK`); job descriptions do not.
-> Where the text below says OpenAI or `OPENAI_API_KEY`, read Ollama.
-
-- Both scripts read `data/raw/jobs/jobs_usa_full_backup_cleaned.json` by default
-  and print the path at startup. `--jobs` overrides this path.
-- The cleaned file was derived from `jobs_usa_full_backup.json`: empty
-  descriptions were removed and HTML was cleaned; the original backup was not
-  modified.
-- Set `OPENAI_API_KEY` in the environment, then run:
-
-  ```powershell
-  python pretokenize_openai.py
-  python filter_jobs_openai.py --query "remote data analyst"
-  ```
-
-- `pretokenize_openai.py` creates job vectors and vectors for every selectable
-  barrier subtype in `config/neurodivergence_job_barriers.json`.
-  Job caches use `usa_full_backup_cleaned_openai_*` names so they do not mix
-  with embeddings for other job files. `--rebuild` recomputes the caches and
-  makes API requests.
-- `filter_jobs_openai.py` treats the search-bar text as the similarity query
-  and embeds it with one OpenAI API request per search. Quiz answers are passed
-  as selected barrier IDs such as `autism_spectrum:sensory_load`; only those
-  barrier subtypes can block results. Passing no IDs applies no personal
-  blockers. The quiz/UI layer should store and send the IDs the user selects;
-  category names are not inferred from a diagnosis.
-- Its `filter_jobs()` function returns a JSON-ready dictionary with unblocked
-  `jobs`, separate `blocked_jobs` (including selected barrier reasons), and a
-  `summary` for web-backend integration. The CLI prints only unblocked jobs and
-reports the number of blocked similar jobs. Use `--json` to print the full
-result as JSON for integrations. Each job has `company_verified`
-  (`true` only when its normalized company key is in `selected_companies`) and
-  `company_verification_status` (`qualified`, `not_qualified`, or `unknown`).
-  By default, known non-qualified companies are excluded before results are
-  returned; unmatched companies remain eligible as `unknown`.
-- `SIMILARITY_THRESHOLD` is a standard-deviation multiplier above the mean
-  similarity (`2.0` by default): the cutoff is `mean + 2 * standard_deviation`.
-  `BLOCKED_THRESHOLD` is currently `0.35` (Qwen3 vectors).
+- **Model:** `qwen3-embedding:0.6b` through Ollama (`ollama pull qwen3-embedding:0.6b`), vectors of 1,024 numbers.
+  Searches and condition texts get a one-line task in front (`QUERY_TASK`, `BARRIER_TASK` in `embed_jobs.py`); job
+  descriptions go in plain.
+- **Caches:** `data/processed/embeddings/*_qwen3_*`. `embed_jobs.py` reuses the job vectors when they are current and
+  refreshes the condition vectors; `--rebuild` recomputes everything (a few minutes on the GPU).
+- **Matching:** a job matches when its similarity to the search is `SIMILARITY_THRESHOLD` (2.0) standard deviations
+  above the mean, so the cutoff adapts to each search.
+- **Conditions:** the person's choices arrive as IDs such as `autism_spectrum:sensory_load`; only those can flag a job,
+  at `BLOCKED_THRESHOLD` (0.35). Words the person types (`--custom-blocker=...`) match whole words. Nothing is inferred
+  from a diagnosis.
+- **Companies:** each job gets `company_verified` (in `selected_companies`) and `company_verification_status`
+  (`qualified`, `not_qualified` or `unknown`). Known non-qualified companies are left out; unmatched ones stay as
+  `unknown`.
+- **Output:** `filter_jobs()` returns `jobs`, `blocked_jobs` (with the reasons) and a `summary`. With `--json` the
+  script prints only that result to stdout; diagnostics go to stderr, because `/api/jobs` parses stdout.
 
 ## 7. Company inclusion matching (`company_inclusion.py`)
 
-- Compares `data/raw/glassdoor/current/all_reviews.csv` (9.9M rows; process
-  by chunks) and `data/raw/glassdoor/legacy/glassdoor_reviews.csv`.
-- Current dataset fields: `firm_link` and `Diversity & Inclusion`; legacy
-  fields: `firm` and `diversity_inclusion`. Scores are stored separately in
-  SQLite so the two populations are not silently blended.
-- Normalizes employer names, aggregates scores with at least 10 ratings per
-  dataset, and joins the Glassdoor, B Corp, and DEI reference sources.
-- Matched companies are saved to `data/processed/company_inclusion.sqlite`,
-  table `matched_companies`; unmatched employers are not labeled as bad.
-- `select_qualified_companies.py` writes qualifying employers to
-  `data/processed/qualified_company_jobs.sqlite`, table `selected_companies`;
-  qualification requires Glassdoor D&I >= 3.7 in either dataset or a positive
-  non-Glassdoor match. The OpenAI filter excludes only companies present in
-  `matched_companies` but absent from `selected_companies`; unmatched employers
-  remain eligible as unknown.
-- Glassdoor scores are review-based signals, not verified measures of
-  neurodivergent workplace accessibility.
+- Compares `data/raw/glassdoor/current/all_reviews.csv` (9.9M rows, read in chunks) and
+  `data/raw/glassdoor/legacy/glassdoor_reviews.csv`. Scores from the two are stored apart, not blended.
+- Normalizes employer names, keeps scores with at least 10 ratings, and joins the Glassdoor, B Corp and DEI sources into
+  `matched_companies`; unmatched employers are not labeled as bad.
+- `select_qualified_companies.py` keeps employers with Glassdoor D&I >= 3.7 in either dataset or a positive
+  non-Glassdoor match (`selected_companies`). The job search leaves out only companies in `matched_companies` that are
+  not in `selected_companies`.
+- Glassdoor scores are review-based signals, not verified measures of neurodivergent workplace accessibility.
 
-## 8. Open tasks
+## 8. The conditions picker prototype (`user_barriers.html`)
 
-1. Grow USA coverage (more Greenhouse/Ashby boards, Dice+details at scale).
-2. Fuzzy company match to raise inclusion coverage above 8%.
-3. Tune affinity/block thresholds against real jobs.
-4. Per-sentence (not per-doc) blocking for precise strike-through.
-5. Build the app: profile per neurotype, top-N explained ranking,
-   strike-through rendering, save/compare-later, company flags.
-6. Optional: Torre 401 fix, Playwright sources, DEI list as second signal.
+A standalone page to choose workplace conditions from `config/neurodivergence_job_barriers.json`. It is a preference
+picker, not a diagnostic quiz: people can skip it or choose across groups. It emits a `barriers-selected` event with
+IDs such as `autism_spectrum:sensory_load`. The app's own picker is in Profile, Job conditions.
 
-## 9. User barrier selection demo
+`candidate_terms_en` holds wording variants from job ads ("customer-facing role", "rotating shifts"). They are signals
+for the embeddings, not keywords that must appear. After changing them, run `embed_jobs.py` to refresh the condition
+vectors.
 
-- `user_barriers.html` is a standalone English UI prototype for selecting
-  one or more job-environment barrier subtypes from
-  `config/neurodivergence_job_barriers.json`. It is a preference selector, not
-  a diagnostic quiz; users can skip it or select options across categories.
-- The page loads the JSON dynamically, shows example vacancy terms, and emits
-  a `barriers-selected` browser event with `detail.user_blockers`, using IDs
-  such as `autism_spectrum:sensory_load`. It also displays a JSON preview that
-  can be connected to the user's profile and passed to `filter_jobs()`.
-- To preview it, start a local web server from the project root and open
-  `http://localhost:8000/user_barriers.html`:
+To preview it: `python -m http.server 8000` from `backend/`, then open `http://localhost:8000/user_barriers.html`.
 
-  ```powershell
-  python -m http.server 8000
-  ```
+## 9. Running the scripts
 
-- The catalog has 11 groups, but “neurodivergence” does not have one universally
-  agreed list of exactly 11 diagnoses. Sensory preferences, giftedness, and
-  trauma-related conditions are presented as optional workplace preferences,
-  not as equivalent diagnoses.
-- `candidate_terms_en` includes related wording variants modeled on job-ad
-  language (for example, “customer-facing role”, “in-person customer service”,
-  “rotating shifts”, and “varied shifts”). The form displays the full list.
-  These are semantic embedding signals, not literal keywords that must appear
-  in a posting.
-- After changing the catalog terms, refresh the barrier vectors with
-  `python pretokenize_openai.py`. This updates the barrier cache; the job cache
-  is reused when it is already current.
-
-## 10. Running scripts from the terminal
-
-Run these commands in PowerShell from the project root. Activate the Python
-environment you use for this project first.
-
-The Next.js `/api/jobs` route starts `filter_jobs_openai.py` for each search.
-It uses `.venv/Scripts/python.exe` on Windows or `.venv/bin/python` elsewhere;
-set `PYTHON_EXECUTABLE` if the environment is in another location. The worker
-inherits `OPENAI_API_KEY` from the Next.js process.
-
-### Install dependencies and set the OpenAI key
+In PowerShell from `backend/`, with the project's environment (`..\.venv\Scripts\python.exe`, shown as `python` here).
 
 ```powershell
-python -m pip install -r requirements.txt
-$env:OPENAI_API_KEY = "YOUR_OPENAI_API_KEY"
-```
-
-The PowerShell environment variable applies only to the current terminal
-session. Do not commit the API key to the repository.
-
-### Collect a small set of job postings (optional)
-
-```powershell
+# Collect jobs (optional; the repository already has a snapshot)
 python collect_bulk.py --sources greenhouse,ashby --query "data analyst" --limit 100 --out data/raw/jobs/jobs_bulk.json
-```
-
-For Dice collection, set its API key in the current terminal session:
-
-```powershell
-$env:DICE_API_KEY = "YOUR_DICE_API_KEY"
-```
-
-The collector supports other sources and options. Run this to view them:
-
-```powershell
 python collect_bulk.py --help
-```
 
-The collection command writes to the path given by `--out`.
-The OpenAI scripts still use `jobs_usa_full_backup_cleaned.json` by default;
-pass `--jobs data/raw/jobs/jobs_bulk.json` to both OpenAI commands if you want
-to use the file produced by this collector. Use dedicated `--emb` and `--ids`
-paths for a separate job-embedding cache.
-
-### Collect internships from inclusion-verified companies
-
-Needs the company databases below. The first run looks for every company's board (a few minutes; cached
-afterwards, `--rediscover` looks again); later runs only download the boards it found.
-
-```powershell
-python collect_internships.py
-python pretokenize_openai.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_qwen3_embeddings.npy --ids data/processed/embeddings/internships_qwen3_ids.json
-```
-
-Only public board APIs are used. Companies on Workday or their own career sites are not covered yet.
-
-### Prepare company databases
-
-The OpenAI filter requires both company-inclusion SQLite databases. Build them
-once, or skip these commands if the databases are already up to date:
-
-```powershell
+# Company databases (needs the Glassdoor files, which are not in git)
 python company_inclusion.py
 python select_qualified_companies.py
+
+# Vectors, then a search
+python embed_jobs.py
+python filter_jobs.py --query "remote data analyst"
+python filter_jobs.py --query "remote data analyst" --blocker autism_spectrum:sensory_load --blocker adhd:distraction_and_interruptions
+
+# Internships (run weekly: they are seasonal)
+python collect_internships.py
+python embed_jobs.py --jobs data/raw/jobs/internships.json --emb data/processed/embeddings/internships_qwen3_embeddings.npy --ids data/processed/embeddings/internships_qwen3_ids.json
 ```
 
-### Prepare OpenAI embeddings and search jobs
+Both job scripts read `data/raw/jobs/jobs_usa_full_backup_cleaned.json` by default; `--jobs`, `--emb` and `--ids`
+point them at another file and its own vectors. `--help` lists every option.
 
-```powershell
-python pretokenize_openai.py --jobs data/raw/jobs/jobs_usa_full_backup_cleaned.json
-python filter_jobs_openai.py --jobs data/raw/jobs/jobs_usa_full_backup_cleaned.json --query "remote data analyst"
-```
+## 10. History
 
-To apply the selected user blockers, repeat `--blocker` for each subtype ID:
+- The first local filter (`pretokenize.py`, `filter_jobs.py` with PyTorch and sentence-transformers) was replaced by
+  OpenAI `text-embedding-3-small`, and in November 2026 by Qwen3-Embedding-0.6B on Ollama, so the search runs on this
+  computer. The scripts were renamed from `pretokenize_openai.py` and `filter_jobs_openai.py` to `embed_jobs.py` and
+  `filter_jobs.py` when the OpenAI part was gone.
 
-```powershell
-python filter_jobs_openai.py --jobs data/raw/jobs/jobs_usa_full_backup_cleaned.json --query "remote data analyst" --blocker autism_spectrum:sensory_load --blocker adhd:distraction_and_interruptions
-```
+## 11. Open tasks
 
-After changing `config/neurodivergence_job_barriers.json`, run
-`python pretokenize_openai.py` again to refresh its barrier vectors. Use
-`python pretokenize_openai.py --rebuild` only when you intend to recompute all
-job embeddings as well; that makes additional OpenAI API requests. CLI options
-are available with `python pretokenize_openai.py --help` and
-`python filter_jobs_openai.py --help`.
-
-### Old local pipeline
-
-The first local filter (`pretokenize.py`, `filter_jobs.py`, PyTorch and sentence-transformers) was removed in November 2026; the app uses the Ollama pipeline above. It is in git history if needed.
-
-### Preview the user barrier form
-
-```powershell
-python -m http.server 8000
-```
-
-Then open `http://localhost:8000/user_barriers.html` in a browser. Stop the
-server with `Ctrl+C`.
+1. Grow USA coverage (more Greenhouse and Ashby boards, Dice with details at scale).
+2. Fuzzy company matching, to raise inclusion coverage above 8%.
+3. Tune the match and flag thresholds against real jobs.
+4. Flag per sentence instead of per posting, to show exactly which part matched.
+5. Optional: Torre, Playwright sources, the DEI list as a second signal.
