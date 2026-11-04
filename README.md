@@ -51,7 +51,7 @@ Profile answers, job conditions, the parsed CV, the plan and settings are saved 
 | Preparation chat (interview and CV help) | **Ollama, on this computer** | Your choices, job title, the chat (including any part of a CV you paste), and (if allowed) the CV and plan summary |
 | Talk mode, your voice | **Whisper, on this computer** | The recording, deleted right after it is written down |
 | The AI's voice (Talk, Write and listen) | **Kokoro, on this computer** (the browser's voice if Kokoro is not ready) | The reply text, one sentence at a time |
-| CV reading | Constela's server (`backend/resume_parser.py`) | The PDF, which is not saved |
+| CV reading | Constela's server (`backend/resume_parser/`) | The PDF, which is not saved |
 | Job search, Internships | **Ollama, on this computer** (`qwen3-embedding:0.6b`) | The search words; nothing leaves the computer |
 | Jobs for you | **Ollama, on this computer** (`qwen3-embedding:0.6b`) | Skills, sectors, experience and projects from the CV, plus your work preference |
 | Learn, picks for you | **This browser** | Your saved jobs and your CV's skills; nothing is sent |
@@ -261,7 +261,7 @@ Rules every screen follows: Easy Read copy (short sentences, verb first, no excl
 
 Read [DESIGN.md](DESIGN.md) before building a screen, [PERSONALIZATION.md](PERSONALIZATION.md) for Settings, and [backend/README.md](backend/README.md) for the Python side. The UI and the code are in English. Product decisions (two audiences, Easy Read, needs instead of diagnoses) are fixed; change them only with the team.
 
-The CV parser (`backend/resume_parser.py/`) and third-party source reports (`backend/data/reference/source_docs/`) are kept out of git on purpose: the first holds real CVs used for testing, the second is 22 MB of reports the app does not read. A working copy needs its own `backend/resume_parser.py/resume_parser.py` for CV upload.
+The CV parser is in `backend/resume_parser/`. Its hand-test mode saves CVs in `backend/resume_parser/resumes/`, which git ignores: test CVs are real people's data and never go in the repository. Third-party source reports (`backend/data/reference/source_docs/`, 22 MB) are kept out of git too; the app does not read them.
 
 ### How the app is put together
 
@@ -311,6 +311,7 @@ At run time nothing uses OpenAI. Each search embeds its words with Qwen on Ollam
 
 ### Open work
 
+- Planned, may not make the deadline: integrate Juan's Constela for Employers (see [How the work was split](#how-the-work-was-split)). The code is in the history (merge `65203a0`), and it needs to be adapted to the current app, which now runs its AI locally.
 - Not built yet: a finder for proven certifications and their courses, and a country filter for internships. The CV helper exists as a chat in Preparation; the parser still does not read education or certifications, and the helper cannot tailor a CV to a saved job yet.
 - After the move from OpenAI to Ollama (3 to 4 November 2026) everything runs on the local computer except "Break it down for me" (Groq) and the Wikipedia call in "Look up". "Company courses" now searches only the hand-checked list (1 or 2 courses per company), so it is short. The conditions filter (`BLOCKED_THRESHOLD = 0.35`) sets apart about 3.6% of condition-and-job pairs, and every condition flags at least 10 jobs; check it with real people. `company_sizes.py` still uses OpenAI. The old `*_openai_*` caches in `data/processed/embeddings/` can be deleted.
 - Open question: a fresh job JSON with company size and salary, as two files (US jobs, and companies). The open question is whether to re-collect (fresh, recovers pay, 60 to 90 minutes plus new embeddings) or enrich the current file.
@@ -392,6 +393,15 @@ Everything below runs on the person's own computer, except the last row.
 | MediaPipe BlazeFace (short range), Face Landmarker and Gesture Recognizer (Google) | Camera framing, expressions and the open-palm gesture. The files are in `public/models/` | Apache 2.0 |
 | [gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) (OpenAI), **on Groq's servers** | "Break it down for me" | Apache 2.0 |
 
+### Code from other projects
+
+The CV parser's first version was based on [Vbhargav370/resume_parser.py](https://github.com/Vbhargav370/resume_parser.py)
+(pdfplumber and Tkinter). That project has no license, so the parts that came from it (reading the PDF, and finding the
+name, email, phone and projects) were rewritten in November 2026. The taxonomy, skills, sectors, experience, validation
+and the mode the app uses are the team's own.
+
+### Software the models run on
+
 The software that runs them: [Ollama](https://github.com/ollama/ollama) (MIT),
 [ONNX Runtime](https://github.com/microsoft/onnxruntime) (MIT), [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) (MIT),
 [faster-whisper](https://github.com/SYSTRAN/faster-whisper) (MIT) and
@@ -408,14 +418,23 @@ Luis · Regina · Juan · Zahid · Evy
 
 ### How the work was split
 
-The git history (111 commits, 26 October to 4 November 2026) shows who built what:
+The git history (26 October to 4 November 2026) shows who built what:
 
 - **Luis** (LuisACastellanosA): the app's base and design system (`DESIGN.md`), navigation, the night sky, the "How
   this works" tours, the Interview module (built from Evy's coach prototype), and merging the team's branches.
-- **Juan** (Juan Juarez): Constela for Employers, on its own branch, merged into the team repository on 2 November. It
-  is not in this version yet.
+- **Juan** (Juan Juarez): Constela for Employers, the side of the app for companies: vacancies written in clear
+  language, talent search, structured interviews and invitations, and an inclusion seal. He built it on its own branch
+  (30 October to 2 November), and Luis merged it into the team repository on 2 November (`65203a0`); his commits are
+  in this history. We plan to integrate it into this version, but we have not had time yet, and it may not be ready by
+  the deadline. Even so, the team counts Juan's work as part of the project.
 - **Zahid** (j-ZMC): the Python backend (job collectors, company inclusion data, the job search and its vectors), the
   CV profile and job recommendations, the move to local AI, and the preparation of the final version.
+- **Evy**: the first version of the interview coach, a single HTML page (`entrenador1.html`) made for this challenge
+  and shared with the team on WhatsApp on 1 November 2026. Evy is in her first semester and had not used GitHub yet, so
+  her work has no commits of its own. Luis built the Interview module from it the same day (`ff735e8`): practice with
+  feedback ("what went well" and "one thing to try", never a score), AI questions with four standard questions as a
+  fallback, follow-up questions, "How to answer" steps, and options for shorter and gentler feedback. The module later
+  grew into Preparation, which keeps those ideas.
 
 Two of Zahid's commits are large (about 10,000 lines each) because they were the preparation of the final version,
 not new work added at once:
