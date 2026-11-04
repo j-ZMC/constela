@@ -22,6 +22,7 @@ export const DELETED_KEYS = [
   "tour",
   "help-picks",
   "employers",
+  "seal-history",
 ];
 
 // restart: after deleting, open the app fresh at the first form ("What is hard for you?" in the Profile), or at the

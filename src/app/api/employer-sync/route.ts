@@ -1,5 +1,6 @@
-import { MAX_SNAPSHOT_CHARS, publicSnapshotSchema } from "@/lib/public-employer";
+import { EMPTY_SNAPSHOT, MAX_SNAPSHOT_CHARS, publicSnapshotSchema, type PublicSnapshot } from "@/lib/public-employer";
 import { clearSnapshot, writeSnapshot } from "@/lib/public-store";
+import { recordSeals } from "@/lib/seal-log";
 
 // Keeps the public API's copy up to date. A PUT or DELETE from another site needs a preflight, and this route has no
 // CORS headers, so a browser can't call it from anywhere else.
@@ -8,6 +9,9 @@ import { clearSnapshot, writeSnapshot } from "@/lib/public-store";
 const writable = () => process.env.NODE_ENV === "development" || process.env.PUBLIC_API_WRITES === "on";
 
 const fail = (error: string, status: number) => Response.json({ error }, { status });
+
+// The data is saved either way. A change the history misses here is recorded the next time anyone asks about that company.
+const record = (snapshot: PublicSnapshot) => recordSeals(snapshot, new Date()).catch(() => {});
 
 function parse(text: string): unknown {
   try {
@@ -24,6 +28,7 @@ export async function PUT(req: Request) {
   if (!parsed.success) return fail("invalid_input", 400);
   try {
     await writeSnapshot(parsed.data);
+    await record(parsed.data);
     return new Response(null, { status: 204 });
   } catch {
     return fail("failed", 500);
@@ -34,6 +39,7 @@ export async function DELETE() {
   if (!writable()) return fail("not_configured", 503);
   try {
     await clearSnapshot();
+    await record(EMPTY_SNAPSHOT); // the seal ends; the history keeps that it once had one
     return new Response(null, { status: 204 });
   } catch {
     return fail("failed", 500);

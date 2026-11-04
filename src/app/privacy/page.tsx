@@ -16,7 +16,7 @@ export default function PrivacyPage() {
       </PageSky>
       <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-8">
 
-      <Summarized summary="Your saved profile stays in this browser. Searches and optional features send only the data described below. Job posts an employer publishes are public. You can delete saved data below.">
+      <Summarized summary="Your saved profile stays in this browser. Searches and optional features send only the data described below. Job posts an employer publishes are public, and so is the history of their seal. You can delete saved data below.">
       <section className="flex flex-col gap-2">
         <h2 className="flex items-center gap-2 text-xl font-semibold"><HardDrive aria-hidden className="size-6 shrink-0 text-primary" />What we keep, and where</h2>
         <p>Your answers, contact details, parsed CV profile, plan and settings are saved in this browser, on this device. We do not have online accounts or keep your profile data on a server.</p>
@@ -31,6 +31,7 @@ export default function PrivacyPage() {
           <li>Your job and course filters</li>
           <li>Invitations from employers, and your answers</li>
           <li>If you use Constela for Employers: your job posts and interview questions</li>
+          <li>If you check a seal: the size of the public seal history you saw, so we can tell you if it changes</li>
         </ul>
       </section>
 
@@ -108,6 +109,11 @@ export default function PrivacyPage() {
           When an employer publishes a job post, a copy goes to our server, and anyone can read it there. Tools like a browser
           extension use it to show the job post and the seal. The dates of the employer&apos;s answers go too, to work out the seal,
           but never who the answers were for. Unpublishing a job post removes it, and so does deleting your data below.
+        </p>
+        <p>
+          When a company&apos;s seal starts, changes or ends, our server adds the company name, the level and the time to a public
+          history. Nobody can change that history without it showing, so deleting your data does not remove it: the history
+          records that the seal ended. It never holds a person&apos;s name, a candidate or an answer.
         </p>
       </section>
 

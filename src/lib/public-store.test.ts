@@ -74,9 +74,9 @@ describe("the write route", () => {
     expect((await readSnapshot()).vacancies).toEqual([]);
   });
 
-  it("leaves no temporary file behind and stores no level", async () => {
+  it("leaves no temporary file behind, and the copy stores no level", async () => {
     await put();
-    expect(readdirSync(join(folder, ".data"))).toEqual(["public-employer.json"]);
+    expect(readdirSync(join(folder, ".data")).sort()).toEqual(["public-employer.json", "seal-log.jsonl"]);
     const stored = readFileSync(file(), "utf8");
     expect(JSON.parse(stored)).not.toHaveProperty("level");
     expect(stored).not.toContain("bronze");
@@ -109,7 +109,7 @@ describe("the write route", () => {
     expect((await put(JSON.stringify({ vacancies: [], guideRead: false, responses: [] }))).status).toBe(500);
     busy.times = 0;
     expect((await readSnapshot()).vacancies).toHaveLength(1);
-    expect(readdirSync(join(folder, ".data"))).toEqual(["public-employer.json"]);
+    expect(readdirSync(join(folder, ".data")).sort()).toEqual(["public-employer.json", "seal-log.jsonl"]);
   });
 
   it("says so when the server can't save", async () => {
@@ -152,7 +152,7 @@ describe("the public routes", () => {
 
   it("answers the seal of a company, worked out from the stored data", async () => {
     await put();
-    expect(await (await seal("?company=ceiba%20foods")).json()).toEqual({ company: "Ceiba Foods", level: "bronze", vacancyIds: [DEMO_VACANCY.id] });
+    expect(await (await seal("?company=ceiba%20foods")).json()).toEqual({ company: "Ceiba Foods", level: "bronze", vacancyIds: [DEMO_VACANCY.id], token: expect.any(String) });
   });
 
   it("needs a company of a sensible length", async () => {
@@ -164,7 +164,7 @@ describe("the public routes", () => {
   it("treats an unknown company as a normal answer", async () => {
     const res = await seal("?company=Other");
     expect(res.status).toBe(200);
-    expect(await res.json()).toEqual({ company: "Other", level: null, vacancyIds: [] });
+    expect(await res.json()).toEqual({ company: "Other", level: null, vacancyIds: [], token: null });
   });
 
   it("gives the card of a published job post, and not_found for the rest", async () => {

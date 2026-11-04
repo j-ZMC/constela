@@ -12,9 +12,10 @@ import { useHydrated } from "@/lib/use-hydrated";
 // "Turn on this help" is the way in. Later it stays in Profile, What is hard, to change.
 export function FirstRunHelp() {
   const hydrated = useHydrated();
-  // Employers are not the person looking for a job, so Constela for Employers never asks "What is hard for you?".
-  const employers = usePathname().startsWith("/employers");
-  return hydrated && !employers ? <FirstRun /> : null;
+  // Employers are not the person looking for a job, and a seal check is one public page anyone can open from a link, so
+  // neither asks "What is hard for you?" first.
+  const elsewhere = /^\/(employers|seal-check)(\/|$)/.test(usePathname());
+  return hydrated && !elsewhere ? <FirstRun /> : null;
 }
 
 function FirstRun() {

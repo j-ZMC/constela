@@ -90,6 +90,15 @@ function VacancyCard({ vacancy: v, level, needs }: { vacancy: Vacancy; level: Se
               Neuroinclusive seal: {SEAL_NAMES[level]}
             </span>
           )}
+          {level && (
+            <Link
+              href={`/seal-check?company=${encodeURIComponent(v.company)}`}
+              aria-label={`Check this seal: ${v.company}`}
+              className="inline-flex min-h-11 items-center text-sm font-medium underline underline-offset-4"
+            >
+              Check this seal
+            </Link>
+          )}
         </div>
         <h3 className="mt-1 text-lg font-semibold leading-snug">{v.title}</h3>
       </div>

@@ -19,6 +19,7 @@ function Panel() {
   const seal = useSeal(data);
   const next = nextLevel(seal);
   const toDo = seal.checks.filter((c) => c.level === next && !c.met).length;
+  const company = data.vacancies.find((v) => v.status === "published")?.company;
 
   return (
     <div className="flex flex-col gap-6">
@@ -30,6 +31,14 @@ function Panel() {
           {seal.level ? `Neuroinclusive seal: ${SEAL_NAMES[seal.level]}` : "Your Neuroinclusive seal"}
         </h1>
         <p data-detail="extra">It comes from what you do on Constela. It changes as soon as your data does.</p>
+        {seal.level && company && (
+          <p>
+            Constela signs your seal, so anyone can check that it is real.{" "}
+            <Link href={`/seal-check?company=${encodeURIComponent(company)}`} className="inline-flex min-h-11 items-center underline underline-offset-4">
+              Check it like a candidate
+            </Link>
+          </p>
+        )}
         {next && (
           <p>
             {toDo === 1 ? "1 thing" : `${toDo} things`} to do to reach {SEAL_NAMES[next]}.
