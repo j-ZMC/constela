@@ -1,6 +1,6 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
 import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, applyHelp, describeVisual, loadHelpPicks, mergePrefs, saveHelpPicks } from "@/lib/help-picks";
-import { DEFAULT_PREFS, cleanPrefs } from "@/lib/personalization";
+import { DEFAULT_PREFS, PRESETS, cleanPrefs } from "@/lib/personalization";
 import { toAdaptations } from "@/lib/profile";
 
 describe("what is hard: help picks", () => {
@@ -16,7 +16,8 @@ describe("what is hard: help picks", () => {
       offerBreakdownFirst: true,
       headsUpOnChanges: true,
     });
-    expect(prefs).toMatchObject({ calm: true, soft: 2, slowVoice: true, font: "dyslexic", ctlSize: 52, detail: "reduced" });
+    expect(prefs).toMatchObject({ calm: true, slowVoice: true, font: "dyslexic", ctlSize: 52, detail: "reduced", preset: "dark" });
+    expect(prefs.colors?.background).toBe(PRESETS.find((p) => p.id === "dark")!.colors!.background);
   });
 
   it("keeps what the person already chose, and changes nothing without picks", () => {
@@ -35,6 +36,17 @@ describe("what is hard: help picks", () => {
       expect(describeVisual(NEURO_TYPES[id].prefs), id).not.toBe("");
     }
     expect(describeVisual(NEURO_TYPES.dyslexia.prefs)).toBe("An easier-to-read font, bigger text, more space, shorter lines");
+  });
+
+  it("turns the screen dark for light sensitivity, but never over colors the person chose", () => {
+    expect(applyHelp(["screen"], {}, DEFAULT_PREFS).prefs).toMatchObject({ preset: "dark", calm: true });
+    const cream = PRESETS.find((p) => p.id === "cream")!.colors!;
+    expect(applyHelp(["screen"], {}, { ...DEFAULT_PREFS, preset: "cream", colors: cream }).prefs).toMatchObject({ preset: "cream", colors: cream });
+  });
+
+  it("says which kinds of neurodivergence each pick often helps with", () => {
+    for (const h of HELP) expect(h.often.length, h.id).toBeGreaterThan(0);
+    expect(HELP.find((h) => h.id === "reading")!.often).toContain("dyslexia");
   });
 
   it("joins settings so the stronger one wins, and adding help never takes any away", () => {

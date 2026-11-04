@@ -1,11 +1,15 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { BookOpen, CalendarClock, ChevronRight, Ear, Footprints, ListOrdered, MousePointerClick, SunDim, type LucideIcon } from "lucide-react";
 import { optionRow } from "@/components/profile/question-step";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, describeVisual, type NeuroType } from "@/lib/help-picks";
+import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, applyHelp, describeVisual, type NeuroType } from "@/lib/help-picks";
+import { applyPrefs, loadPrefs } from "@/lib/personalization";
+
+// OpenDyslexic is a class on <html> (the Settings panel switches it the same way).
+const setDyslexic = (on: boolean) => document.documentElement.classList.toggle("dyslexic", on);
 
 const action = "h-11 px-5 text-base";
 // A pictogram for each pick, so each one can be found without reading.
@@ -24,6 +28,27 @@ const ICONS: Record<string, LucideIcon> = {
 export function HelpPicks({ initial, onDone }: { initial: readonly string[]; onDone: (picks: string[], types: NeuroType[]) => void }) {
   const [picks, setPicks] = useState<string[]>([...initial]);
   const [types, setTypes] = useState<NeuroType[]>([]);
+
+  // A live preview: what is ticked changes the page right away (font, size, dark screen, bigger buttons...).
+  // Nothing is saved until "Turn on this help"; anything else (untick, "Decide later", leaving) puts it back.
+  const before = useRef(loadPrefs());
+  const wasDyslexic = useRef(document.documentElement.classList.contains("dyslexic"));
+  const kept = useRef(false);
+  useEffect(() => {
+    const preview = applyHelp(picks, {}, before.current, types).prefs;
+    applyPrefs(preview);
+    setDyslexic(wasDyslexic.current || preview.font === "dyslexic");
+  }, [picks, types]);
+  useEffect(
+    () => () => {
+      if (kept.current) return;
+      applyPrefs(before.current);
+      setDyslexic(wasDyslexic.current);
+    },
+    [],
+  );
+  const previewing = picks.length > 0 || types.length > 0;
+
   return (
     <section aria-labelledby="help-picks-heading" className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
@@ -31,7 +56,11 @@ export function HelpPicks({ initial, onDone }: { initial: readonly string[]; onD
           What is hard for you?
         </h2>
         <p className="text-pretty text-muted-foreground">
-          Choose any. Each one turns on help in Constela. You can change it anytime in Profile and Settings.
+          These often come with ADHD, autism, dyslexia and other kinds of neurodivergence, and with no diagnosis at all.
+          Choose any. Each one turns on help in Constela, and you can change it anytime in Profile and Settings.
+        </p>
+        <p role="status" className={previewing ? "rounded-lg bg-secondary px-3 py-2 text-sm" : "sr-only"}>
+          {previewing ? "You are seeing a preview of the page with this help. Press Turn on this help to keep it." : ""}
         </p>
       </div>
       <div className="flex flex-col gap-3">
@@ -46,7 +75,12 @@ export function HelpPicks({ initial, onDone }: { initial: readonly string[]; onD
               <Icon aria-hidden className="size-6 shrink-0 text-primary" />
               <span className="flex flex-col">
                 <span className="font-medium">{h.hard}</span>
-                <span className="text-sm text-muted-foreground">{h.help}</span>
+                <span className="text-sm text-muted-foreground">
+                  <span className="font-medium">What it does:</span> {h.help}
+                </span>
+                <span className="text-sm font-medium text-primary">
+                  Often helpful with: {h.often.map((t) => NEURO_TYPES[t].label).join(", ")}
+                </span>
               </span>
             </label>
           );
@@ -79,7 +113,14 @@ export function HelpPicks({ initial, onDone }: { initial: readonly string[]; onD
       </details>
 
       <div className="flex flex-wrap gap-3">
-        <Button className={action} disabled={picks.length === 0 && types.length === 0} onClick={() => onDone(picks, types)}>
+        <Button
+          className={action}
+          disabled={!previewing}
+          onClick={() => {
+            kept.current = true;
+            onDone(picks, types);
+          }}
+        >
           Turn on this help
         </Button>
         <Button className={action} variant="outline" onClick={() => onDone([], [])}>

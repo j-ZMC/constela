@@ -2,7 +2,7 @@
 // answers to the Profile questions (so toAdaptations() picks them up) and Personalize settings. Nothing here is sent
 // anywhere.
 import type { Answers } from "@/lib/profile";
-import type { Prefs } from "@/lib/personalization";
+import { PRESETS, type Prefs } from "@/lib/personalization";
 
 // The visual settings that often help with each kind of neurodivergence. Used two ways:
 // - Each "What is hard" pick draws its visuals from one entry (`visual`), so answering by need is enough.
@@ -11,13 +11,15 @@ import type { Prefs } from "@/lib/personalization";
 export const NEURO_TYPES = {
   adhd: { label: "ADHD", prefs: { detail: "reduced", focus: true, calm: true } },
   autism: { label: "Autism", prefs: { calm: true, soft: 1, detail: "reduced" } },
-  dyslexia: { label: "Dyslexia", prefs: { font: "dyslexic", size: 115, lh: 1.8, ls: 0.03, width: 65 } },
+  // No extra letter spacing: OpenDyslexic is already wide, and more made words fall apart.
+  dyslexia: { label: "Dyslexia", prefs: { font: "dyslexic", size: 115, lh: 1.8, width: 65 } },
   dyscalculia: { label: "Dyscalculia", prefs: { size: 110, lh: 1.6, detail: "reduced" } },
   dysgraphia: { label: "Dysgraphia", prefs: { size: 110, ctlSize: 48 } },
   dyspraxia: { label: "Dyspraxia (DCD)", prefs: { ctlSize: 52, iconSize: 24, cursor: "large" } },
   tourette: { label: "Tourette", prefs: { ctlSize: 48, calm: true } },
   ocd: { label: "OCD", prefs: { calm: true, detail: "reduced" } },
-  sensory: { label: "Sensory processing differences", prefs: { calm: true, soft: 2 } },
+  // Light sensitivity: the dark palette (only when the person has not chosen colors), and no movement or glow.
+  sensory: { label: "Sensory processing differences", prefs: { calm: true, preset: "dark" } },
   auditory: { label: "Auditory processing differences", prefs: { slowVoice: true, size: 105 } },
 } as const satisfies Record<string, { label: string; prefs: Partial<Prefs> }>;
 export type NeuroType = keyof typeof NEURO_TYPES;
@@ -29,6 +31,7 @@ export type HelpPick = {
   help: string; // what turns on
   answers?: Answers;
   visual?: NeuroType; // whose screen settings this pick turns on
+  often: readonly NeuroType[]; // shown as "Often helpful with", so each pick says which neurodivergence it relates to
 };
 
 export const HELP: readonly HelpPick[] = [
@@ -38,19 +41,21 @@ export const HELP: readonly HelpPick[] = [
     help: "Short summaries, a Listen button, and an easier font with more space.",
     answers: { reading: "listen", longText: "tiring" },
     visual: "dyslexia",
+    often: ["dyslexia", "adhd"],
   },
-  { id: "unclear", hard: "Instructions that are not clear", help: "Instructions as numbered steps with an example.", answers: { unclear: "stuck" } },
+  { id: "unclear", hard: "Instructions that are not clear", help: "Instructions as numbered steps with an example.", answers: { unclear: "stuck" }, often: ["autism", "adhd"] },
   {
     id: "starting",
     hard: "Getting started, or too many things at once",
     help: "One step at a time, big tasks broken down, and less on screen.",
     answers: { startBlockers: ["too-many-options", "big-tasks"] },
     visual: "adhd",
+    often: ["adhd"],
   },
-  { id: "changes", hard: "Sudden changes", help: "We tell you what to expect, on a calm, predictable screen.", answers: { changes: "heads-up" }, visual: "autism" },
-  { id: "screen", hard: "Bright or busy screens", help: "Calm mode (no movement or glow) and a warmer, softer page.", visual: "sensory" },
-  { id: "precision", hard: "Small buttons or precise movements", help: "Bigger buttons, icons and cursor.", visual: "dyspraxia" },
-  { id: "speech", hard: "Following fast speech", help: "A slower AI voice, with captions while it talks.", visual: "auditory" },
+  { id: "changes", hard: "Sudden changes", help: "We tell you what to expect, on a calm, predictable screen.", answers: { changes: "heads-up" }, visual: "autism", often: ["autism", "ocd"] },
+  { id: "screen", hard: "Bright or busy screens", help: "A dark screen, and Calm mode: no movement or glow.", visual: "sensory", often: ["sensory", "autism"] },
+  { id: "precision", hard: "Small buttons or precise movements", help: "Bigger buttons, icons and cursor.", visual: "dyspraxia", often: ["dyspraxia", "dysgraphia"] },
+  { id: "speech", hard: "Following fast speech", help: "A slower AI voice, with captions while it talks.", visual: "auditory", often: ["auditory", "adhd"] },
 ];
 
 // Joins two sets of screen settings: the stronger choice wins, so adding help never takes help away.
@@ -63,6 +68,12 @@ export function mergePrefs(base: Prefs, add: Partial<Prefs>): Prefs {
   if (add.detail === "reduced") next.detail = "reduced";
   if (add.font && (base.font === "default" || add.font === "dyslexic")) next.font = add.font;
   if (add.cursor && CURSOR.indexOf(add.cursor) > CURSOR.indexOf(base.cursor)) next.cursor = add.cursor;
+  // A palette (the dark one for light sensitivity) only replaces the default, never colors the person chose.
+  const palette = add.preset ? PRESETS.find((p) => p.id === add.preset) : undefined;
+  if (palette?.colors && base.colors === null) {
+    next.preset = palette.id;
+    next.colors = palette.colors;
+  }
   return next;
 }
 
@@ -73,6 +84,7 @@ export function describeVisual(p: Partial<Prefs>): string {
     p.size && "bigger text",
     (p.lh || p.ls) && "more space",
     p.width && "shorter lines",
+    p.preset === "dark" && "a dark screen",
     p.calm && "Calm mode",
     p.soft && "softer light",
     p.detail === "reduced" && "less on screen",

@@ -79,15 +79,18 @@ The [privacy page](src/app/privacy/page.tsx) says the same in Easy Read. Keep th
 
 ## Getting started
 
-You need Node.js 20 or newer, Python 3.12 and, for Interview, [Ollama](https://ollama.com).
+You need Node.js 20 or newer, Python 3.10 or newer (3.12 recommended) and [Ollama](https://ollama.com/download).
 
 ```bash
 npm install
-cp .env.example .env.local   # then add your keys
+npm run setup                # Python environment, voice and speech models, Ollama models (about 2 GB the first time)
+cp .env.example .env.local   # optional: GROQ_API_KEY for "Break it down for me"
 npm run dev
 ```
 
-Open http://localhost:3000.
+Open http://localhost:3000. `npm run setup` (`backend/setup_local.py`) is safe to run again; it skips what is already there.
+Without it, the first voice reply waits for Kokoro to download (about 340 MB) and the browser's voice reads instead.
+The job data and the search vectors (computed locally with Qwen3-Embedding) come with the repository.
 
 ### Environment variables
 
@@ -107,7 +110,7 @@ Set these in `.env.local`. Only the keys for the features you use are needed.
 
 ### Python backend
 
-The Next.js server runs the Python scripts itself; there is no separate backend server. It uses the virtual environment at `.venv` in the project root. In PowerShell from the repository root:
+The Next.js server runs the Python scripts itself; there is no separate backend server. It uses the virtual environment at `.venv` in the project root, which `npm run setup` creates. To do it by hand, in PowerShell from the repository root:
 
 ```powershell
 python -m venv .venv
