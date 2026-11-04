@@ -4,21 +4,12 @@
 import { mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { describe, expect, it } from "vitest";
 import { CHECKS, isComplete, isEnglish, plain, postingKey, readPosting, readingGrade, type Check, type Posting } from "./postings";
-import { percentile, share, wilson } from "./stats";
+import { percentile, seeded, share, wilson } from "./stats";
 import type { PostingFacts } from "@/lib/posting-facts";
 import { DEMO_VACANCY, EXCLUSIONARY_PHRASES, findExclusionaryPhrases } from "@/lib/vacancy";
 
 const DATA = "backend/data/raw/jobs/jobs_usa_full_backup_cleaned.json";
 
-// mulberry32: seeded, so the examples in the report are the same on every run.
-function seeded(seed: number) {
-  return () => {
-    seed = (seed + 0x6d2b79f5) | 0;
-    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
-    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
-    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
-  };
-}
 
 const LABELS: Record<Check, string> = {
   pay: "Says the pay",

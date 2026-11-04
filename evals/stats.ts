@@ -1,4 +1,14 @@
-// Small statistics for the AI evaluation. Pure, so they have tests in the normal suite.
+// Small statistics for the evaluations. Pure, so they have tests in the normal suite.
+
+// mulberry32: seeded, so a report is the same on every run.
+export function seeded(seed: number): () => number {
+  return () => {
+    seed = (seed + 0x6d2b79f5) | 0;
+    let t = Math.imul(seed ^ (seed >>> 15), 1 | seed);
+    t = (t + Math.imul(t ^ (t >>> 7), 61 | t)) ^ t;
+    return ((t ^ (t >>> 14)) >>> 0) / 4294967296;
+  };
+}
 
 // The Wilson score interval: honest at small samples and at 0 or 100%, where the usual p ± 1.96·σ says nothing.
 export function wilson(k: number, n: number, z = 1.96): [number, number] {

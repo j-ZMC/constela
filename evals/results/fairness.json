@@ -1,0 +1,63 @@
+{
+  "seed": 20261104,
+  "vacancies": 300,
+  "people": 30,
+  "top": 5,
+  "checked": {
+    "needs": 27000,
+    "identity": 9000,
+    "order": 900,
+    "more-skill": 42061,
+    "other-skills": 8638,
+    "explained": 23824,
+    "nothing-hidden": 31466
+  },
+  "broken": [],
+  "tiesAtCut": 196,
+  "byCount": {
+    "Shares no need": {
+      "selected": 729,
+      "total": 4443
+    },
+    "Shares 1 or 2 needs": {
+      "selected": 373,
+      "total": 2296
+    },
+    "Shares 3 or more needs": {
+      "selected": 398,
+      "total": 2261
+    }
+  },
+  "byAny": {
+    "Shares no need": {
+      "selected": 729,
+      "total": 4443
+    },
+    "Shares a need": {
+      "selected": 771,
+      "total": 4557
+    }
+  },
+  "scenarios": [
+    {
+      "gap": 0,
+      "now": 0.9697859002619432,
+      "sameWeight": 0.9672011279313445
+    },
+    {
+      "gap": 0.15,
+      "now": 0.8107006006940174,
+      "sameWeight": 0.9672011279313445
+    },
+    {
+      "gap": 0.3,
+      "now": 0.5992632964154793,
+      "sameWeight": 0.9672011279313445
+    },
+    {
+      "gap": 0.45,
+      "now": 0.39694451889573834,
+      "sameWeight": 0.9672011279313445
+    }
+  ]
+}
