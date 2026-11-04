@@ -73,6 +73,31 @@ The [privacy page](src/app/privacy/page.tsx) says the same in Easy Read. Keep th
 - WCAG AA contrast on every text color, 44 px targets, keyboard and screen-reader use.
 - Respect the system "reduce motion" setting.
 
+## How it was validated
+
+- **With a partner organization:** the team researched the needs of neurodivergent job seekers with Kairos Inclusión,
+  the challenge's partner organization (socio formador).
+- **With people with ADHD:** people the team knows who have ADHD tried the app.
+- **With real CVs, with permission:** the CV parser was tested with CVs from people who agreed to it. Those CVs are not
+  in this repository (`backend/resume_parser/resumes/` is ignored by git); the tests use made-up data.
+
+Still to validate: the other conditions in "Shortcuts by type" (only ADHD was tested with people who have it), and
+the face reading in "Adjust the practice" with people whose facial expression differs, such as autistic people.
+
+### Choices about people and data
+
+- **"Shortcuts by type" names conditions on purpose.** Choosing help one need at a time is hard if you do not know
+  which needs apply to you; the shortcuts let a person find the help that fits their condition faster. They are
+  optional, they only turn on screen settings, and which one was chosen is never stored or sent.
+- **"Inclusive company" uses Glassdoor on purpose.** Kairos Inclusión told the team that a workplace is really good
+  for neurodivergent people only when people there feel included and get accommodations. Glassdoor's Diversity &
+  Inclusion rating comes from employees' own reviews, so it is the closest public signal to that; B Corp and DEI lists
+  add to it. It is a review-based signal, not a verified measure of accessibility, and companies with no data are
+  shown as unknown, never as bad.
+- **Only job sources that allow it.** LinkedIn and Indeed were left out of the job data because their terms do not
+  allow collecting their postings. The jobs in this repository come from public job APIs and feeds: Dice, Y Combinator,
+  Greenhouse, Ashby, RemoteOK, Lever and Remotive (6,450 jobs and 158 internships, none from LinkedIn or Indeed).
+
 ## Tech stack
 
 [Next.js 16](https://nextjs.org) · [shadcn/ui](https://ui.shadcn.com) on [Base UI](https://base-ui.com) · [AI SDK](https://ai-sdk.dev) · Tailwind CSS · TypeScript · Python (job filter, CV parser, Whisper, Kokoro) · [Ollama](https://ollama.com) · [faster-whisper](https://github.com/SYSTRAN/faster-whisper) · [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx)
