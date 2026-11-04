@@ -1,0 +1,21 @@
+{
+  "data": "backend/data/raw/jobs/jobs_usa_full_backup_cleaned.json",
+  "collected": 6450,
+  "unique": 5879,
+  "english": 5854,
+  "whole": 2729,
+  "postings": 2729,
+  "vague": 0.32063026749725176,
+  "answerTime": 0,
+  "clearAtBest": 0.00659582264565775,
+  "interval": {
+    "vague": [
+      0.30338195795312495,
+      0.3383828629570954
+    ],
+    "answerTime": [
+      0,
+      0.0014057163064262487
+    ]
+  }
+}

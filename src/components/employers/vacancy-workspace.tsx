@@ -7,6 +7,7 @@ import { action, outlined, pageTitle, panel } from "@/components/employers/vacan
 import { Button } from "@/components/ui/button";
 import { useEmployerData } from "@/lib/employer-store";
 import { Loading } from "@/components/loading";
+import { postingFactsLine } from "@/lib/posting-facts";
 import { useHydrated } from "@/lib/use-hydrated";
 import { emptyForm, formFromVacancy, leftText, thingsLeft } from "@/lib/vacancy-editor";
 
@@ -49,6 +50,7 @@ function Workspace() {
         </Button>
       </div>
       <p data-detail="extra">Paste a job post, see what is missing, and publish a clear version.</p>
+      <p data-detail="extra">{postingFactsLine()}</p>
       {vacancies.length + notStored.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {notStored.map((form) => (

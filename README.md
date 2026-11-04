@@ -240,7 +240,7 @@ Run these commands from the project root:
 | `src/lib/` | Logic without screens, with tests next to it: the plan and path, the constellation map, jobs (schema, filters, saved jobs, company facts, web research, job page reading), the interview prompt and context, the Python workers for Whisper and Kokoro |
 | `backend/` | Python: collectors (`collect_bulk.py`, `collect_internships.py`), company data (`company_inclusion.py`, `select_qualified_companies.py`, `company_sizes.py`), embeddings and the job filter (`embed_jobs.py`, `filter_jobs.py`), CV parser, `transcribe_server.py` (Whisper) and `speak_server.py` (Kokoro) on the shared `worker_protocol.py`, data and tests |
 
-`npm test` runs the tests. `npm run eval:ai` measures the employer AI against the real model and writes [evals/REPORT.md](evals/REPORT.md); it needs `GROQ_API_KEY` and takes about 15 minutes. `npm run eval:replay` runs the answers it recorded through the current guards, offline.
+`npm test` runs the tests. `npm run eval:ai` measures the employer AI against the real model and writes [evals/REPORT.md](evals/REPORT.md); it needs `GROQ_API_KEY` and takes about 15 minutes. `npm run eval:replay` runs the answers it recorded through the current guards, offline. `npm run eval:postings` reads 6,450 real job posts and writes [evals/POSTINGS.md](evals/POSTINGS.md) in seconds.
 
 ## Connecting your module to My plan
 
