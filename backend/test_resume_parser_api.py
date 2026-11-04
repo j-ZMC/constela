@@ -5,7 +5,7 @@ import unittest
 from pathlib import Path
 from unittest.mock import patch
 
-PARSER_DIR = Path(__file__).parent / "resume_parser.py"
+PARSER_DIR = Path(__file__).parent / "resume_parser"
 sys.path.insert(0, str(PARSER_DIR))
 
 import resume_parser
@@ -71,6 +71,42 @@ class ResumeParserApiTests(unittest.TestCase):
     def test_rejects_malformed_pdf_bytes(self):
         with self.assertRaisesRegex(ValueError, "PDF could not be read"):
             resume_parser.parse_resume_bytes(b"%PDF-1.4 test")
+
+
+class ReadProfileTests(unittest.TestCase):
+    CV = (
+        "ALEX RIVERA\n"
+        "Email: alex.rivera@example.com | Phone: +52 555 010 0100\n"
+        "Profile\n"
+        "Data analyst who likes Python and SQL.\n"
+        "Projects\n"
+        "• Dashboard of city bike trips\n"
+        "- Survey cleaner in Python\n"
+        "Education\n"
+        "University of Somewhere, 2020 - 2024\n"
+    )
+
+    def test_reads_name_contact_and_the_projects_section(self):
+        profile = resume_parser.read_profile(self.CV)
+        self.assertEqual(profile["name"], "Alex Rivera")
+        self.assertEqual(profile["email"], "alex.rivera@example.com")
+        self.assertEqual(profile["phone"], "+52 555 010 0100")
+        self.assertEqual(profile["projects"], ["Dashboard of city bike trips", "Survey cleaner in Python"])
+        self.assertIn("Python", profile["skills_found"])
+
+    def test_keeps_a_name_written_in_mixed_case_and_skips_a_heading(self):
+        lines = ["Curriculum Vitae", "María José de la Cruz", "maria@example.com"]
+        self.assertEqual(resume_parser.find_name(lines[1:]), "María José de la Cruz")
+        self.assertEqual(resume_parser.find_name(["Experience", "Ana López"]), "Ana López")
+
+    def test_missing_fields_are_empty_not_placeholder_text(self):
+        profile = resume_parser.read_profile("Notes from 2024\n123 Main Street\n")
+        self.assertEqual((profile["name"], profile["email"], profile["phone"]), ("", "", ""))
+        self.assertEqual(profile["sectors"], [])
+
+    def test_a_phone_needs_10_to_15_digits(self):
+        self.assertEqual(resume_parser.find_phone("Call (555) 010-0100"), "(555) 010-0100")
+        self.assertEqual(resume_parser.find_phone("Years 2020 - 2024, room 12"), "")
 
 
 if __name__ == "__main__":

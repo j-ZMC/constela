@@ -44,7 +44,9 @@ next-env.d.ts
 # impeccable binary (each teammate installs it with: npx impeccable install)
 .claude/skills/impeccable/scripts/bin/
 
-# Kept out on purpose: its own git repository, with real people's CVs in resumes/ (the CV parser needs a local copy)
+# The CV parser is in backend/resume_parser/. Its test mode saves CVs in resumes/: real people's data, never in git.
+/backend/resume_parser/resumes/
+# The old local copy of the parser: its own git repository, whose history has a real CV.
 /backend/resume_parser.py/
 # Third-party reports (B Corp, Equidad MX, HRC), 22 MB; the app does not read them
 /backend/data/reference/source_docs/

@@ -19,7 +19,7 @@ function runParser(pdf: Buffer): Promise<string> {
       process.platform === "win32" ? "Scripts" : "bin",
       process.platform === "win32" ? "python.exe" : "python",
     );
-  const script = join(process.cwd(), "backend", "resume_parser.py", "resume_parser.py");
+  const script = join(process.cwd(), "backend", "resume_parser", "resume_parser.py");
 
   return new Promise((resolve, reject) => {
     const child = spawn(/* turbopackIgnore: true */ python, [script, "--stdin-json"], {

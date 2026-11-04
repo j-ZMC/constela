@@ -90,8 +90,8 @@ export function CvSection() {
             <Button type="button" variant="ghost" className={action} onClick={clear}>Clear CV</Button>
           </div>
           <dl className="mt-4 grid gap-3 text-sm sm:grid-cols-2">
-            <div><dt className="font-medium">Name</dt><dd>{profile.name}</dd></div>
-            <div><dt className="font-medium">Email</dt><dd>{profile.email}</dd></div>
+            <div><dt className="font-medium">Name</dt><dd>{profile.name || "Not found"}</dd></div>
+            <div><dt className="font-medium">Email</dt><dd>{profile.email || "Not found"}</dd></div>
             <div><dt className="font-medium">Skills</dt><dd>{profile.skills_found.join(", ") || "None found"}</dd></div>
             <div><dt className="font-medium">Sectors</dt><dd>{profile.sectors.join(", ") || "None found"}</dd></div>
           </dl>

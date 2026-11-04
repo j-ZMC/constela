@@ -40,6 +40,7 @@ which the team ran by hand; its answers are stored in `company_sizes.json` and t
 | `transcribe_server.py` | Whisper speech to text, plus the pauses and pace of an answer (no model) for "Adjust the practice". |
 | `speak_server.py` | The AI's voice with Kokoro-82M (the model is in `models/kokoro/`). |
 | `worker_protocol.py` | The JSON-lines protocol the two voice workers share with Next.js. |
+| `resume_parser/` | The CV reader: `resume_parser.py` turns a PDF into name, email, skills, sectors, experience and projects, using `resume_taxonomy.json` (skills, and section headings in English and Spanish). The app sends the PDF on stdin (`--stdin-json`); nothing is saved. Its first version was based on [Vbhargav370/resume_parser.py](https://github.com/Vbhargav370/resume_parser.py), which has no license, so the parts that came from it were rewritten. |
 | `setup_local.py` | One-command setup: `.venv`, Python packages, Whisper and the Ollama models. |
 | `config/neurodivergence_job_barriers.json` | The workplace conditions a person can choose, with example wording from job ads. |
 | `user_barriers.html` | A standalone prototype of the conditions picker (see section 7). |
