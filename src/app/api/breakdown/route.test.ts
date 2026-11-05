@@ -1,11 +1,10 @@
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { beforeEach, describe, expect, it, vi } from "vitest";
 
 const breakdownMock = vi.fn();
 vi.mock("@/lib/breakdown", async (original) => ({
   ...(await original<typeof import("@/lib/breakdown")>()),
   breakdown: (...args: unknown[]) => breakdownMock(...args),
 }));
-vi.mock("@ai-sdk/groq", () => ({ createGroq: () => (id: string) => ({ id }) }));
 
 const { POST } = await import("@/app/api/breakdown/route");
 const { BreakdownError } = await import("@/lib/breakdown");
@@ -16,11 +15,8 @@ const post = (body: unknown) =>
 
 describe("POST /api/breakdown", () => {
   beforeEach(() => {
-    vi.stubEnv("GROQ_API_KEY", "test-key");
-    vi.stubEnv("GROQ_MODEL", "");
     breakdownMock.mockReset();
   });
-  afterEach(() => vi.unstubAllEnvs());
 
   it("returns the steps for a valid request", async () => {
     breakdownMock.mockResolvedValue([{ title: "Open the job post", minutes: 2 }]);
@@ -29,19 +25,10 @@ describe("POST /api/breakdown", () => {
     expect(await res.json()).toEqual({ steps: [{ title: "Open the job post", minutes: 2 }] });
   });
 
-  it("passes only the validated task and flags, with the default model", async () => {
+  it("passes only the validated task and flags, and needs no key", async () => {
     breakdownMock.mockResolvedValue([]);
     await post(valid);
-    const [request, model] = breakdownMock.mock.calls[0];
-    expect(request).toEqual(valid);
-    expect(model).toEqual({ id: "openai/gpt-oss-20b" });
-  });
-
-  it("uses GROQ_MODEL when set", async () => {
-    vi.stubEnv("GROQ_MODEL", "qwen/qwen3.8-27b");
-    breakdownMock.mockResolvedValue([]);
-    await post(valid);
-    expect(breakdownMock.mock.calls[0][1]).toEqual({ id: "qwen/qwen3.8-27b" });
+    expect(breakdownMock.mock.calls[0]).toEqual([valid]);
   });
 
   it.each([
@@ -53,13 +40,6 @@ describe("POST /api/breakdown", () => {
     expect(res.status).toBe(400);
     expect(await res.json()).toEqual({ error: "invalid_input" });
     expect(breakdownMock).not.toHaveBeenCalled();
-  });
-
-  it("says not_configured when there is no API key", async () => {
-    vi.stubEnv("GROQ_API_KEY", "");
-    const res = await post(valid);
-    expect(res.status).toBe(503);
-    expect(await res.json()).toEqual({ error: "not_configured" });
   });
 
   it.each([

@@ -52,8 +52,8 @@ export function BreakdownDialog({
     request.current?.abort();
     const controller = new AbortController();
     request.current = controller;
-    // The route times out at 15 s; this only guards against a network that never answers.
-    fetchSteps(task, flags, AbortSignal.any([controller.signal, AbortSignal.timeout(20_000)]))
+    // The route times out at 60 s (the local model may be loading); this only guards against a server that never answers.
+    fetchSteps(task, flags, AbortSignal.any([controller.signal, AbortSignal.timeout(65_000)]))
       .then((s) => {
         setSteps(s);
         setStatus("review");

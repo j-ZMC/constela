@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
-import { MockLanguageModelV4 } from "ai/test";
 import { BreakdownError, breakdown, breakdownRequest, buildPrompt, type BreakdownRequest } from "@/lib/breakdown";
+import { OllamaError } from "@/lib/ollama-tools";
 
 const request: BreakdownRequest = {
   task: "Prepare for my interview on Friday",
@@ -9,19 +9,8 @@ const request: BreakdownRequest = {
   gentleTone: false,
 };
 
-function modelReturning(text: string) {
-  return new MockLanguageModelV4({
-    doGenerate: async () => ({
-      content: [{ type: "text", text }],
-      finishReason: { unified: "stop", raw: undefined },
-      usage: {
-        inputTokens: { total: 10, noCache: 10, cacheRead: undefined, cacheWrite: undefined },
-        outputTokens: { total: 20, text: 20, reasoning: undefined },
-      },
-      warnings: [],
-    }),
-  });
-}
+// Ollama answering with `text`, read as JSON the way localJson does.
+const modelReturning = (text: string) => async () => JSON.parse(text);
 
 const steps = (n: number, minutes = 5) =>
   JSON.stringify({ steps: Array.from({ length: n }, (_, i) => ({ title: `Step ${i + 1}`, minutes })) });
@@ -80,11 +69,11 @@ describe("breakdown", () => {
     expect(result[0]).toEqual({ title: "Step 1", minutes: 5 });
   });
 
-  it("keeps at most 6 steps and clamps minutes to 1..10", async () => {
+  it("keeps at most 6 steps and clamps minutes to 1..10, whole minutes", async () => {
     const text = JSON.stringify({
       steps: [
         { title: "  A  ", minutes: 30 },
-        { title: "B", minutes: 0 },
+        { title: "B", minutes: 0.2 },
         ...Array.from({ length: 6 }, (_, i) => ({ title: `C${i}`, minutes: 3 })),
       ],
     });
@@ -108,20 +97,27 @@ describe("breakdown", () => {
     await expect(breakdown(request, modelReturning("not json"))).rejects.toBeInstanceOf(BreakdownError);
   });
 
-  it("reports a timeout when the call is aborted by its time limit", async () => {
-    const slow = new MockLanguageModelV4({
-      doGenerate: async ({ abortSignal }) =>
-        new Promise((_, reject) => abortSignal?.addEventListener("abort", () => reject(abortSignal.reason))),
-    });
-    await expect(breakdown(request, slow, 20)).rejects.toMatchObject({ code: "timeout" });
+  it("reports a timeout when Ollama takes too long", async () => {
+    const slow = async () => {
+      throw new OllamaError("timeout");
+    };
+    await expect(breakdown(request, slow)).rejects.toMatchObject({ code: "timeout" });
   });
 
-  it("reports a provider error as failed", async () => {
-    const broken = new MockLanguageModelV4({
-      doGenerate: async () => {
-        throw new Error("rate limited");
-      },
-    });
+  it("reports Ollama not running, or any other error, as failed", async () => {
+    const broken = async () => {
+      throw new OllamaError("failed");
+    };
     await expect(breakdown(request, broken)).rejects.toMatchObject({ code: "failed" });
+  });
+
+  it("sends the rules and the task to the model, with the JSON shape", async () => {
+    let seen: { prompt: string; schema: object } | undefined;
+    await breakdown(request, async (prompt, schema) => {
+      seen = { prompt, schema };
+      return JSON.parse(steps(3));
+    });
+    expect(seen?.prompt).toMatch(/Easy Read[\s\S]*<task>Prepare for my interview on Friday<\/task>/);
+    expect(seen?.schema).toMatchObject({ required: ["steps"] });
   });
 });

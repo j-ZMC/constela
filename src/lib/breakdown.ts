@@ -1,8 +1,8 @@
-// "Break it down for me": the request contract, the prompt and the AI call.
+// "Break it down for me": the request contract, the prompt and the AI call, to Ollama on this computer.
 // Only the task text, three instruction flags and an optional starter-step id reach the server; .strict() rejects
-// anything else. The id maps to fixed app text below, so no free text beyond the task reaches the provider.
-import { generateText, Output, type LanguageModel } from "ai";
+// anything else. The id maps to fixed app text below, so no free text beyond the task reaches the model.
 import { z } from "zod";
+import { OllamaError, localJson } from "@/lib/ollama-tools";
 
 // What each starter step means inside Constela, so the AI breaks it into steps the app really has.
 const STARTER_CONTEXT = {
@@ -25,7 +25,7 @@ export const breakdownRequest = z
 
 export type BreakdownRequest = z.infer<typeof breakdownRequest>;
 export type BreakdownStep = { title: string; minutes: number };
-export type BreakdownErrorCode = "invalid_input" | "not_configured" | "timeout" | "failed";
+export type BreakdownErrorCode = "invalid_input" | "timeout" | "failed";
 
 export class BreakdownError extends Error {
   constructor(public code: Extract<BreakdownErrorCode, "timeout" | "failed">) {
@@ -33,15 +33,32 @@ export class BreakdownError extends Error {
   }
 }
 
-// Kept simple for the model (Groq strict mode); the real limits are enforced in normalize().
+// The shape Ollama must answer in, kept simple; the real limits are enforced in normalize().
+const SCHEMA = {
+  type: "object",
+  additionalProperties: false,
+  required: ["steps"],
+  properties: {
+    steps: {
+      type: "array",
+      items: {
+        type: "object",
+        additionalProperties: false,
+        required: ["title", "minutes"],
+        properties: { title: { type: "string" }, minutes: { type: "integer" } },
+      },
+    },
+  },
+};
 const modelOutput = z.object({
-  steps: z.array(z.object({ title: z.string(), minutes: z.number().int() })),
+  steps: z.array(z.object({ title: z.string(), minutes: z.number() })),
 });
 
 const MIN_STEPS = 3;
 const MAX_STEPS = 6;
 const MAX_TITLE = 80;
-const TIMEOUT_MS = 15_000;
+// The local model can take a while the first time it loads.
+const TIMEOUT_MS = 60_000;
 
 export function buildPrompt(r: BreakdownRequest): { system: string; prompt: string } {
   const rules = [
@@ -63,26 +80,25 @@ export function buildPrompt(r: BreakdownRequest): { system: string; prompt: stri
 function normalize(r: BreakdownRequest, raw: z.infer<typeof modelOutput>): BreakdownStep[] {
   const maxMinutes = r.gentleTone ? 5 : 10;
   const steps = raw.steps
-    .map((s) => ({ title: s.title.trim().slice(0, MAX_TITLE), minutes: Math.min(maxMinutes, Math.max(1, s.minutes)) }))
+    .map((s) => ({ title: s.title.trim().slice(0, MAX_TITLE), minutes: Math.min(maxMinutes, Math.max(1, Math.round(s.minutes))) }))
     .filter((s) => s.title.length > 0)
     .slice(0, MAX_STEPS);
   if (steps.length < MIN_STEPS) throw new BreakdownError("failed");
   return steps;
 }
 
-export async function breakdown(r: BreakdownRequest, model: LanguageModel, timeoutMs = TIMEOUT_MS): Promise<BreakdownStep[]> {
-  const signal = AbortSignal.timeout(timeoutMs);
+type Ask = (prompt: string, schema: object, timeoutMs: number) => Promise<unknown>;
+
+// `ask` is Ollama's structured output (localJson); tests pass their own.
+export async function breakdown(r: BreakdownRequest, ask: Ask = localJson, timeoutMs = TIMEOUT_MS): Promise<BreakdownStep[]> {
+  const { system, prompt } = buildPrompt(r);
+  let raw: unknown;
   try {
-    const { output } = await generateText({
-      model,
-      ...buildPrompt(r),
-      output: Output.object({ schema: modelOutput }),
-      abortSignal: signal,
-      maxRetries: 1,
-    });
-    return normalize(r, output);
+    raw = await ask(`${system}\n\n${prompt}`, SCHEMA, timeoutMs);
   } catch (error) {
-    if (error instanceof BreakdownError) throw error;
-    throw new BreakdownError(signal.aborted ? "timeout" : "failed");
+    throw new BreakdownError(error instanceof OllamaError && error.code === "timeout" ? "timeout" : "failed");
   }
+  const parsed = modelOutput.safeParse(raw);
+  if (!parsed.success) throw new BreakdownError("failed");
+  return normalize(r, parsed.data);
 }
