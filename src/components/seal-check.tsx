@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState, type FormEvent } from "react";
 import { useSearchParams } from "next/navigation";
-import { BadgeCheck, CircleAlert, CircleCheck } from "lucide-react";
+import { BadgeCheck, ChevronRight, CircleAlert, CircleCheck } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
@@ -188,8 +188,11 @@ function Checker() {
         {!busy && done && (done.report ? <ReportView report={done.report} /> : <p>Constela could not be reached. Try again.</p>)}
       </div>
 
-      <details className="rounded-xl border bg-card p-4">
-        <summary className="flex min-h-11 cursor-pointer items-center font-medium">Check a seal token from somewhere else</summary>
+      <details className="group rounded-xl border bg-card p-4">
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-medium">
+          <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
+          Check a seal token from somewhere else
+        </summary>
         <form onSubmit={checkToken} className="mt-2 flex flex-col gap-3">
           <label className="flex flex-col gap-1 font-medium">
             Seal token
@@ -201,8 +204,11 @@ function Checker() {
         </form>
       </details>
 
-      <details className="rounded-xl border bg-card p-4">
-        <summary className="flex min-h-11 cursor-pointer items-center font-medium">For developers</summary>
+      <details className="group rounded-xl border bg-card p-4">
+        <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-medium">
+          <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
+          For developers
+        </summary>
         <ul className="mt-2 flex list-disc flex-col gap-2 pl-6 text-sm leading-relaxed">
           <li>
             <code>GET /api/public/seal?company=…</code> answers with a <code>token</code>: a JWS signed with Ed25519 (EdDSA, RFC 8037). It is good for an hour at most, and never past the next date that could drop the seal.

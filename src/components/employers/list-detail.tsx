@@ -62,7 +62,7 @@ export function ListRow({ id, selected, open, onOpen, className, children }: { i
       id={rowId(id)}
       aria-current={selected && open ? "true" : undefined}
       onClick={onOpen}
-      className={cn("flex min-h-13 w-full gap-3 px-4 py-2 text-left hover:bg-secondary", selected && "lg:bg-secondary lg:font-semibold", className)}
+      className={cn("press flex min-h-13 w-full gap-3 px-4 py-2 text-left hover:bg-secondary", selected && "lg:bg-secondary lg:font-semibold", className)}
     >
       {children}
     </button>

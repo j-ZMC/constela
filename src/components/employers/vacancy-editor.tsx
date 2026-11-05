@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight, Info } from "lucide-react";
 import { EmployerPage } from "@/components/employers/employer-page";
 import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/list-detail";
 import { MarkedText, PhraseHelp } from "@/components/employers/phrase-help";
@@ -267,8 +267,11 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
               Clarity score: {score} of 100. {score >= CLEAR_SCORE ? "This job post is clear." : `A job post is clear at ${CLEAR_SCORE}.`}
             </p>
             {posting.trim() && (
-              <details className={panel}>
-                <summary className="flex min-h-11 cursor-pointer items-center font-semibold">Your pasted text</summary>
+              <details className={`group ${panel}`}>
+                <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-medium">
+                  <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
+                  Your pasted text
+                </summary>
                 <MarkedText text={posting} />
               </details>
             )}

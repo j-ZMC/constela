@@ -69,7 +69,7 @@ function Home() {
 function Row({ icon: Icon, title, lines, href }: { icon: LucideIcon; title: string; lines: string[]; href: string }) {
   return (
     <li>
-      <Link href={href} className="flex min-h-11 items-center gap-4 p-5 hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none">
+      <Link href={href} className="press flex min-h-11 items-center gap-4 p-5 hover:bg-secondary focus-visible:ring-3 focus-visible:ring-ring focus-visible:outline-none">
         <Icon aria-hidden className="size-6 shrink-0 text-primary" />
         <span className="flex min-w-0 flex-1 flex-col gap-1">
           <span className="text-lg font-semibold">{title}</span>

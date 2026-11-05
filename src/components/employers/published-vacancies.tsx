@@ -2,7 +2,7 @@
 
 import { useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
-import { BadgeCheck } from "lucide-react";
+import { BadgeCheck, ChevronRight } from "lucide-react";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { useEmployerData, useSeal } from "@/lib/employer-store";
 import { waitingInvitations } from "@/lib/invitations";
@@ -120,8 +120,11 @@ function VacancyCard({ vacancy: v, level, needs }: { vacancy: Vacancy; level: Se
         </div>
       )}
 
-      <details>
-        <summary className="flex min-h-11 w-fit cursor-pointer items-center text-sm font-medium underline underline-offset-4">See the tasks and hiring steps</summary>
+      <details className="group">
+        <summary className="flex min-h-11 w-fit cursor-pointer items-center gap-2 text-sm font-medium">
+          <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
+          See the tasks and hiring steps
+        </summary>
         <div className="mt-2 flex flex-col gap-4 text-sm leading-relaxed">
           <Details title="A typical day" items={v.tasks} />
           <Details title="Essential" items={v.essential.map((r) => r.text)} />
