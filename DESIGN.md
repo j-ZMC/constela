@@ -32,7 +32,7 @@ Personalize can override these with presets; build with tokens and it just works
 |---|---|---|
 | Task (one flow, forms, reading) | `max-w-xl` | Profile, My plan, Privacy |
 | Browse (lists of results) | `max-w-5xl` | Jobs, Learn |
-| Header and shell | a fixed bar on the left, `w-56`, on wide screens; a top bar and a bottom tab bar on phones | `site-nav.tsx` |
+| Header and shell | a fixed bar on the left, `w-56`, on wide screens; a top bar and a bottom tab bar on phones | `site-nav.tsx` (`AppNav`, the same bars on the employer side through `employers/employer-nav.tsx`) |
 | Intro card | `max-w-md` | `/` |
 
 Never wider than the header. Pages use `mx-auto w-full px-4 py-10`.
@@ -112,7 +112,7 @@ Read the profile with `toAdaptations(loadProfile() ?? {})` (`src/lib/profile.ts`
 - **Dark bars:** the app menu (the bar on the left on wide screens; the top bar and tab bar on phones) uses `bg-sky` with white text, in every palette, so it never blends with the page. The selected item is `bg-white/15`.
 - **Depth:** the "now" card and grouped lists use a soft, offset shadow (`0 1px 2px` plus a wide, low blur). No colored halos.
 - **Browser surfaces:** selection, caret, scrollbars and native checkboxes take the palette (`globals.css`, `html`). The app is light unless a dark Personalize palette sets `data-pz-scheme="dark"`, which switches native controls too.
-- **Phones:** the viewport uses `interactive-widget=resizes-content`, and the bottom nav hides while a text field has focus, so the keyboard never covers what you type.
+- **Phones:** the viewport uses `interactive-widget=resizes-content`, and the bottom nav hides while a text field has focus, so the keyboard never covers what you type. At large text the bottom nav wraps to a second row, and the page keeps as much room below as the nav takes (`--tab-bar`).
 - **One action at a time:** anything that sends something (search, CV upload, Look up, Add a step) runs through `useSingleFlight` (`src/lib/use-single-flight.ts`) or a ref guard, so a double tap sends once.
 - **Errors:** the screen shows only words we wrote (`JOB_ERRORS` in `src/lib/jobs.ts`), never a server or browser message.
 - **Kept, never wiped:** filters are saved per list (`job-filters`); saved jobs keep entries this version cannot read instead of dropping them on the next write.
