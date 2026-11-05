@@ -6,12 +6,13 @@ export const metadata: Metadata = {
   description: "Write clear job posts, find people by their skills, and run a hiring process with no surprises",
 };
 
+// The same shell as every Constela page: the menu bars, then a page that opens with its sky (EmployerPage).
 export default function EmployersLayout({ children }: LayoutProps<"/employers">) {
   return (
-    <div className="flex flex-1 flex-col lg:flex-row">
+    <>
       <EmployerNav />
       {/* A long word wraps here at the largest text, even one the employer typed. */}
-      <main className="mx-auto w-full max-w-[60rem] min-w-0 flex-1 px-4 py-8 [overflow-wrap:anywhere] lg:px-10 lg:py-10">{children}</main>
-    </div>
+      <main className="flex flex-col [overflow-wrap:anywhere]">{children}</main>
+    </>
   );
 }

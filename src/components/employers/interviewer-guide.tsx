@@ -3,8 +3,9 @@
 import { useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { InterviewQuestions } from "@/components/employers/interview-questions";
+import { EmployerPage } from "@/components/employers/employer-page";
 import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/list-detail";
-import { action, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
+import { action, outlined, panel } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
 import { markGuideRead, useEmployerData } from "@/lib/employer-store";
 import { Loading } from "@/components/loading";
@@ -49,9 +50,14 @@ const QUESTIONS = { id: "questions", title: "Interview questions", points: [] };
 const PARTS = [...GUIDE, QUESTIONS];
 const LAST_READ = GUIDE[GUIDE.length - 1].id;
 
-// What is open lives in the URL, so render only after hydration (same as the Profile flow).
+// What is open lives in the URL, so the parts wait for hydration; the sky and title don't.
 export function InterviewerGuide() {
-  return useHydrated() ? <Guide /> : <Loading />;
+  const hydrated = useHydrated();
+  return (
+    <EmployerPage title="Interviewer guide" intro="Read how to run a fair interview, then prepare the questions for your job post.">
+      {hydrated ? <Guide /> : <Loading />}
+    </EmployerPage>
+  );
 }
 
 function Guide() {
@@ -62,48 +68,42 @@ function Guide() {
   const asksToRead = selected.id === LAST_READ && !guideRead;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-col gap-2">
-        <h1 className={pageTitle}>Interviewer guide</h1>
-        <p data-detail="extra">Read how to run a fair interview, then prepare the questions for your job post.</p>
-      </div>
-      <ListDetail
-        open={open !== null}
-        backLabel="Back to all parts"
-        onBack={() => setOpen(null)}
-        list={
-          <nav aria-label="Parts of this guide" className={ROWS}>
-            {PARTS.map((p) => (
-              <ListRow key={p.id} id={p.id} selected={p === selected} open={open !== null} onOpen={() => setOpen(p.id)} className="items-center">
-                {p.title}
-              </ListRow>
+    <ListDetail
+      open={open !== null}
+      backLabel="Back to all parts"
+      onBack={() => setOpen(null)}
+      list={
+        <nav aria-label="Parts of this guide" className={ROWS}>
+          {PARTS.map((p) => (
+            <ListRow key={p.id} id={p.id} selected={p === selected} open={open !== null} onOpen={() => setOpen(p.id)} className="items-center">
+              {p.title}
+            </ListRow>
+          ))}
+        </nav>
+      }
+    >
+      {selected === QUESTIONS ? (
+        <InterviewQuestions title={title} />
+      ) : (
+        <section aria-labelledby="part-title" className={panel}>
+          <h2 id="part-title" ref={title} tabIndex={-1} className="text-xl font-semibold outline-none">
+            {selected.title}
+          </h2>
+          <ul className="flex list-disc flex-col gap-2 pl-6">
+            {selected.points.map((point) => (
+              <li key={point}>{point}</li>
             ))}
-          </nav>
-        }
-      >
-        {selected === QUESTIONS ? (
-          <InterviewQuestions title={title} />
-        ) : (
-          <section aria-labelledby="part-title" className={panel}>
-            <h2 id="part-title" ref={title} tabIndex={-1} className="text-xl font-semibold outline-none">
-              {selected.title}
-            </h2>
-            <ul className="flex list-disc flex-col gap-2 pl-6">
-              {selected.points.map((point) => (
-                <li key={point}>{point}</li>
-              ))}
-            </ul>
-            {selected.id === LAST_READ && <GuideRead />}
-            {next && (
-              <Button variant={asksToRead ? "outline" : "default"} className={`${asksToRead ? outlined : action} gap-2 self-end`} onClick={() => setOpen(next.id)}>
-                Next part
-                <ArrowRight aria-hidden className="size-5" />
-              </Button>
-            )}
-          </section>
-        )}
-      </ListDetail>
-    </div>
+          </ul>
+          {selected.id === LAST_READ && <GuideRead />}
+          {next && (
+            <Button variant={asksToRead ? "outline" : "default"} className={`${asksToRead ? outlined : action} gap-2 self-end`} onClick={() => setOpen(next.id)}>
+              Next part
+              <ArrowRight aria-hidden className="size-5" />
+            </Button>
+          )}
+        </section>
+      )}
+    </ListDetail>
   );
 }
 

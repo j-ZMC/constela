@@ -1,9 +1,10 @@
 "use client";
 
 import { useState } from "react";
+import { EmployerPage } from "@/components/employers/employer-page";
 import { useUrlValue } from "@/components/employers/list-detail";
 import { VacancyEditor, unsavedForms } from "@/components/employers/vacancy-editor";
-import { action, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
+import { action, outlined, panel } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
 import { useEmployerData } from "@/lib/employer-store";
 import { Loading } from "@/components/loading";
@@ -11,9 +12,17 @@ import { postingFactsLine } from "@/lib/posting-facts";
 import { useHydrated } from "@/lib/use-hydrated";
 import { emptyForm, formFromVacancy, leftText, thingsLeft } from "@/lib/vacancy-editor";
 
-// Job posts live in localStorage, so render only after hydration (same as the Profile flow).
+const INTRO = "Paste a job post, see what is missing, and publish a clear version.";
+
+// Job posts live in localStorage, so the list waits for hydration; the sky and title don't.
 export function VacancyWorkspace() {
-  return useHydrated() ? <Workspace /> : <Loading />;
+  return useHydrated() ? (
+    <Workspace />
+  ) : (
+    <EmployerPage title="Jobs" intro={INTRO}>
+      <Loading />
+    </EmployerPage>
+  );
 }
 
 function Workspace() {
@@ -41,16 +50,14 @@ function Workspace() {
   const notStored = kept.filter((form) => !vacancies.some((v) => v.id === form.id));
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <h1 className={pageTitle}>Jobs</h1>
+    <EmployerPage title="Jobs" intro={INTRO}>
+      <div className="flex flex-col items-start gap-3">
         {/* After the editor closes, focus returns here instead of falling back to the top of the page. */}
         <Button autoFocus={returned} className={action} onClick={() => setPost(crypto.randomUUID())}>
           Add a job post
         </Button>
+        <p data-detail="extra" className="text-muted-foreground">{postingFactsLine()}</p>
       </div>
-      <p data-detail="extra">Paste a job post, see what is missing, and publish a clear version.</p>
-      <p data-detail="extra">{postingFactsLine()}</p>
       {vacancies.length + notStored.length > 0 ? (
         <ul className="flex flex-col gap-3">
           {notStored.map((form) => (
@@ -71,7 +78,7 @@ function Workspace() {
       ) : (
         <p>You have no job posts yet.</p>
       )}
-    </div>
+    </EmployerPage>
   );
 }
 

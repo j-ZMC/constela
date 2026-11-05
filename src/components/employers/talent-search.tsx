@@ -2,8 +2,9 @@
 
 import { useRef, useState, type RefObject } from "react";
 import Link from "next/link";
+import { EmployerPage } from "@/components/employers/employer-page";
 import { ListDetail, ListRow, ROWS, useOpenRow, useUrlValue } from "@/components/employers/list-detail";
-import { Field, SelectField, action, control, note, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
+import { Field, SelectField, action, control, note, outlined, panel } from "@/components/employers/vacancy-fields";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { addPermission, markAnswerSent, scheduleInterview, useEmployerData, type EmployerData } from "@/lib/employer-store";
@@ -20,9 +21,14 @@ const ANSWERS: Record<NonNullable<TalentRow["status"]>, string> = {
 };
 const STATES: Record<NonNullable<TalentRow["status"]>, string> = { invited: "Invited", accepted: "Said yes", declined: "Said no" };
 
-// Job posts live in localStorage, so render only after hydration (same as the Profile flow).
+// Job posts live in localStorage, so the people wait for hydration; the sky and title don't.
 export function TalentSearch() {
-  return useHydrated() ? <Search /> : <Loading />;
+  const hydrated = useHydrated();
+  return (
+    <EmployerPage title="People" intro="We sort people by skills only. What a person needs at work never changes the order.">
+      {hydrated ? <Search /> : <Loading />}
+    </EmployerPage>
+  );
 }
 
 function ToJobs({ message }: { message: string }) {
@@ -47,20 +53,14 @@ function Search() {
   const options = published.map((v) => ({ value: v.id, label: `${v.title} · ${v.company}` }));
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className="flex flex-wrap items-end justify-between gap-4">
-        <h1 className={pageTitle}>People</h1>
-        {vacancy && (
-          <div className="w-full sm:w-[20rem]">
-            {/* Changing the job closes the person who was open. */}
-            <SelectField label="Job" value={vacancy.id} options={options} onChange={(id) => id && window.history.pushState(null, "", `?job=${encodeURIComponent(id)}`)} />
-          </div>
-        )}
-      </div>
-      <div className={`${note} ${row.open ? "hidden lg:flex" : ""}`}>
-        <p>We sort people by skills only. What a person needs at work never changes the order.</p>
-        <p>Names stay hidden until they say yes.</p>
-      </div>
+    <>
+      {vacancy && (
+        <div className="w-full sm:w-[20rem]">
+          {/* Changing the job closes the person who was open. */}
+          <SelectField label="Job" value={vacancy.id} options={options} onChange={(id) => id && window.history.pushState(null, "", `?job=${encodeURIComponent(id)}`)} />
+        </div>
+      )}
+      <p className={`${note} ${row.open ? "hidden lg:flex" : ""}`}>Names stay hidden until they say yes.</p>
       {!vacancy ? (
         <ToJobs message="Publish a job post to see who fits it." />
       ) : vacancy.essential.some((r) => r.skill) ? (
@@ -68,7 +68,7 @@ function Search() {
       ) : (
         <ToJobs message="This job post has no skills to match yet. Pick a skill for each essential requirement." />
       )}
-    </div>
+    </>
   );
 }
 

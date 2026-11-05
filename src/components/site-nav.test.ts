@@ -53,4 +53,12 @@ describe("EmployerNav", () => {
   it("marks the seal as current on its own page", () => {
     expect([...render(EmployerNav, "/employers/seal").current]).toEqual(["/employers/seal"]);
   });
+
+  // Constela for Employers looks like the rest of Constela: the same bars, only the links and the name change.
+  it("uses the same bars as the rest of the app", () => {
+    const bars = (html: string) => [...html.matchAll(/<(header|aside|nav)\b[^>]*class="([^"]*)"/g)].map(([, tag, classes]) => `${tag} ${classes}`);
+    const candidate = bars(render(SiteNav, "/jobs").html);
+    expect(candidate).toHaveLength(4); // the top bar, the side bar, its menu, and the phone tab bar
+    expect(bars(render(EmployerNav, "/employers/talent").html)).toEqual(candidate);
+  });
 });

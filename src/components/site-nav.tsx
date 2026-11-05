@@ -1,13 +1,16 @@
 "use client";
 
+import type { ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { BriefcaseBusiness, GraduationCap, ListChecks, MessagesSquare, UserRound } from "lucide-react";
+import { BriefcaseBusiness, GraduationCap, ListChecks, MessagesSquare, UserRound, type LucideIcon } from "lucide-react";
 import { Logo } from "@/components/logo";
 import { PersonalizationPanel } from "@/components/personalization-panel";
 import { cn } from "@/lib/utils";
 
-const links = [
+export type NavLink = { href: string; label: string; icon: LucideIcon };
+
+const links: NavLink[] = [
   { href: "/plan", label: "My plan", icon: ListChecks },
   { href: "/jobs", label: "Jobs", icon: BriefcaseBusiness },
   { href: "/learn", label: "Learn", icon: GraduationCap },
@@ -17,15 +20,18 @@ const links = [
 
 export function SiteNav() {
   const pathname = usePathname();
-  // The intro asks for one decision only, so the app menu waits until the person starts. Personalize stays.
-  const intro = pathname === "/";
-  // Employers have their own side menu (employers/employer-nav.tsx), so the two menus never show together.
+  // Employers have their own menu (employers/employer-nav.tsx), made of the same bars, so two menus never show together.
   if (pathname.startsWith("/employers")) return null;
+  // The intro asks for one decision only, so the app menu waits until the person starts. Personalize stays.
+  return <AppNav home="/" brand={<Logo />} links={links} current={(href) => pathname.startsWith(href)} menu={pathname !== "/"} />;
+}
 
+// The app's bars, the same on each side of Constela. homeLabel names the brand link when its text alone says too little.
+export function AppNav({ home, brand, homeLabel, links, current, menu = true }: { home: string; brand: ReactNode; homeLabel?: string; links: NavLink[]; current: (href: string) => boolean; menu?: boolean }) {
   // side: the wide-screen bar on the left, one link per row; otherwise the phone tab bar, icon over label.
   const items = (side: boolean) =>
     links.map(({ href, label, icon: Icon }) => {
-      const active = pathname.startsWith(href);
+      const active = current(href);
       return (
         <Link
           key={href}
@@ -48,23 +54,23 @@ export function SiteNav() {
       {/* The bars are the dark sky color (--sky, always dark enough for white text, in every palette), so they never
           blend with the page. On wide screens the app menu is the bar on the left, so this top bar shows only on the
           intro and on phones. */}
-      <header className={cn("sticky top-0 z-10 border-b border-white/10 bg-sky text-white", !intro && "lg:hidden")}>
+      <header className={cn("sticky top-0 z-10 border-b border-white/10 bg-sky text-white", menu && "lg:hidden")}>
         <div className="mx-auto flex max-w-5xl flex-wrap items-center justify-between gap-4 px-4 py-3">
-          <Link href="/" className="flex min-h-11 items-center text-lg">
-            <Logo />
+          <Link href={home} aria-label={homeLabel} className="flex min-h-11 items-center text-lg">
+            {brand}
           </Link>
           <PersonalizationPanel onSky />
         </div>
       </header>
-      {!intro && (
+      {menu && (
         <>
           {/* Wide screens: one bar down the left side; layout.tsx moves the page over by its width (data-side-nav). */}
           <aside
             data-side-nav
             className="fixed inset-y-0 left-0 z-10 hidden w-56 flex-col gap-6 border-r border-white/10 bg-sky px-3 py-4 text-white lg:flex"
           >
-            <Link href="/" className="flex min-h-11 items-center px-3 text-lg">
-              <Logo />
+            <Link href={home} aria-label={homeLabel} className="flex min-h-11 items-center px-3 text-lg">
+              {brand}
             </Link>
             <nav aria-label="Main" className="flex flex-col gap-1">
               {items(true)}

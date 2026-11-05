@@ -2,7 +2,8 @@
 
 import Link from "next/link";
 import { ArrowRight, ChevronRight, FileText, Star, UsersRound, type LucideIcon } from "lucide-react";
-import { action, outlined, pageTitle } from "@/components/employers/vacancy-fields";
+import { EmployerPage } from "@/components/employers/employer-page";
+import { action, outlined } from "@/components/employers/vacancy-fields";
 import { Button, buttonVariants } from "@/components/ui/button";
 import { homeSummary } from "@/lib/employer-home";
 import { saveVacancy, useEmployerData, useSeal } from "@/lib/employer-store";
@@ -10,9 +11,14 @@ import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 import { DEMO_VACANCY } from "@/lib/vacancy";
 
-// Everything here comes from localStorage, so render only after hydration (same as the Profile flow).
+// The sky and title come first, like every page. What is below comes from localStorage, so it waits for hydration.
 export function EmployerHome() {
-  return useHydrated() ? <Home /> : <Loading />;
+  const hydrated = useHydrated();
+  return (
+    <EmployerPage title="Home" intro="Write clear job posts, find people by their skills, and run a hiring process with no surprises." width="max-w-3xl">
+      {hydrated ? <Home /> : <Loading />}
+    </EmployerPage>
+  );
 }
 
 function Home() {
@@ -21,9 +27,7 @@ function Home() {
   const { next, jobs, people, seal: sealLines } = homeSummary(data, seal, new Date());
 
   return (
-    <div className="flex flex-col gap-6">
-      <h1 className={pageTitle}>Home</h1>
-
+    <>
       <section aria-labelledby="next-heading" className="flex flex-wrap items-center justify-between gap-4 rounded-2xl border border-primary/15 bg-card p-5 shadow-[0_10px_30px_-14px_rgb(36_59_83/0.35)] sm:p-7">
         <div className="min-w-0">
           <h2 id="next-heading" className="text-xl font-semibold">
@@ -58,7 +62,7 @@ function Home() {
       <Link href="/" className="flex min-h-11 w-fit items-center underline underline-offset-4">
         Looking for a job? Go to Constela
       </Link>
-    </div>
+    </>
   );
 }
 

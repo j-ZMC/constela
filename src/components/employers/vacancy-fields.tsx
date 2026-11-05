@@ -15,8 +15,6 @@ export const control = "h-12 border bg-card font-normal text-base md:text-base";
 export const longControl = "min-h-12 border bg-card text-base font-normal md:text-base";
 const nativeSelect = "h-12 w-full rounded-lg border border-input bg-card px-3 text-base font-normal outline-none focus-visible:border-ring focus-visible:ring-3 focus-visible:ring-ring/50";
 
-// Same title as every app page (DESIGN.md).
-export const pageTitle = "text-2xl font-bold text-balance sm:text-3xl";
 export const panel = "flex flex-col gap-4 rounded-xl border bg-card p-5";
 export const note = "flex flex-col gap-2 rounded-xl bg-secondary p-4";
 

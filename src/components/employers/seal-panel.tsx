@@ -2,16 +2,25 @@
 
 import Link from "next/link";
 import { Check, Circle, Star } from "lucide-react";
-import { outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
+import { EmployerPage } from "@/components/employers/employer-page";
+import { outlined, panel } from "@/components/employers/vacancy-fields";
 import { buttonVariants } from "@/components/ui/button";
 import { useEmployerData, useSeal } from "@/lib/employer-store";
 import { SEAL_LEVELS, SEAL_NAMES, nextLevel, type SealCheck } from "@/lib/seal";
 import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
 
-// The seal lives in localStorage data, so render only after hydration (same as the Profile flow).
+const INTRO = "It comes from what you do on Constela. It changes as soon as your data does.";
+
+// The seal lives in localStorage data, so its level waits for hydration; the sky doesn't.
 export function SealPanel() {
-  return useHydrated() ? <Panel /> : <Loading />;
+  return useHydrated() ? (
+    <Panel />
+  ) : (
+    <EmployerPage title="Your Neuroinclusive seal" intro={INTRO} width="max-w-3xl">
+      <Loading />
+    </EmployerPage>
+  );
 }
 
 function Panel() {
@@ -22,15 +31,19 @@ function Panel() {
   const company = data.vacancies.find((v) => v.status === "published")?.company;
 
   return (
-    <div className="flex flex-col gap-6">
-      <div className="flex flex-col gap-2">
-        <h1 className={`${pageTitle} flex items-center gap-2`}>
-          {/* Star gold marks achievements only. The outline keeps it visible on white. */}
-          {seal.level && <Star aria-hidden className="size-7 shrink-0 fill-star text-foreground" />}
+    <EmployerPage
+      width="max-w-3xl"
+      intro={INTRO}
+      title={
+        <span className="flex items-center gap-3">
+          {/* Star gold marks achievements only, like the logo's lit star: gold, outlined in the sky's white. */}
+          {seal.level && <Star aria-hidden className="size-8 shrink-0 fill-star" />}
           {/* Progress, not a deficit: the line below says what is left. */}
           {seal.level ? `Neuroinclusive seal: ${SEAL_NAMES[seal.level]}` : "Your Neuroinclusive seal"}
-        </h1>
-        <p data-detail="extra">It comes from what you do on Constela. It changes as soon as your data does.</p>
+        </span>
+      }
+    >
+      <div className="flex flex-col gap-2">
         {seal.level && company && (
           <p>
             Constela signs your seal, so anyone can check that it is real.{" "}
@@ -60,7 +73,7 @@ function Panel() {
           </ul>
         </section>
       ))}
-    </div>
+    </EmployerPage>
   );
 }
 

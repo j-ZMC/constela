@@ -3,15 +3,18 @@
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
 import { ArrowLeft, ArrowRight, Check, Info } from "lucide-react";
+import { EmployerPage } from "@/components/employers/employer-page";
 import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/list-detail";
 import { MarkedText, PhraseHelp } from "@/components/employers/phrase-help";
-import { Field, LongTextField, NumberField, Rows, SelectField, TextField, action, longControl, note, outlined, pageTitle, panel } from "@/components/employers/vacancy-fields";
+import { Field, LongTextField, NumberField, Rows, SelectField, TextField, action, longControl, note, outlined, panel } from "@/components/employers/vacancy-fields";
+import { onSky } from "@/components/page-sky";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Textarea } from "@/components/ui/textarea";
 import type { VacancyDraft } from "@/lib/employer-ai";
 import { extractVacancy } from "@/lib/employer-ai-client";
 import { saveVacancy } from "@/lib/employer-store";
+import { cn } from "@/lib/utils";
 import {
   ALTERNATIVE_FORMATS,
   CLEAR_SCORE,
@@ -140,11 +143,18 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
     onClose();
   }
 
-  const back = leaving ? (
+  // The way back sits in the page sky, above the title. With changes not saved, it asks first, at the top of the page.
+  const back = !leaving && (
+    <Button variant="ghost" className={cn(action, "w-fit gap-2 px-2 font-normal underline underline-offset-4", onSky)} onClick={() => (dirty ? setLeaving(true) : onClose())}>
+      <ArrowLeft aria-hidden className="size-5" />
+      Back to jobs
+    </Button>
+  );
+  const askToLeave = leaving && (
     <div role="alert" className={panel}>
       <p>You have changes that are not saved.</p>
       <div className="flex flex-wrap gap-3">
-        <Button variant="outline" className={outlined} onClick={() => setLeaving(false)}>
+        <Button autoFocus variant="outline" className={outlined} onClick={() => setLeaving(false)}>
           Keep editing
         </Button>
         <Button variant="ghost" className={`${action} font-normal underline underline-offset-4`} onClick={leave}>
@@ -152,19 +162,13 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
         </Button>
       </div>
     </div>
-  ) : (
-    <Button variant="ghost" className={`${action} w-fit gap-2 px-2 font-normal underline underline-offset-4`} onClick={() => (dirty ? setLeaving(true) : onClose())}>
-      <ArrowLeft aria-hidden className="size-5" />
-      Back to jobs
-    </Button>
   );
 
   if (step === "paste") {
     return (
-      <div className="flex max-w-[40rem] flex-col gap-5">
-        {back}
+      <EmployerPage title="Add a job post" titleRef={heading} intro="Paste your job post. We fill in its parts for you to check." before={back} width="max-w-3xl">
+        {askToLeave}
         <PasteStep
-          heading={heading}
           text={posting}
           onText={setPosting}
           onManual={() => setStep("card")}
@@ -174,7 +178,7 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
             setStep("card");
           }}
         />
-      </div>
+      </EmployerPage>
     );
   }
 
@@ -190,40 +194,38 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
   const ready = !published && left === 0;
 
   return (
-    <div className="flex flex-col gap-5">
-      <div className={open ? "hidden lg:block" : undefined}>{back}</div>
-
-      <div className="flex flex-wrap items-center justify-between gap-4">
-        <div className="min-w-0">
-          <h1 ref={heading} tabIndex={-1} className={`${pageTitle} outline-none`}>
-            {form.title.trim() || "New job post"}
-          </h1>
-          {/* Stays in the page, so screen readers hear it change. */}
-          <p role="status" className="flex items-start gap-2">
-            {!failed && !dirty && <Check aria-hidden className="mt-1 size-5 shrink-0" />}
-            <span>
-              {failed && "This browser could not save the job post. Copy your text somewhere safe and try again."}
-              {!failed && published && (dirty ? "Published. You have changes that are not saved." : "Published. Candidates can see this job post on Jobs.")}
-              {!failed && !published && (waiting.length > 0 ? `Draft. Not saved yet. ${waiting.join(" ")}` : "Draft. Saved.")}
-            </span>
-          </p>
-        </div>
-        <div className="flex flex-wrap gap-3">
-          {published && !dirty && (
-            <Link href="/jobs" className={`${action} flex items-center font-normal underline underline-offset-4`}>
-              See it on Jobs
-            </Link>
-          )}
-          {published && (
-            <Button variant="outline" className={outlined} onClick={() => save("draft")}>
-              Unpublish
-            </Button>
-          )}
-          {/* One main action at a time: Publish takes over from Next part when nothing is left. */}
-          <Button variant={published || ready ? "default" : "outline"} className={published || ready ? action : outlined} onClick={() => save("published")}>
-            {published ? "Save changes" : "Publish"}
+    <EmployerPage
+      title={form.title.trim() || "New job post"}
+      titleRef={heading}
+      before={<div className={open ? "hidden lg:block" : undefined}>{back}</div>}
+      after={
+        // Stays in the page, so screen readers hear it change.
+        <p role="status" className="flex items-start gap-2 text-pretty text-white/80">
+          {!failed && !dirty && <Check aria-hidden className="mt-1 size-5 shrink-0" />}
+          <span>
+            {failed && "This browser could not save the job post. Copy your text somewhere safe and try again."}
+            {!failed && published && (dirty ? "Published. You have changes that are not saved." : "Published. Candidates can see this job post on Jobs.")}
+            {!failed && !published && (waiting.length > 0 ? `Draft. Not saved yet. ${waiting.join(" ")}` : "Draft. Saved.")}
+          </span>
+        </p>
+      }
+    >
+      {askToLeave}
+      <div className="flex flex-wrap items-center gap-3">
+        {/* One main action at a time: Publish takes over from Next part when nothing is left. */}
+        <Button variant={published || ready ? "default" : "outline"} className={published || ready ? action : outlined} onClick={() => save("published")}>
+          {published ? "Save changes" : "Publish"}
+        </Button>
+        {published && (
+          <Button variant="outline" className={outlined} onClick={() => save("draft")}>
+            Unpublish
           </Button>
-        </div>
+        )}
+        {published && !dirty && (
+          <Link href="/jobs" className={`${action} flex items-center font-normal underline underline-offset-4`}>
+            See it on Jobs
+          </Link>
+        )}
       </div>
 
       {problems.length > 0 && (
@@ -299,7 +301,7 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
           )}
         </section>
       </ListDetail>
-    </div>
+    </EmployerPage>
   );
 }
 
@@ -470,13 +472,11 @@ function RequirementRow({ label, item, onChange }: { label: string; item: Requir
 }
 
 function PasteStep({
-  heading,
   text,
   onText,
   onManual,
   onDraft,
 }: {
-  heading: React.RefObject<HTMLHeadingElement | null>;
   text: string;
   onText: (text: string) => void;
   onManual: () => void;
@@ -498,12 +498,7 @@ function PasteStep({
 
   return (
     <section className="flex flex-col gap-4">
-      <div className="flex flex-col gap-2">
-        <h1 ref={heading} tabIndex={-1} className={`${pageTitle} outline-none`}>
-          Add a job post
-        </h1>
-        <p>Paste your job post. We fill in its parts for you to check. Your draft saves itself, and candidates can&apos;t see it until you publish.</p>
-      </div>
+      <p>Your draft saves itself, and candidates can&apos;t see it until you publish.</p>
       <Field label="Your job post">
         <Textarea value={text} maxLength={MAX_POSTING} rows={10} disabled={status === "loading"} onChange={(e) => onText(e.target.value)} className={`${longControl} min-h-48`} />
       </Field>
