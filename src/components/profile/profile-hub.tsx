@@ -15,7 +15,7 @@ import { Loading } from "@/components/loading";
 
 type Section = "needs" | "conditions" | "cv" | "contact";
 const sections: Array<{ id: Section; label: string }> = [
-  { id: "needs", label: "What is hard" },
+  { id: "needs", label: "Adaptability" },
   { id: "conditions", label: "Job conditions" },
   { id: "cv", label: "CV" },
   { id: "contact", label: "Contact details" },

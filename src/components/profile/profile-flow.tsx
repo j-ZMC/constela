@@ -6,7 +6,7 @@ import { Loading } from "@/components/loading";
 import { loadHelpPicks, saveHelpPicks, turnOnHelp } from "@/lib/help-picks";
 import { useHydrated } from "@/lib/use-hydrated";
 
-// "Your needs" in the Profile: "What is hard for you?". Each pick turns on screen settings (seen as a live preview)
+// "Your needs" in the Profile: "What would help you adapt?". Each pick turns on screen settings (seen as a live preview)
 // and the matching adaptations (summaries, one step at a time, heads-ups), which the rest of the app reads through
 // toAdaptations(). Saved picks show ticked, so the person can come back and change them.
 // Saved answers live in localStorage, which the server can't see, so this renders only after hydration.

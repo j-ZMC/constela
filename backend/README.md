@@ -116,7 +116,7 @@ stays inside `while`; `return collected` stays outside `for category`.
 
 A standalone page to choose workplace conditions from `config/neurodivergence_job_barriers.json`. It is a preference
 picker, not a diagnostic quiz: people can skip it or choose across groups. It emits a `barriers-selected` event with
-IDs such as `autism_spectrum:sensory_load`. The app's own picker is in Profile, Job conditions.
+IDs such as `autism_spectrum:sensory_load`. The app's own picker is in Profile, Job conditions; it groups them by kind of situation (`barrierGroups` in `src/lib/barrier-preferences.ts`) and never shows the condition names.
 
 `candidate_terms_en` holds wording variants from job ads ("customer-facing role", "rotating shifts"). They are signals
 for the embeddings, not keywords that must appear. After changing them, run `embed_jobs.py` to refresh the condition

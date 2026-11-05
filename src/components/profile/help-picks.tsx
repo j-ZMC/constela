@@ -23,7 +23,7 @@ const ICONS: Record<string, LucideIcon> = {
   speech: Ear,
 };
 
-// The first thing in the Profile: what is hard. Every pick is optional, and "Decide later" skips all.
+// The first thing in the Profile: adaptability. Every pick is optional, and "Decide later" skips all.
 // Shortcuts by type turn on screen settings directly; which ones were chosen is passed on once and never kept.
 // onBack: shows Back and Skip, like a question in a flow. required: the first start of the app; there is no way
 // around it, and at least one pick or shortcut turns on "Turn on this help".
@@ -67,7 +67,7 @@ export function HelpPicks({
     <section aria-labelledby="help-picks-heading" className="flex flex-col gap-6">
       <div className="flex flex-col gap-2">
         <h2 id="help-picks-heading" className="text-2xl font-semibold text-balance">
-          What is hard for you?
+          What would help you adapt?
         </h2>
         <p className="text-pretty text-muted-foreground">
           These often come with ADHD, autism, dyslexia and other kinds of neurodivergence, and with no diagnosis at all.

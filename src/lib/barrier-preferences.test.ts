@@ -1,6 +1,7 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import {
   barrierCatalog,
+  barrierGroups,
   loadBarrierPreferences,
   loadCustomBlockers,
   normalizeCustomBlocker,
@@ -23,6 +24,15 @@ describe("barrier preferences", () => {
   it("uses condition IDs from the backend catalog", () => {
     expect(barrierCatalog.categories[0].subtypes[0].id).toBe("distraction_and_interruptions");
     expect(barrierCatalog.categories).toHaveLength(11);
+  });
+
+  it("shows every catalog option in exactly one group, and no group is named after a condition", () => {
+    const shown = barrierGroups.flatMap((group) => group.options.map((option) => option.id));
+    const all = barrierCatalog.categories.flatMap((c) => c.subtypes.map((s) => `${c.id}:${s.id}`));
+    expect(shown.toSorted()).toEqual(all.toSorted());
+    expect(barrierGroups.every((group) => group.options.every((option) => option.subtype))).toBe(true);
+    const names = barrierCatalog.categories.map((c) => c.name_en.toLowerCase());
+    expect(barrierGroups.filter((group) => names.some((n) => group.name.toLowerCase().includes(n)))).toEqual([]);
   });
 
   it("saves and loads selected category:condition IDs", () => {

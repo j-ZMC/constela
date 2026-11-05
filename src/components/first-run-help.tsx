@@ -7,9 +7,9 @@ import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { loadHelpPicks, turnOnHelp } from "@/lib/help-picks";
 import { useHydrated } from "@/lib/use-hydrated";
 
-// The first start of the app (or after "Delete my data"): "What is hard for you?" before anything else, on any page.
+// The first start of the app (or after "Delete my data"): "What would help you adapt?" before anything else, on any page.
 // It cannot be closed (no close button, Escape or click outside); choosing at least one pick or shortcut and pressing
-// "Turn on this help" is the way in. Later it stays in Profile, What is hard, to change.
+// "Turn on this help" is the way in. Later it stays in Profile, Adaptability, to change.
 export function FirstRunHelp() {
   const hydrated = useHydrated();
   // Employers are not the person looking for a job, and a seal check is one public page anyone can open from a link, so

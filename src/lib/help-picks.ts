@@ -1,4 +1,4 @@
-// "What is hard for you?": optional picks at the start of the Profile. Each turns on help that already exists:
+// "What would help you adapt?": optional picks at the start of the Profile. Each turns on help that already exists:
 // answers to the Profile questions (so toAdaptations() picks them up) and Personalize settings. Nothing here is sent
 // anywhere.
 import { loadProfile, saveProfile, type Answers } from "@/lib/profile";
@@ -6,7 +6,7 @@ import { PRESETS, applyPrefs, loadPrefs, savePrefs, type Prefs } from "@/lib/per
 import { setReadingOption } from "@/lib/reading";
 
 // The visual settings that often help with each kind of neurodivergence. Used two ways:
-// - Each "What is hard" pick draws its visuals from one entry (`visual`), so answering by need is enough.
+// - Each "Adaptability" pick draws its visuals from one entry (`visual`), so answering by need is enough.
 // - "Shortcuts by type" lets the person turn an entry on directly. Which ones they chose is never saved or sent;
 //   only the resulting settings are, the same as changing them by hand in Personalize.
 export const NEURO_TYPES = {

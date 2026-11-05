@@ -22,7 +22,7 @@ export default function PrivacyPage() {
         <p>Your answers, contact details, parsed CV profile, plan and settings are saved in this browser, on this device. We do not have online accounts or keep your profile data on a server.</p>
         <ul className="list-disc space-y-1 pl-6">
           <li>Your profile answers, which describe needs, never diagnoses</li>
-          <li>What you chose in &quot;What is hard for you?&quot;</li>
+          <li>What you chose in &quot;What would help you adapt?&quot;</li>
           <li>Your plan: steps, stars and stages</li>
           <li>Whether you asked for easier steps today</li>
           <li>Your reading and personalization settings</li>
@@ -97,9 +97,9 @@ export default function PrivacyPage() {
           companies&apos; official sites, on this device; nothing is sent. Course sites have their own privacy rules.
         </p>
         <p>
-          When you press &quot;Break it down for me&quot;, we send the task text to Groq to get smaller steps. We also send three
-          settings that shape the answer and which starter step it is. Constela does not save the task text; each AI service
-          handles its data under its own privacy policy.
+          When you press &quot;Break it down for me&quot;, the AI on this computer turns the task into smaller steps. It reads
+          the task text, three settings that shape the answer and which starter step it is. Nothing leaves this computer, and
+          Constela does not save the task text.
         </p>
         <p>
           If you use Constela for Employers: when you press &quot;Read it for me&quot;, &quot;Write it for me&quot; or &quot;Draft
@@ -124,7 +124,7 @@ export default function PrivacyPage() {
           <li>If you use &quot;Shortcuts by type&quot;, we keep only the screen settings it turns on, never which type you chose.</li>
           <li>
             If you turn on &quot;Adjust the practice to how it is going&quot;, Constela looks at your answers and, on this computer
-            only, at your pauses and pace when you speak and at your face (with the camera on). It only makes the next question easier. It never
+            only, at your pauses and pace when you speak. It never reads your face. It only makes the next question easier. It never
             shows, saves or sends what it read.
           </li>
           <li>We do not use ads or tracking.</li>

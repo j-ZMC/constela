@@ -6,7 +6,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
   MAX_CUSTOM_BLOCKERS,
-  barrierCatalog,
+  barrierGroups,
   loadBarrierPreferences,
   loadCustomBlockers,
   normalizeCustomBlocker,
@@ -30,25 +30,24 @@ function Survey({ onNext }: { onNext: () => void }) {
   const [status, setStatus] = useState("");
 
   const query = search.trim().toLocaleLowerCase("en");
-  const categories = useMemo(
+  const groups = useMemo(
     () =>
-      barrierCatalog.categories.flatMap((category) => {
-        const categoryMatches = category.name_en.toLocaleLowerCase("en").includes(query);
-        const subtypes = categoryMatches
-          ? category.subtypes
-          : category.subtypes.filter((subtype) =>
+      barrierGroups.flatMap((group) => {
+        const options = group.name.toLocaleLowerCase("en").includes(query)
+          ? group.options
+          : group.options.filter(({ subtype }) =>
               [subtype.label_en, ...subtype.candidate_terms_en].some((text) => text.toLocaleLowerCase("en").includes(query)),
             );
-        return subtypes.length ? [{ category, subtypes }] : [];
+        return options.length ? [{ name: group.name, options }] : [];
       }),
     [query],
   );
   const selectedOptions = useMemo(
     () =>
-      barrierCatalog.categories.flatMap((category) =>
-        category.subtypes
-          .filter((subtype) => selected.includes(`${category.id}:${subtype.id}`))
-          .map((subtype) => ({ id: `${category.id}:${subtype.id}`, category: category.name_en, label: subtype.label_en })),
+      barrierGroups.flatMap((group) =>
+        group.options
+          .filter(({ id }) => selected.includes(id))
+          .map(({ id, subtype }) => ({ id, group: group.name, label: subtype.label_en })),
       ),
     [selected],
   );
@@ -108,19 +107,18 @@ function Survey({ onNext }: { onNext: () => void }) {
           />
         </label>
 
-        {categories.length ? (
+        {groups.length ? (
           <div className="flex flex-col divide-y rounded-xl border bg-card">
-            {categories.map(({ category, subtypes }) => (
-              <details key={category.id} open={Boolean(query)}>
+            {groups.map(({ name, options }) => (
+              <details key={name} open={Boolean(query)}>
                 <summary className="flex min-h-12 cursor-pointer items-center justify-between gap-3 rounded-lg px-4 py-3 font-medium outline-none focus-visible:ring-2 focus-visible:ring-ring">
-                  <span>{category.name_en}</span>
+                  <span>{name}</span>
                   <span className="text-sm font-normal text-muted-foreground">
-                    {subtypes.length} {subtypes.length === 1 ? "option" : "options"}
+                    {options.length} {options.length === 1 ? "option" : "options"}
                   </span>
                 </summary>
                 <div className="flex flex-col gap-3 px-4 pb-4">
-                  {subtypes.map((subtype) => {
-                    const id = `${category.id}:${subtype.id}`;
+                  {options.map(({ id, subtype }) => {
                     const isExpanded = expanded.includes(id);
                     return (
                       <div key={id}>
@@ -217,7 +215,7 @@ function Survey({ onNext }: { onNext: () => void }) {
           <ul className="flex flex-col divide-y rounded-xl border bg-card px-4">
             {selectedOptions.map((item) => (
               <li key={item.id} className="flex items-center justify-between gap-2 py-1 text-sm">
-                <span>{item.category}: {item.label}</span>
+                <span>{item.group}: {item.label}</span>
                 <button
                   type="button"
                   aria-label={`Remove ${item.label}`}

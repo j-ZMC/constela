@@ -1,5 +1,5 @@
 // Profile: the shape of the saved answers, how they are stored, and how they become app settings. The answers are no
-// longer asked one by one: "What is hard for you?" (src/lib/help-picks.ts) fills them.
+// longer asked one by one: "What would help you adapt?" (src/lib/help-picks.ts) fills them.
 // Other modules should only use loadProfile() + toAdaptations(), never raw answers.
 
 export const QUESTIONS = [

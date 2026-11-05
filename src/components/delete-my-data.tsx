@@ -25,9 +25,9 @@ export const DELETED_KEYS = [
   "seal-history",
 ];
 
-// restart: after deleting, open the app fresh at the first form ("What is hard for you?" in the Profile), or at the
-// employers' Home on their side. A full page load, not a client navigation: pages already visited stay mounted with
-// what they knew about the person.
+// restart: after deleting, open the app fresh at the first form ("What would help you adapt?" in the Profile), or at
+// the employers' Home on their side. A full page load, not a client navigation: pages already visited stay mounted
+// with what they knew about the person.
 export function DeleteMyData({ restart = false }: { restart?: boolean }) {
   const [step, setStep] = useState<"idle" | "confirm" | "done">("idle");
   const [error, setError] = useState(false);

@@ -3,7 +3,7 @@ import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, applyHelp, describeVisual, loadHelpP
 import { DEFAULT_PREFS, PRESETS, cleanPrefs } from "@/lib/personalization";
 import { toAdaptations } from "@/lib/profile";
 
-describe("what is hard: help picks", () => {
+describe("adaptability: help picks", () => {
   afterEach(() => vi.unstubAllGlobals());
 
   it("turns each pick into help that the rest of the app already reads", () => {
