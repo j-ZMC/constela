@@ -13,7 +13,7 @@ import { useHydrated } from "@/lib/use-hydrated";
 export function FirstRunHelp() {
   const hydrated = useHydrated();
   // Employers are not the person looking for a job, and a seal check is one public page anyone can open from a link, so
-  // neither asks "What is hard for you?" first.
+  // neither asks "What would help you adapt?" first.
   const elsewhere = /^\/(employers|seal-check)(\/|$)/.test(usePathname());
   return hydrated && !elsewhere ? <FirstRun /> : null;
 }
