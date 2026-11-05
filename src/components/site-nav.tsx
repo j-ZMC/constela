@@ -19,6 +19,8 @@ export function SiteNav() {
   const pathname = usePathname();
   // The intro asks for one decision only, so the app menu waits until the person starts. Personalize stays.
   const intro = pathname === "/";
+  // Employers have their own side menu (employers/employer-nav.tsx), so the two menus never show together.
+  if (pathname.startsWith("/employers")) return null;
 
   // side: the wide-screen bar on the left, one link per row; otherwise the phone tab bar, icon over label.
   const items = (side: boolean) =>

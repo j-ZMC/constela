@@ -9,6 +9,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { DeleteMyData } from "@/components/delete-my-data";
 import { onSky as onSkyText } from "@/components/page-sky";
+import { cn } from "@/lib/utils";
 import {
   DEFAULT_PREFS, DEFAULT_ROLES, PRESETS, ROLE_LABELS, applyPrefs, checkContrast, loadPrefs, savePrefs, starCheck,
   type Prefs, type Roles,
@@ -46,7 +47,8 @@ function Slider({ id, label, value, min, max, step, shown, onChange }: { id: str
 }
 
 // onSky: the button sits on a dark bar (the app menu), so it is white on the sky color.
-export function PersonalizationPanel({ onSky = false }: { onSky?: boolean }) {
+// className: extra layout for another menu, like the employers' side menu.
+export function PersonalizationPanel({ onSky = false, className }: { onSky?: boolean; className?: string }) {
   const [p, setP] = useState<Prefs>(DEFAULT_PREFS);
   const [tab, setTab] = useState<Tab>("colors");
   const [name, setName] = useState("");
@@ -88,7 +90,7 @@ export function PersonalizationPanel({ onSky = false }: { onSky?: boolean }) {
       const dys = document.documentElement.classList.contains("dyslexic");
       setP({ ...l, font: dys ? "dyslexic" : l.font === "dyslexic" ? "default" : l.font });
     }}>
-      <DialogTrigger render={<Button variant="outline" className={onSky ? `border-white/30 bg-transparent ${onSkyText}` : undefined} />}>
+      <DialogTrigger render={<Button variant="outline" className={cn(onSky && `border-white/30 bg-transparent ${onSkyText}`, className) || undefined} />}>
         <Settings aria-hidden data-pz-icon />
         <span data-pz-label>Settings</span>
       </DialogTrigger>

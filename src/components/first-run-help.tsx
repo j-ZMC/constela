@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { usePathname } from "next/navigation";
 import { HelpPicks } from "@/components/profile/help-picks";
 import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
 import { loadHelpPicks, turnOnHelp } from "@/lib/help-picks";
@@ -10,7 +11,10 @@ import { useHydrated } from "@/lib/use-hydrated";
 // It cannot be closed (no close button, Escape or click outside); choosing at least one pick or shortcut and pressing
 // "Turn on this help" is the way in. Later it stays in Profile, What is hard, to change.
 export function FirstRunHelp() {
-  return useHydrated() ? <FirstRun /> : null;
+  const hydrated = useHydrated();
+  // Employers are not the person looking for a job, so Constela for Employers never asks "What is hard for you?".
+  const employers = usePathname().startsWith("/employers");
+  return hydrated && !employers ? <FirstRun /> : null;
 }
 
 function FirstRun() {

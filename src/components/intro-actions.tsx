@@ -52,6 +52,9 @@ export function IntroActions() {
           Privacy
         </Link>
       </p>
+      <Link href="/employers" className="flex min-h-11 w-fit items-center text-sm text-muted-foreground underline underline-offset-4 hover:text-foreground">
+        Hiring? Constela for Employers
+      </Link>
     </div>
   );
 }

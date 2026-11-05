@@ -29,6 +29,8 @@ export default function PrivacyPage() {
           <li>Your parsed CV profile, if you upload a CV</li>
           <li>The jobs you save, whether you said you applied, and what Wikipedia says about their companies</li>
           <li>Your job and course filters</li>
+          <li>Invitations from employers, and your answers</li>
+          <li>If you use Constela for Employers: your job posts and interview questions</li>
         </ul>
       </section>
 
@@ -98,6 +100,10 @@ export default function PrivacyPage() {
           settings that shape the answer and which starter step it is. Constela does not save the task text; each AI service
           handles its data under its own privacy policy.
         </p>
+        <p>
+          If you use Constela for Employers: when you press &quot;Read it for me&quot;, &quot;Write it for me&quot; or &quot;Draft
+          with AI&quot;, we send that job post text to Groq. No candidate&apos;s details go with it.
+        </p>
       </section>
 
       <section className="flex flex-col gap-2">
@@ -112,6 +118,7 @@ export default function PrivacyPage() {
           </li>
           <li>We do not use ads or tracking.</li>
           <li>We do not sell your data.</li>
+          <li>We do not show employers your name unless you say yes to an invitation.</li>
         </ul>
       </section>
       </Summarized>

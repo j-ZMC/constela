@@ -4,7 +4,8 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 
 // Everything Constela keeps lives in this browser under these keys (profile, plan, reading and personalization).
-const KEYS = [
+// delete-my-data.test.ts fails if a key the app stores is not on this list.
+export const DELETED_KEYS = [
   "profile",
   "profile-step",
   "plan",
@@ -20,6 +21,7 @@ const KEYS = [
   "learn-filters",
   "tour",
   "help-picks",
+  "employers",
 ];
 
 // restart: after deleting, open the app fresh at the first form ("What is hard for you?" in the Profile). A full page
@@ -36,13 +38,13 @@ export function DeleteMyData({ restart = false }: { restart?: boolean }) {
         </Button>
       ) : (
         <>
-          <p className="w-full">This deletes your profile, CV data, plan, saved jobs and settings on this device. It cannot be undone.</p>
+          <p className="w-full">This deletes your profile, CV data, plan, saved jobs, settings and any employer job posts on this device. It cannot be undone.</p>
           <Button
             variant="destructive"
             className="h-11 px-5 text-base"
             onClick={() => {
               try {
-                KEYS.forEach((k) => localStorage.removeItem(k));
+                DELETED_KEYS.forEach((k) => localStorage.removeItem(k));
                 const html = document.documentElement;
                 html.removeAttribute("style");
                 ["data-pz", "data-pz-icons", "data-pz-detail", "data-pz-scheme", "data-pz-calm"].forEach((a) => html.removeAttribute(a));
