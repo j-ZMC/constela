@@ -27,6 +27,7 @@ The challenge asks for AI that supports **executive function**: planning, focus,
 | Learn | Courses, certificates, programs, free guides on GitHub and forums in the United States, hand-picked and checked (`src/lib/learn-resources.ts`). **Picked for your saved jobs**: what your saved jobs ask for that your CV does not show, and what teaches it (on this device). **Search company courses**: a web search limited to the official course sites of Anthropic, AWS, Google, Microsoft, NVIDIA and others. Filters by area, type, cost, format and "only for college students". Any resource can be added to My plan. The first, Mexico-only list is kept as `MEXICO_RESOURCES_LEGACY`, not shown | `/learn` | |
 | Preparation (was Interview; the route is still `/interview`) | A local AI with eight activities in four boxes (`GROUPS` in `interview-chat.tsx`): **Practice an interview** (with "What to expect"), **Common questions** (with "Learn how to answer"), **Messages and letters** (translate a recruiter's message, write an email, a cover letter or a follow-up with `[blanks]` instead of made-up facts, and "Check my writing", kind proofreading), and **Write or improve your CV** (write it from zero, get tips on yours, or fix one part; it never makes up facts and leaves blanks like `[start year]`). Choosing a box shows all its choices at once as boxes with pictograms, with defaults, and Start. Cover letters, follow-ups and CV help can use a typed or saved job (`USES_JOB` in `interview.ts`). In Write modes, **Dictate** writes what you say into the box without sending it; while the AI talks, the sentence it is saying shows as a caption. **Video call** is spoken, like a meeting app: the interviewer fills the screen with captions, you are a small tile in the corner, and a control bar has Start speaking, I need a moment, Camera, Hide me and Leave; "Type instead" is the only fallback. The camera is opt-in in More options, with a check before the call (a light tip and where to put the camera); you can hide yourself or turn the camera off, and a camera that goes off gets one calm note ([camera-view.tsx](src/components/interview/camera-view.tsx), light in [camera.ts](src/lib/camera.ts)). Nothing is recorded. In Talk mode, "I need a moment" stops the microphone and the voice until you are ready. Before a video call, **MediaPipe** (`@mediapipe/tasks-vision`, face detector model in `public/models/`, its WASM from jsDelivr pinned to the installed version) says if the face is in the middle (`framingTip` in `camera.ts`). **For a real meeting** ([meeting-helper.tsx](src/components/interview/meeting-helper.tsx)): reminders the person picks, one at a time, with no sound; live captions of a shared meeting tab, written by Whisper on this computer; both can float on top of the meeting in a Document Picture-in-Picture window (Chrome and Edge). Three interview types (General, Video call, Experience questions). Write, talk, or write and listen. Can practice for a saved job, using its posting and what a web search found about the company | `/interview` | Evy |
 | Personalization | Colors, text, cursor, icons, amount of information and motion, saved on the device. Also **Soft light** (a warmer, dimmer page that keeps every contrast check), **Calm mode** (no movement, no glow, Hey Constela answers in text) and **Slower AI voice** ([PERSONALIZATION.md](PERSONALIZATION.md)) | Settings (in the menu; the code still calls it Personalize). Also "Delete my data", which deletes everything and opens the first form | Regina |
+| Constela for Employers | The side for companies, with its own menu and no "What is hard for you?" window. **Jobs**: write a job post in parts, with autosave, or paste one; a clarity check points out vague phrases and missing facts (pay, the hiring steps, when they will answer), with a line on what 6,450 real job posts leave out. The AI (Groq) can read a pasted post, rewrite one vague line without adding facts, and draft interview questions. **People**: demo candidates ranked by the skills the job asks for, with "What would change the order"; needs are never read. **Seal**: Bronze, Silver or Gold, from what the job posts say and how fast the employer answers, signed so anyone can check it. **Guide**: structured interviews. Published job posts show in Jobs, and candidates answer invitations at `/invitations`. A public API for the LinkedIn extension: `/api/public/vacancies/[id]` and `/api/public/seal` (its key at `/api/public/seal/keys`, its history at `/api/public/seal/log`) | `/employers`, `/invitations`, `/seal-check` | Juan |
 | Privacy | What is kept, what leaves the device, and "Delete my data" | `/privacy` | |
 | LinkedIn extension (optional) | A "less chaotic" mode with the same look and settings | — | Regina |
 
@@ -59,6 +60,8 @@ Profile answers, job conditions, the parsed CV, the plan and settings are saved 
 | "Look up" on a saved job | Wikipedia's public API (no key) for the company; **Ollama on this computer** sums it up and reads the job's own page | To Wikipedia: the company name only. The page text stays on the computer |
 | Interview for a saved job | **Ollama, on this computer** | The start of the posting, what it asks for, and what the web search found |
 | Break it down for me | Groq | The task text and three settings that shape the answer |
+| Constela for Employers: "Read it for me", "Write it for me", "Draft with AI" | Groq | The job post text only; no candidate's details |
+| Constela for Employers: published job posts and the seal | Constela's server (`.data/`), public | Published job posts, and the dates of the employer's answers (never who they were for). When a seal starts, changes or ends, the company name, level and time go into a public history, which "Delete my data" does not remove |
 
 Saved jobs, what "Look up" found, and "I sent my application" stay in the browser too (`saved-jobs` in localStorage). Pay, work mode and company size on a job are read from Constela's own data; nothing about the person is used for them.
 
@@ -80,6 +83,11 @@ The [privacy page](src/app/privacy/page.tsx) says the same in Easy Read. Keep th
 - **With people with ADHD:** people the team knows who have ADHD tried the app.
 - **With real CVs, with permission:** the CV parser was tested with CVs from people who agreed to it. Those CVs are not
   in this repository (`backend/resume_parser/resumes/` is ignored by git); the tests use made-up data.
+- **Measured, on the employer side:** the employer AI against the real model ([evals/REPORT.md](evals/REPORT.md):
+  29 of 32 vague lines got a clear rewrite, and none of them added a fact); 6,450 real job posts from this
+  repository's data ([evals/POSTINGS.md](evals/POSTINGS.md): of the 2,729 with their whole text, 3 in 10 use a vague
+  phrase, and none says when they will answer); and the ranking's promises on 9,000 synthetic people ([evals/FAIRNESS.md](evals/FAIRNESS.md): 142,889
+  checks, none broken). The seal's signature reproduces the published RFC 8037 test vector.
 
 Still to validate: the other conditions in "Shortcuts by type" (only ADHD was tested with people who have it), and
 the face reading in "Adjust the practice" with people whose facial expression differs, such as autistic people.
@@ -104,7 +112,8 @@ the face reading in "Adjust the practice" with people whose facial expression di
 
 ## How to set up
 
-Constela runs on your own computer. All the AI runs locally, except "Break it down for me", which uses Groq.
+Constela runs on your own computer. All the AI runs locally, except "Break it down for me" and the AI in Constela for
+Employers, which use Groq.
 
 ### 1. Install the tools
 
@@ -133,7 +142,8 @@ The job data, the search vectors and the Kokoro voice model come with the reposi
 cp .env.example .env.local    # PowerShell: Copy-Item .env.example .env.local
 ```
 
-Only "Break it down for me" needs a key: put a free Groq key in `GROQ_API_KEY` (https://console.groq.com/keys).
+Only "Break it down for me" and the AI in Constela for Employers need a key: put a free Groq key in `GROQ_API_KEY`
+(https://console.groq.com/keys).
 Everything else works without one. See [Environment variables](#environment-variables) for the rest.
 
 ### 4. Start it
@@ -167,8 +177,10 @@ Set these in `.env.local`. Only the keys for the features you use are needed.
 
 | Variable | Used by | Notes |
 | --- | --- | --- |
-| `GROQ_API_KEY` | Break it down for me | Free key at https://console.groq.com/keys |
-| `GROQ_MODEL` | Break it down for me | Optional; defaults to `openai/gpt-oss-20b` |
+| `GROQ_API_KEY` | Break it down for me, Constela for Employers | Free key at https://console.groq.com/keys |
+| `GROQ_MODEL` | Break it down for me, Constela for Employers | Optional; defaults to `openai/gpt-oss-20b` |
+| `PUBLIC_API_WRITES` | Constela for Employers | Optional; `on` lets `npm start` receive published job posts for the public API (`npm run dev` always can). Leave it off on a public server: there are no accounts yet, so nothing proves who is writing |
+| `SEAL_SIGNING_KEY` | The seal | Optional; an Ed25519 private key (PKCS#8 PEM). Without it, Constela makes one in `.data/seal-signing-key.pem`. Set it on a server, so seals stay checkable after a new deploy |
 | `OPENAI_API_KEY` | `backend/company_sizes.py` only (run by hand) | The app itself no longer uses OpenAI |
 | `PYTHON_EXECUTABLE` | Jobs, CV, Talk mode | Optional; defaults to `.venv` at the project root |
 | `OLLAMA_URL` | Interview | Optional; defaults to `http://127.0.0.1:11434` |
@@ -229,18 +241,22 @@ Run these commands from the project root:
 | `npm start` | Start the production server after building |
 | `npm run lint` | Check the code with ESLint |
 | `npm test` | Run the web test suite (Vitest) |
+| `npm run eval:ai` | Measure the employer AI against the real model; writes [evals/REPORT.md](evals/REPORT.md). Needs `GROQ_API_KEY`, about 15 minutes |
+| `npm run eval:replay` | Run the answers `eval:ai` recorded through the current guards, offline |
+| `npm run eval:postings` | Read 6,450 real job posts and write [evals/POSTINGS.md](evals/POSTINGS.md), in seconds |
+| `npm run eval:fairness` | Check the ranking's promises on 9,000 synthetic people and write [evals/FAIRNESS.md](evals/FAIRNESS.md) |
 | `cd backend; ..\.venv\Scripts\python.exe -m unittest` | Run the Python tests |
 
 ## Project map
 
 | Folder | What is there |
 | --- | --- |
-| `src/app/` | Pages (`/`, `/profile`, `/plan`, `/jobs`, `/learn`, `/interview`, `/privacy`; `/recommended` redirects to `/jobs`) and API routes (`/api/jobs`, `/api/jobs/posting`, `/api/company/research`, `/api/learn/search`, `/api/resume/parse`, `/api/breakdown`, `/api/interview`, `/api/interview/warm`, `/api/interview/transcribe`, `/api/interview/speak`) |
-| `src/components/` | Screens by module (`profile/`, `plan/`, `jobs/`, `interview/`) and shared UI in `ui/` |
-| `src/lib/` | Logic without screens, with tests next to it: the plan and path, the constellation map, jobs (schema, filters, saved jobs, company facts, web research, job page reading), the interview prompt and context, the Python workers for Whisper and Kokoro |
+| `src/app/` | Pages (`/`, `/profile`, `/plan`, `/jobs`, `/learn`, `/interview`, `/privacy`; `/recommended` redirects to `/jobs`; the employer side under `/employers`, plus `/invitations` and `/seal-check`) and API routes (`/api/jobs`, `/api/jobs/posting`, `/api/company/research`, `/api/learn/search`, `/api/resume/parse`, `/api/breakdown`, `/api/interview`, `/api/interview/warm`, `/api/interview/transcribe`, `/api/interview/speak`, `/api/employer-ai`, `/api/employer-sync`, `/api/public/...`) |
+| `src/components/` | Screens by module (`profile/`, `plan/`, `jobs/`, `interview/`, `employers/`) and shared UI in `ui/` |
+| `src/lib/` | Logic without screens, with tests next to it: the plan and path, the constellation map, jobs (schema, filters, saved jobs, company facts, web research, job page reading), the interview prompt and context, the Python workers for Whisper and Kokoro, and the employer side (job posts and their clarity check, the employer AI and its guards, the ranking, the seal, its signature and public history) |
+| `evals/` | Measurements of the employer side, with their reports: the employer AI against the real model (`REPORT.md`), 6,450 real job posts (`POSTINGS.md`) and the ranking on 9,000 synthetic people (`FAIRNESS.md`) |
+| `.data/` | Made while the app runs, never in git: published job posts, the seal history and the seal's signing key |
 | `backend/` | Python: collectors (`collect_bulk.py`, `collect_internships.py`), company data (`company_inclusion.py`, `select_qualified_companies.py`, `company_sizes.py`), embeddings and the job filter (`embed_jobs.py`, `filter_jobs.py`), CV parser, `transcribe_server.py` (Whisper) and `speak_server.py` (Kokoro) on the shared `worker_protocol.py`, data and tests |
-
-`npm test` runs the tests. `npm run eval:ai` measures the employer AI against the real model and writes [evals/REPORT.md](evals/REPORT.md); it needs `GROQ_API_KEY` and takes about 15 minutes. `npm run eval:replay` runs the answers it recorded through the current guards, offline. `npm run eval:postings` reads 6,450 real job posts and writes [evals/POSTINGS.md](evals/POSTINGS.md) in seconds. `npm run eval:fairness` checks the ranking's promises on 9,000 synthetic people and writes [evals/FAIRNESS.md](evals/FAIRNESS.md).
 
 ## Connecting your module to My plan
 
@@ -338,7 +354,14 @@ At run time nothing uses OpenAI. Each search embeds its words with Qwen on Ollam
 
 ### Open work
 
-- Planned, may not make the deadline: integrate Juan's Constela for Employers (see [How the work was split](#how-the-work-was-split)). The code is in the history (merge `65203a0`), and it needs to be adapted to the current app, which now runs its AI locally.
+- Constela for Employers, brought into this version on 4 November 2026:
+  - Its AI still runs on Groq, not on the local Ollama. Moving it means running `npm run eval:ai` again on the new model.
+  - People with the same score should show as tied: in 65% of the synthetic pools, the order by id decided who made the
+    top 5 ([evals/FAIRNESS.md](evals/FAIRNESS.md)). The same audit shows that the weight of a checked skill passes on any
+    gap in who gets their skills checked.
+  - The seal history keeps company names after "Delete my data", or it would prove nothing.
+  - The public API has no accounts, so its writes stay off on a public server (`PUBLIC_API_WRITES`). The LinkedIn
+    extension should accept the new `token` field of `/api/public/seal` and pin the key id (`kid`).
 - Not built yet: a finder for proven certifications and their courses, and a country filter for internships. The CV helper exists as a chat in Preparation; the parser still does not read education or certifications, and the helper cannot tailor a CV to a saved job yet.
 - After the move from OpenAI to Ollama (3 to 4 November 2026) everything runs on the local computer except "Break it down for me" (Groq) and the Wikipedia call in "Look up". "Company courses" now searches only the hand-checked list (1 or 2 courses per company), so it is short. The conditions filter (`BLOCKED_THRESHOLD = 0.35`) sets apart about 3.6% of condition-and-job pairs, and every condition flags at least 10 jobs; check it with real people. `company_sizes.py` still uses OpenAI. The old `*_openai_*` caches in `data/processed/embeddings/` can be deleted.
 - Open question: a fresh job JSON with company size and salary, as two files (US jobs, and companies). The open question is whether to re-collect (fresh, recovers pay, 60 to 90 minutes plus new embeddings) or enrich the current file.
@@ -418,7 +441,7 @@ Everything below runs on the person's own computer, except the last row.
 | [Kokoro-82M](https://huggingface.co/hexgrad/Kokoro-82M) (hexgrad), int8 ONNX files from [kokoro-onnx](https://github.com/thewh1teagle/kokoro-onnx) | The AI's voice. The files are in `backend/models/kokoro/` | Apache 2.0 |
 | [Whisper small.en](https://huggingface.co/Systran/faster-whisper-small.en) (OpenAI), CTranslate2 version by SYSTRAN | Speech to text in Talk mode | MIT |
 | MediaPipe BlazeFace (short range), Face Landmarker and Gesture Recognizer (Google) | Camera framing, expressions and the open-palm gesture. The files are in `public/models/` | Apache 2.0 |
-| [gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) (OpenAI), **on Groq's servers** | "Break it down for me" | Apache 2.0 |
+| [gpt-oss-20b](https://huggingface.co/openai/gpt-oss-20b) (OpenAI), **on Groq's servers** | "Break it down for me", and in Constela for Employers: reading a pasted job post, rewriting a vague line, drafting interview questions | Apache 2.0 |
 
 ### Code from other projects
 
@@ -452,8 +475,8 @@ The git history (26 October to 4 November 2026) shows who built what:
 - **Juan** (Juan Juarez): Constela for Employers, the side of the app for companies: vacancies written in clear
   language, talent search, structured interviews and invitations, and an inclusion seal. He built it on its own branch
   (30 October to 2 November), and Luis merged it into the team repository on 2 November (`65203a0`); his commits are
-  in this history. We plan to integrate it into this version, but we have not had time yet, and it may not be ready by
-  the deadline. Even so, the team counts Juan's work as part of the project.
+  in this history. It was brought into this version on 4 November 2026, with Luis's later styling, a public API for
+  the LinkedIn extension, a signed seal anyone can check, and three measurements in `evals/`.
 - **Zahid** (j-ZMC): the Python backend (job collectors, company inclusion data, the job search and its vectors), the
   CV profile and job recommendations, the move to local AI, and the preparation of the final version.
 - **Evy**: the first version of the interview coach, a single HTML page (`entrenador1.html`) made for this challenge
