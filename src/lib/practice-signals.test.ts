@@ -14,12 +14,11 @@ describe("adjust the practice to how it is going", () => {
     expect(needsEasier([])).toBe(false);
   });
 
-  it("never eases on the voice or the face alone", () => {
+  it("never eases on the voice alone", () => {
     expect(needsEasier([answer({ voice: steady }), answer({ voice: halting })])).toBe(false);
-    expect(needsEasier([answer({ tension: 0.1 }), answer({ tension: 0.6 })])).toBe(false);
   });
 
-  it("counts voice and face only as a change from the same person's earlier answers", () => {
+  it("counts the voice only as a change from the same person's earlier answers", () => {
     // A short answer with more pauses than before: ease.
     expect(needsEasier([answer({ voice: steady }), answer({ words: 3, voice: { seconds: 1.2, pauses: 0.3 } })])).toBe(true);
     // A short answer spoken much slower than before (1 word per second): ease.
@@ -27,9 +26,7 @@ describe("adjust the practice to how it is going", () => {
     // Someone who always pauses a lot, at their usual pace: no change, no effect.
     expect(needsEasier([answer({ voice: halting }), answer({ words: 3, voice: { seconds: 1.2, pauses: 0.4 } })])).toBe(false);
     // The first answer has nothing to compare with.
-    expect(needsEasier([answer({ words: 3, voice: halting, tension: 0.9 })])).toBe(false);
-    // Voice and face changing together.
-    expect(needsEasier([answer({ voice: steady, tension: 0.1 }), answer({ voice: halting, tension: 0.5 })])).toBe(true);
+    expect(needsEasier([answer({ words: 3, voice: halting })])).toBe(false);
   });
 
   it("hears unsure answers and counts words", () => {

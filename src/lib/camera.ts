@@ -34,15 +34,6 @@ export function lightTip(level: number): string | null {
   return null;
 }
 
-// How tense the face looks, from 0 to 1: the average of MediaPipe Face Landmarker blendshapes that tighten with
-// effort (brows down, lips pressed, mouth corners down). Weak evidence: only ever compared with the same person's
-// earlier answers (practice-signals.ts), never shown, never kept.
-const TENSE = ["browDownLeft", "browDownRight", "mouthPressLeft", "mouthPressRight", "mouthFrownLeft", "mouthFrownRight"];
-export function faceTension(blendshapes: { categoryName: string; score: number }[]): number | null {
-  const scores = blendshapes.filter((b) => TENSE.includes(b.categoryName)).map((b) => b.score);
-  return scores.length ? scores.reduce((a, b) => a + b, 0) / scores.length : null;
-}
-
 // "I need a moment" by raising an open hand: the palm has to stay up for PALM_HOLD_MS, so a quick wave or a movement
 // the person did not choose (a tic, for example) never sets it off. Then it waits PALM_REST_MS before it can again.
 export const PALM_HOLD_MS = 1500;

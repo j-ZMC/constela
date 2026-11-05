@@ -191,7 +191,6 @@ export function InterviewChat() {
   const signals = useRef<AnswerSignals[]>([]);
   const paused = useRef(false);
   const heardVoice = useRef<Voice | undefined>(undefined);
-  const tensions = useRef<number[]>([]);
   // Video call practice with the person's own camera: off unless they turn it on.
   const [camera, setCamera] = useState(false);
   // In the meeting: the camera, hiding yourself, the one calm note when you turn it off, and typing instead of talking.
@@ -445,7 +444,6 @@ export function InterviewChat() {
     setStarted(true);
     signals.current = [];
     paused.current = false;
-    tensions.current = [];
     ask([], a);
   }
 
@@ -460,19 +458,16 @@ export function InterviewChat() {
     // What this answer showed, compared with this practice's earlier answers. Only with "Adjust the practice" on.
     let ease = false;
     if (adapt && USES_TYPE.includes(activity)) {
-      const face = tensions.current;
       signals.current.push({
         words: countWords(words),
         unsure: soundsUnsure(words),
         paused: paused.current,
         voice: heardVoice.current,
-        tension: face.length ? face.reduce((a, b) => a + b, 0) / face.length : undefined,
       });
       ease = needsEasier(signals.current);
     }
     paused.current = false;
     heardVoice.current = undefined;
-    tensions.current = [];
     ask(next, activity, ease);
   }
 
@@ -769,7 +764,7 @@ export function InterviewChat() {
                   <span>Adjust the practice to how it is going</span>
                   <span className="text-sm text-muted-foreground">
                     If a question seems hard, the next one is easier, with an example or a break. It looks at your answers and,
-                    only on this computer, at your pauses and pace when you speak and at your face when the camera is on. Nothing is shown or saved.
+                    only on this computer, at your pauses and pace when you speak. It never reads your face. Nothing is shown or saved.
                   </span>
                 </span>
               </label>
@@ -835,7 +830,6 @@ export function InterviewChat() {
                 on={camOn}
                 hidden={hideMe}
                 onPalm={needAMoment}
-                onTension={adapt ? (t) => recorder.current && tensions.current.push(t) : undefined}
               />
             </div>
           </div>

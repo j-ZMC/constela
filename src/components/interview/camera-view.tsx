@@ -3,7 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Eye, EyeOff, Video, VideoOff } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { NO_PALM, brightness, faceTension, framingTip, lightTip, palmStep, raisedPalm, type FaceBox } from "@/lib/camera";
+import { NO_PALM, brightness, framingTip, lightTip, palmStep, raisedPalm, type FaceBox } from "@/lib/camera";
 import { cn } from "@/lib/utils";
 
 // How often the light is checked, on a tiny copy of the picture.
@@ -15,20 +15,18 @@ const MEDIAPIPE_WASM = "https://cdn.jsdelivr.net/npm/@mediapipe/tasks-vision@1.2
 // can hide (seeing yourself tires many people) or turn off. Nothing is recorded or sent; the picture only shows here.
 // `check`: before the call, also show where to put the camera.
 // `on` and `hidden` given: the meeting's control bar runs the camera, so the tile shows only the picture.
-// In the call: `onPalm` when the person holds up an open hand ("I need a moment"); `onTension` with how tense the face
-// looks, only if "Adjust the practice" is on. Both read the picture on this device and keep nothing.
+// In the call: `onPalm` when the person holds up an open hand ("I need a moment"). It reads the picture on this device
+// and keeps nothing. Facial expressions are not read: they can misread people whose expression differs.
 export function CameraView({
   check = false,
   on: onProp,
   hidden: hiddenProp,
   onPalm,
-  onTension,
 }: {
   check?: boolean;
   on?: boolean;
   hidden?: boolean;
   onPalm?: () => void;
-  onTension?: (tension: number) => void;
 }) {
   const controlled = onProp !== undefined;
   const video = useRef<HTMLVideoElement>(null);
@@ -124,62 +122,42 @@ export function CameraView({
     };
   }, [check, status]);
 
-  // The newest callbacks, so a re-render does not restart MediaPipe.
+  // The newest callback, so a re-render does not restart MediaPipe.
   const palmRef = useRef(onPalm);
-  const tensionRef = useRef(onTension);
   useEffect(() => {
     palmRef.current = onPalm;
-    tensionRef.current = onTension;
   });
   const wantsPalm = Boolean(onPalm);
   // Shown on the tile while an open hand is up, so the person knows the camera sees it.
   const [palmSeen, setPalmSeen] = useState(false);
-  const wantsTension = Boolean(onTension);
 
-  // In the call: MediaPipe's Gesture Recognizer and Face Landmarker (both Apache 2.0), on this device, 2.5 times a second.
+  // In the call: MediaPipe's Gesture Recognizer (Apache 2.0), on this device, 2.5 times a second.
   useEffect(() => {
-    if (status !== "on" || (!wantsPalm && !wantsTension)) return;
+    if (status !== "on" || !wantsPalm) return;
     let stopped = false;
     let timer: ReturnType<typeof setInterval> | undefined;
-    const closers: Array<() => void> = [];
+    let hands: Awaited<ReturnType<typeof import("@mediapipe/tasks-vision").GestureRecognizer.createFromOptions>> | undefined;
     (async () => {
       try {
-        const { FaceLandmarker, FilesetResolver, GestureRecognizer } = await import("@mediapipe/tasks-vision");
+        const { FilesetResolver, GestureRecognizer } = await import("@mediapipe/tasks-vision");
         const files = await FilesetResolver.forVisionTasks(MEDIAPIPE_WASM);
-        const hands = wantsPalm
-          ? await GestureRecognizer.createFromOptions(files, {
-              baseOptions: { modelAssetPath: "/models/gesture_recognizer.task", delegate: "CPU" },
-              runningMode: "VIDEO",
-              numHands: 1,
-            })
-          : undefined;
-        const face = wantsTension
-          ? await FaceLandmarker.createFromOptions(files, {
-              baseOptions: { modelAssetPath: "/models/face_landmarker.task", delegate: "CPU" },
-              runningMode: "VIDEO",
-              numFaces: 1,
-              outputFaceBlendshapes: true,
-            })
-          : undefined;
-        if (hands) closers.push(() => hands.close());
-        if (face) closers.push(() => face.close());
-        if (stopped) return closers.forEach((close) => close());
+        const made = await GestureRecognizer.createFromOptions(files, {
+          baseOptions: { modelAssetPath: "/models/gesture_recognizer.task", delegate: "CPU" },
+          runningMode: "VIDEO",
+          numHands: 1,
+        });
+        if (stopped) return made.close();
+        hands = made;
         let palm = NO_PALM;
         timer = setInterval(() => {
           const v = video.current;
-          if (!v || v.readyState < 2) return;
+          if (!v || v.readyState < 2 || !hands) return;
           const now = performance.now();
-          if (hands) {
-            const seen = hands.recognizeForVideo(v, now);
-            const step = palmStep(palm, raisedPalm(seen.gestures[0]?.[0], seen.landmarks[0]?.[9]?.y), now);
-            palm = step.state;
-            setPalmSeen(palm.since !== null);
-            if (step.fire) palmRef.current?.();
-          }
-          if (face) {
-            const tension = faceTension(face.detectForVideo(v, now).faceBlendshapes[0]?.categories ?? []);
-            if (tension !== null) tensionRef.current?.(tension);
-          }
+          const seen = hands.recognizeForVideo(v, now);
+          const step = palmStep(palm, raisedPalm(seen.gestures[0]?.[0], seen.landmarks[0]?.[9]?.y), now);
+          palm = step.state;
+          setPalmSeen(palm.since !== null);
+          if (step.fire) palmRef.current?.();
         }, 400);
       } catch {
         // Without MediaPipe, the buttons still do the same.
@@ -188,9 +166,9 @@ export function CameraView({
     return () => {
       stopped = true;
       clearInterval(timer);
-      closers.forEach((close) => close());
+      hands?.close();
     };
-  }, [status, wantsPalm, wantsTension]);
+  }, [status, wantsPalm]);
 
   function turn(next: boolean) {
     setOn(next);

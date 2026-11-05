@@ -2,9 +2,9 @@
 // easier? Only when the person turned it on. Nothing here is shown, kept or sent; it only sets one flag (`ease`) on the
 // next request to the interview AI on this computer.
 //
-// The task counts most: an "I don't know", a pause the person asked for, a very short answer. Voice and face are weak
-// evidence (people pause and speak at very different paces), so they never decide alone, and they count only as a
-// change from this same person's earlier answers in this practice, never against anyone else.
+// The task counts most: an "I don't know", a pause the person asked for, a very short answer. The voice is weak
+// evidence (people pause and speak at very different paces), so it never decides alone, and it counts only as a
+// change from this same person's earlier answers in this practice, never against anyone else. The face is not read.
 import type { Voice } from "@/lib/whisper";
 
 export type AnswerSignals = {
@@ -12,7 +12,6 @@ export type AnswerSignals = {
   unsure: boolean; // "I don't know", "can you repeat", "I'm stuck"...
   paused: boolean; // pressed "I need a moment" (or raised a hand) since the last answer
   voice?: Voice; // seconds spoken and share of pauses, Talk mode only
-  tension?: number; // 0 to 1, from the face, camera on only
 };
 
 const UNSURE = /\b(i don'?t know|i do not know|not sure|no idea|can you repeat|repeat (that|the question)|i'?m stuck|i am stuck|pass|skip)\b/i;
@@ -45,7 +44,5 @@ export function needsEasier(history: AnswerSignals[]): boolean {
   if (last.paused) score += 0.5;
   if (last.words < 6) score += 0.25;
   if (voiceHarder(history)) score += 0.25;
-  const face = compared(history, (s) => s.tension);
-  if (face && face.now - face.before > 0.15) score += 0.25;
   return score >= 0.5;
 }

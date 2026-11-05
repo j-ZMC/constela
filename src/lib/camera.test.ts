@@ -1,5 +1,5 @@
 import { describe, expect, it } from "vitest";
-import { NO_PALM, PALM_HOLD_MS, brightness, faceTension, framingTip, lightTip, palmStep, raisedPalm } from "@/lib/camera";
+import { NO_PALM, PALM_HOLD_MS, brightness, framingTip, lightTip, palmStep, raisedPalm } from "@/lib/camera";
 
 const frame = (r: number, g: number, b: number, pixels = 4) => new Uint8ClampedArray(Array.from({ length: pixels }, () => [r, g, b, 255]).flat());
 
@@ -40,12 +40,7 @@ describe("lightTip", () => {
   });
 });
 
-describe("face tension and the raised palm", () => {
-  it("averages the blendshapes that tighten with effort, and ignores the rest", () => {
-    expect(faceTension([{ categoryName: "browDownLeft", score: 0.6 }, { categoryName: "mouthPressRight", score: 0.2 }, { categoryName: "eyeBlinkLeft", score: 1 }])).toBeCloseTo(0.4);
-    expect(faceTension([{ categoryName: "eyeBlinkLeft", score: 1 }])).toBeNull();
-  });
-
+describe("the raised palm", () => {
   it("knows a raised open palm from a lowered or closed hand", () => {
     expect(raisedPalm({ categoryName: "Open_Palm", score: 0.9 }, 0.4)).toBe(true);
     // The open-hand test photo: wrist low in the picture, palm high, a modest score. That is a raised palm.
