@@ -55,10 +55,24 @@ QUALIFIED_COMPANIES_DB = "data/processed/qualified_company_jobs.sqlite"
 EXCLUDE_KNOWN_NON_INCLUSIVE = True
 SIMILARITY_THRESHOLD = 2.0  # Number of standard deviations above the mean.
 # Qwen3-Embedding-0.6B. At 0.40 (the threshold used with OpenAI's vectors) 12 of 33 conditions flagged under 10 jobs ("sound": 3).
-# 0.35 sets apart about 3.6% of (condition, job) pairs, every condition at least 10 jobs ("sound": 58); below it,
-# jobs with no clear link start to show.
+# 0.35 set apart 3.6% of (condition, job) pairs ("sound": 58 jobs). Lowered to 0.33 on 5 November 2026 to flag more:
+# 6.1% of pairs, 35 to 1,619 jobs per condition ("sound": 113). A flag only asks the person to look closer, so a
+# few loose matches cost less than a missed one. At 0.32 (7.9%) unrelated jobs show more often.
 # shortcut: tuned on what the flagged jobs look like, not checked with people; re-tune if it sets apart too much or too little.
-BLOCKED_THRESHOLD = 0.35
+BLOCKED_THRESHOLD = 0.33
+# One threshold per condition, found by tune_thresholds.py (5 November 2026); a condition missing from the file uses
+# BLOCKED_THRESHOLD, as do those where the evidence was too weak to move it.
+BARRIER_THRESHOLDS_PATH = "config/barrier_thresholds.json"
+
+
+def load_barrier_thresholds(path: str = BARRIER_THRESHOLDS_PATH) -> dict[str, float]:
+    """Per-condition flag thresholds, by catalog ID. Empty when the file is missing."""
+    try:
+        with open(path, encoding="utf-8") as file:
+            raw = json.load(file)
+    except FileNotFoundError:
+        return {}
+    return {key: float(value) for key, value in raw.items() if isinstance(value, (int, float))}
 
 
 def normalize_rows(vectors: np.ndarray) -> np.ndarray:
@@ -312,6 +326,7 @@ def filter_jobs(
     blocked_threshold: float = BLOCKED_THRESHOLD,
     exclude_known_non_inclusive: bool = EXCLUDE_KNOWN_NON_INCLUSIVE,
     custom_blockers: list[str] | None = None,
+    barrier_thresholds: dict[str, float] | None = None,
 ) -> dict[str, Any]:
     """Return JSON-ready results for a search query and quiz-selected barriers.
 
@@ -360,6 +375,7 @@ def filter_jobs(
         raise ValueError(
             "Unknown user blocker ID(s): " + ", ".join(sorted(unknown_blockers))
         )
+    thresholds = load_barrier_thresholds() if barrier_thresholds is None else barrier_thresholds
     custom_words = list(
         dict.fromkeys(word.strip().lower() for word in custom_blockers or [] if word.strip())
     )
@@ -400,7 +416,7 @@ def filter_jobs(
         block_reasons = []
         for barrier_id, barrier_vector, barrier in selected_barriers:
             barrier_score = float(np.dot(barrier_vector, document_vector))
-            if barrier_score > blocked_threshold:
+            if barrier_score > thresholds.get(barrier_id, blocked_threshold):
                 block_reasons.append(
                     {
                         "barrier_id": barrier_id,

@@ -1,7 +1,9 @@
 import contextlib
 import io
 import json
+import os
 import sys
+import tempfile
 import unittest
 from unittest.mock import patch
 
@@ -154,6 +156,24 @@ class CompanyFactsTests(unittest.TestCase):
         self.assertEqual(facts["acme"]["glassdoor_inclusion_mean"], 4.2)
         self.assertIsNone(facts["acme"]["bcorp_score"])
         json.dumps(facts, allow_nan=False)
+
+
+class BarrierThresholdTests(unittest.TestCase):
+    def test_reads_numbers_by_condition_and_is_empty_without_a_file(self):
+        with tempfile.TemporaryDirectory() as folder:
+            path = os.path.join(folder, "thresholds.json")
+            with open(path, "w", encoding="utf-8") as file:
+                json.dump({"adhd:distraction_and_interruptions": 0.31, "broken": "high"}, file)
+            self.assertEqual(filter_jobs.load_barrier_thresholds(path), {"adhd:distraction_and_interruptions": 0.31})
+            self.assertEqual(filter_jobs.load_barrier_thresholds(os.path.join(folder, "missing.json")), {})
+
+    def test_the_shipped_file_covers_every_condition_with_a_sane_value(self):
+        with open(filter_jobs.BARRIERS_PATH, encoding="utf-8") as file:
+            catalog = json.load(file)
+        ids = {f"{c['id']}:{s['id']}" for c in catalog["categories"] for s in c["subtypes"]}
+        thresholds = filter_jobs.load_barrier_thresholds()
+        self.assertEqual(set(thresholds), ids)
+        self.assertTrue(all(0.2 < value < 0.5 for value in thresholds.values()))
 
 
 if __name__ == "__main__":

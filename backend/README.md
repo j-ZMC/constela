@@ -36,6 +36,7 @@ which the team ran by hand; its answers are stored in `company_sizes.json` and t
 | `select_qualified_companies.py` | Keeps the employers that meet the inclusion bar, and their jobs: `data/processed/qualified_company_jobs.sqlite`. |
 | `company_sizes.py` | Small / medium / large per company for the size filter (`data/reference/company_data/company_sizes.json`). Sources, best first: B Corp size band, Y Combinator `team_size`, the size the posting states, a `gpt-5-mini` estimate, and with `--web N` a web search for the N unknown companies with the most jobs. Needs `OPENAI_API_KEY`. |
 | `embed_jobs.py` | Vectors for every job and every selectable workplace condition, with `qwen3-embedding:0.6b` on Ollama. |
+| `tune_thresholds.py` | Finds the flag threshold for each condition: Llama 3.1 on this computer judges about 75 sampled jobs per condition, and the threshold with the best F1 is kept when the evidence is good enough. Writes `config/barrier_thresholds.json` and `data/processed/threshold_report.json`. |
 | `filter_jobs.py` | One search: embeds the search words, ranks jobs, flags the conditions the person chose, adds pay, work mode and company facts. `--json` prints the result for `/api/jobs`. |
 | `transcribe_server.py` | Whisper speech to text, plus the pauses and pace of an answer (no model) for "Adjust the practice". |
 | `speak_server.py` | The AI's voice with Kokoro-82M (the model is in `models/kokoro/`). |
@@ -93,7 +94,7 @@ stays inside `while`; `return collected` stays outside `for category`.
 - **Matching:** a job matches when its similarity to the search is `SIMILARITY_THRESHOLD` (2.0) standard deviations
   above the mean, so the cutoff adapts to each search.
 - **Conditions:** the person's choices arrive as IDs such as `autism_spectrum:sensory_load`; only those can flag a job,
-  at `BLOCKED_THRESHOLD` (0.35). Words the person types (`--custom-blocker=...`) match whole words. Nothing is inferred
+  at its own threshold (`config/barrier_thresholds.json`, from `tune_thresholds.py`; `BLOCKED_THRESHOLD`, 0.33, for any condition missing there). Words the person types (`--custom-blocker=...`) match whole words. Nothing is inferred
   from a diagnosis.
 - **Companies:** each job gets `company_verified` (in `selected_companies`) and `company_verification_status`
   (`qualified`, `not_qualified` or `unknown`). Known non-qualified companies are left out; unmatched ones stay as
