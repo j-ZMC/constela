@@ -3,6 +3,7 @@
 import { useSyncExternalStore, type ReactNode } from "react";
 import Link from "next/link";
 import { BadgeCheck, ChevronRight } from "lucide-react";
+import { CARD, MASONRY } from "@/components/paged-grid";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { useEmployerData, useSeal } from "@/lib/employer-store";
 import { waitingInvitations } from "@/lib/invitations";
@@ -39,9 +40,9 @@ export function PublishedVacancies() {
         </h2>
         <p className="mt-1 text-sm text-muted-foreground">These employers say what the work is, what it pays and every step of hiring.</p>
       </div>
-      <ul className="flex flex-col divide-y overflow-hidden rounded-xl border bg-card">
+      <ul className={MASONRY}>
         {published.map((v) => (
-          <li key={v.id}>
+          <li key={v.id} className={CARD}>
             <VacancyCard vacancy={v} level={level} needs={needs} />
           </li>
         ))}

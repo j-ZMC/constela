@@ -2,14 +2,15 @@
 
 import { useEffect, useRef, useState } from "react";
 import Link from "next/link";
-import { ArrowLeft, ArrowRight, Check, ChevronRight, Info } from "lucide-react";
+import { ArrowLeft, ArrowRight, Check, ChevronRight } from "lucide-react";
 import { EmployerPage } from "@/components/employers/employer-page";
-import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/list-detail";
+import { useUrlValue } from "@/components/employers/list-detail";
 import { MarkedText, PhraseHelp } from "@/components/employers/phrase-help";
 import { Field, LongTextField, NumberField, Rows, SelectField, TextField, action, longControl, note, outlined, panel } from "@/components/employers/vacancy-fields";
 import { onSky } from "@/components/page-sky";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
+import { Tabs, TabsList, TabsPanel, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
 import type { VacancyDraft } from "@/lib/employer-ai";
 import { extractVacancy } from "@/lib/employer-ai-client";
@@ -86,7 +87,13 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
   const [problems, setProblems] = useState<string[]>([]);
   const [failed, setFailed] = useState(false);
   const [leaving, setLeaving] = useState(false);
-  const { open, setOpen, title: partTitle } = useOpenRow("part");
+  // The open part lives in the URL, so Back returns to the part before.
+  const [open, setOpen] = useUrlValue("part");
+  const partTitle = useRef<HTMLHeadingElement>(null);
+  // Arrow keys keep focus on the tabs. Next part moves it to the new part's title once that part is open (the URL, and
+  // so the open part, changes a render after the click).
+  const focusPart = useRef<string | null>(null);
+  const selected = PARTS.find((p) => p.id === open)?.id ?? PARTS[0].id;
   const heading = useRef<HTMLHeadingElement>(null);
   const problemBox = useRef<HTMLDivElement>(null);
 
@@ -111,6 +118,13 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
   useEffect(() => {
     if (problems.length > 0) problemBox.current?.focus();
   }, [problems]);
+
+  useEffect(() => {
+    if (focusPart.current !== selected) return;
+    focusPart.current = null;
+    partTitle.current?.focus();
+  }, [selected]);
+
 
   // False when the browser blocks storage or it is full.
   function store(next: VacancyForm) {
@@ -188,16 +202,13 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
   const { score } = clarityScore(vacancy);
   const published = form.status === "published";
   const waiting = published ? [] : saveProblems(vacancy);
-  const selected = PARTS.find((p) => p.id === open)?.id ?? PARTS[0].id;
-  const nextPart = PARTS[PARTS.findIndex((p) => p.id === selected) + 1];
-  const part = parts.find((p) => p.id === selected) as PartStatus;
   const ready = !published && left === 0;
 
   return (
     <EmployerPage
       title={form.title.trim() || "New job post"}
       titleRef={heading}
-      before={<div className={open ? "hidden lg:block" : undefined}>{back}</div>}
+      before={back}
       after={
         // Stays in the page, so screen readers hear it change.
         <p role="status" className="flex items-start gap-2 text-pretty text-white/80">
@@ -244,79 +255,82 @@ export function VacancyEditor({ start, isNew, onClose }: { start: VacancyForm; i
         </p>
       )}
 
-      <ListDetail
-        open={open !== null}
-        backLabel="Back to all parts"
-        onBack={() => setOpen(null)}
-        list={
-          <div className="flex flex-col gap-3">
-            <p role="status" className="font-semibold">
-              {leftText(left)}
-            </p>
-            <nav aria-label="Parts of this job post" className={ROWS}>
-              {parts.map((p) => (
-                <ListRow key={p.id} id={p.id} selected={p.id === selected} open={open !== null} onOpen={() => setOpen(p.id)} className="items-center justify-between">
-                  {p.name}
-                  <span className="sr-only">, </span>
-                  <PartState part={p} />
-                </ListRow>
-              ))}
-            </nav>
-            {/* Always shown, even in the Reduced view: the seal counts this score. */}
-            <p>
-              Clarity score: {score} of 100. {score >= CLEAR_SCORE ? "This job post is clear." : `A job post is clear at ${CLEAR_SCORE}.`}
-            </p>
-            {posting.trim() && (
-              <details className={`group ${panel}`}>
-                <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-medium">
-                  <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
-                  Your pasted text
-                </summary>
-                <MarkedText text={posting} />
-              </details>
-            )}
-          </div>
-        }
-      >
-        <section aria-labelledby="part-title" className={panel}>
-          <h2 id="part-title" ref={partTitle} tabIndex={-1} className="text-xl font-semibold outline-none">
-            {part.name}
-          </h2>
-          {part.fixes.length > 0 && (
-            <div className={note}>
-              <h3 className="font-semibold">To fix here</h3>
-              <ul className="flex flex-col gap-1">
-                {part.fixes.map((issue) => (
-                  <li key={issue.id}>
-                    {issue.fix}
-                    {issue.points > 0 && <span data-detail="extra"> (+{issue.points} points)</span>}
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
-          <PartFields part={selected} form={form} change={change} />
-          {nextPart && (
-            <Button variant={ready ? "outline" : "default"} className={`${ready ? outlined : action} gap-2 self-end`} onClick={() => setOpen(nextPart.id)}>
-              Next part
-              <ArrowRight aria-hidden className="size-5" />
-            </Button>
-          )}
-        </section>
-      </ListDetail>
+      <div className="flex flex-col gap-1">
+        <p role="status" className="font-semibold">
+          {leftText(left)}
+        </p>
+        {/* Always shown, even in the Reduced view: the seal counts this score. */}
+        <p>
+          Clarity score: {score} of 100. {score >= CLEAR_SCORE ? "This job post is clear." : `A job post is clear at ${CLEAR_SCORE}.`}
+        </p>
+      </div>
+
+      {/* The parts as tabs, like the Profile's: a check marks a part with nothing left to fix. */}
+      <Tabs value={selected} onValueChange={(value) => setOpen(String(value))}>
+        <TabsList aria-label="Parts of this job post" className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6">
+          {parts.map((p) => (
+            <TabsTrigger key={p.id} value={p.id}>
+              {!p.empty && p.left === 0 && <Check aria-hidden className="size-4 shrink-0" />}
+              {p.name}
+              <span className="sr-only">, {partState(p)}</span>
+            </TabsTrigger>
+          ))}
+        </TabsList>
+        {parts.map((part, i) => (
+          <TabsPanel key={part.id} value={part.id}>
+            <section aria-labelledby="part-title" className={panel}>
+              <h2 id="part-title" ref={partTitle} tabIndex={-1} className="text-xl font-semibold outline-none">
+                {part.name}
+              </h2>
+              {part.fixes.length > 0 && (
+                <div className={note}>
+                  <h3 className="font-semibold">To fix here</h3>
+                  <ul className="flex flex-col gap-1">
+                    {part.fixes.map((issue) => (
+                      <li key={issue.id}>
+                        {issue.fix}
+                        {issue.points > 0 && <span data-detail="extra"> (+{issue.points} points)</span>}
+                      </li>
+                    ))}
+                  </ul>
+                </div>
+              )}
+              <PartFields part={part.id} form={form} change={change} />
+              {PARTS[i + 1] && (
+                <Button
+                  variant={ready ? "outline" : "default"}
+                  className={`${ready ? outlined : action} gap-2 self-end`}
+                  onClick={() => {
+                    focusPart.current = PARTS[i + 1].id;
+                    setOpen(PARTS[i + 1].id);
+                  }}
+                >
+                  Next part
+                  <ArrowRight aria-hidden className="size-5" />
+                </Button>
+              )}
+            </section>
+          </TabsPanel>
+        ))}
+      </Tabs>
+
+      {posting.trim() && (
+        <details className={`group ${panel}`}>
+          <summary className="flex min-h-11 cursor-pointer items-center gap-2 font-medium">
+            <ChevronRight aria-hidden className="size-4 shrink-0 transition-transform group-open:rotate-90" />
+            Your pasted text
+          </summary>
+          <MarkedText text={posting} />
+        </details>
+      )}
     </EmployerPage>
   );
 }
 
-function PartState({ part }: { part: PartStatus }) {
-  if (part.empty) return <span>Empty</span>;
-  const Icon = part.left > 0 ? Info : Check;
-  return (
-    <span className="flex shrink-0 items-center gap-1.5">
-      <Icon aria-hidden className="size-5" />
-      {part.left > 0 ? `${part.left} to fix` : "Done"}
-    </span>
-  );
+// What a part's tab says to a screen reader, after its name.
+function partState(part: PartStatus): string {
+  if (part.empty) return "empty";
+  return part.left > 0 ? `${part.left} to fix` : "done";
 }
 
 function PartFields({ part, form, change }: { part: PartId; form: VacancyForm; change: Change }) {

@@ -88,7 +88,7 @@ function Help({ text, maxLength, onUse, onDone }: HelpProps & { onDone: () => vo
 
       {status === "review" ? (
         <div className="flex flex-col gap-2">
-          <label className="flex flex-col gap-1 font-semibold">
+          <label className="flex flex-col gap-2 font-medium">
             Suggested version. Nothing changes until you use it.
             <Textarea value={suggestion} onChange={(e) => setSuggestion(e.target.value)} maxLength={maxLength} rows={2} autoFocus className={longControl} />
           </label>

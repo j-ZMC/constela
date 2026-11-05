@@ -1,12 +1,13 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { ArrowRight } from "lucide-react";
 import { InterviewQuestions } from "@/components/employers/interview-questions";
 import { EmployerPage } from "@/components/employers/employer-page";
-import { ListDetail, ListRow, ROWS, useOpenRow } from "@/components/employers/list-detail";
+import { useUrlValue } from "@/components/employers/list-detail";
 import { action, outlined, panel } from "@/components/employers/vacancy-fields";
 import { Button } from "@/components/ui/button";
+import { Tabs, TabsList, TabsPanel, TabsTrigger } from "@/components/ui/tabs";
 import { markGuideRead, useEmployerData } from "@/lib/employer-store";
 import { Loading } from "@/components/loading";
 import { useHydrated } from "@/lib/use-hydrated";
@@ -54,56 +55,74 @@ const LAST_READ = GUIDE[GUIDE.length - 1].id;
 export function InterviewerGuide() {
   const hydrated = useHydrated();
   return (
-    <EmployerPage title="Interviewer guide" intro="Read how to run a fair interview, then prepare the questions for your job post.">
+    <EmployerPage title="Interviewer guide" intro="Read how to run a fair interview, then prepare the questions for your job post." width="max-w-4xl">
       {hydrated ? <Guide /> : <Loading />}
     </EmployerPage>
   );
 }
 
+// The parts as tabs, like the Profile's. The open part lives in the URL, so Back returns to the part before.
 function Guide() {
   const { guideRead } = useEmployerData();
-  const { open, setOpen, title } = useOpenRow("part");
+  const [open, setOpen] = useUrlValue("part");
+  const title = useRef<HTMLHeadingElement>(null);
+  // Arrow keys keep focus on the tabs. Next part moves it to the new part's title once that part is open (the URL, and
+  // so the open part, changes a render after the click).
+  const focusPart = useRef<string | null>(null);
   const selected = PARTS.find((p) => p.id === open) ?? PARTS[0];
-  const next = PARTS[PARTS.indexOf(selected) + 1];
-  const asksToRead = selected.id === LAST_READ && !guideRead;
+
+  useEffect(() => {
+    if (focusPart.current !== selected.id) return;
+    focusPart.current = null;
+    title.current?.focus();
+  }, [selected]);
 
   return (
-    <ListDetail
-      open={open !== null}
-      backLabel="Back to all parts"
-      onBack={() => setOpen(null)}
-      list={
-        <nav aria-label="Parts of this guide" className={ROWS}>
-          {PARTS.map((p) => (
-            <ListRow key={p.id} id={p.id} selected={p === selected} open={open !== null} onOpen={() => setOpen(p.id)} className="items-center">
-              {p.title}
-            </ListRow>
-          ))}
-        </nav>
-      }
-    >
-      {selected === QUESTIONS ? (
-        <InterviewQuestions title={title} />
-      ) : (
-        <section aria-labelledby="part-title" className={panel}>
-          <h2 id="part-title" ref={title} tabIndex={-1} className="text-xl font-semibold outline-none">
-            {selected.title}
-          </h2>
-          <ul className="flex list-disc flex-col gap-2 pl-6">
-            {selected.points.map((point) => (
-              <li key={point}>{point}</li>
-            ))}
-          </ul>
-          {selected.id === LAST_READ && <GuideRead />}
-          {next && (
-            <Button variant={asksToRead ? "outline" : "default"} className={`${asksToRead ? outlined : action} gap-2 self-end`} onClick={() => setOpen(next.id)}>
-              Next part
-              <ArrowRight aria-hidden className="size-5" />
-            </Button>
-          )}
-        </section>
-      )}
-    </ListDetail>
+    <Tabs value={selected.id} onValueChange={(value) => setOpen(String(value))}>
+      <TabsList aria-label="Parts of this guide" className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+        {PARTS.map((p) => (
+          <TabsTrigger key={p.id} value={p.id}>
+            {p.title}
+          </TabsTrigger>
+        ))}
+      </TabsList>
+      {PARTS.map((part, i) => {
+        const next = PARTS[i + 1];
+        const asksToRead = part.id === LAST_READ && !guideRead;
+        return (
+          <TabsPanel key={part.id} value={part.id}>
+            {part === QUESTIONS ? (
+              <InterviewQuestions title={title} />
+            ) : (
+              <section aria-labelledby="part-title" className={panel}>
+                <h2 id="part-title" ref={title} tabIndex={-1} className="text-xl font-semibold outline-none">
+                  {part.title}
+                </h2>
+                <ul className="flex list-disc flex-col gap-2 pl-6">
+                  {part.points.map((point) => (
+                    <li key={point}>{point}</li>
+                  ))}
+                </ul>
+                {part.id === LAST_READ && <GuideRead />}
+                {next && (
+                  <Button
+                    variant={asksToRead ? "outline" : "default"}
+                    className={`${asksToRead ? outlined : action} gap-2 self-end`}
+                    onClick={() => {
+                      focusPart.current = next.id;
+                      setOpen(next.id);
+                    }}
+                  >
+                    Next part
+                    <ArrowRight aria-hidden className="size-5" />
+                  </Button>
+                )}
+              </section>
+            )}
+          </TabsPanel>
+        );
+      })}
+    </Tabs>
   );
 }
 
