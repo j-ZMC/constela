@@ -53,7 +53,8 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body className="min-h-full flex flex-col lg:has-[[data-side-nav]]:pl-56">
         <BackgroundSky />
         <SiteNav />
-        <div className="flex flex-1 flex-col pb-24 lg:pb-0">{children}</div>
+        {/* Phones: room below for the tab bar, as tall as it really is (--tab-bar, set in site-nav.tsx), and some air. */}
+        <div className="flex flex-1 flex-col pb-[calc(var(--tab-bar,4rem)_+_2rem)] lg:pb-0">{children}</div>
         <FirstRunHelp />
       </body>
     </html>

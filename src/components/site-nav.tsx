@@ -1,6 +1,6 @@
 "use client";
 
-import type { ReactNode } from "react";
+import { useEffect, useRef, type ReactNode } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { BriefcaseBusiness, GraduationCap, ListChecks, MessagesSquare, UserRound, type LucideIcon } from "lucide-react";
@@ -28,6 +28,20 @@ export function SiteNav() {
 
 // The app's bars, the same on each side of Constela. homeLabel names the brand link when its text alone says too little.
 export function AppNav({ home, brand, homeLabel, links, current, menu = true }: { home: string; brand: ReactNode; homeLabel?: string; links: NavLink[]; current: (href: string) => boolean; menu?: boolean }) {
+  // At the largest text the phone tab bar takes two rows, so the page keeps as much room below as the bar really takes
+  // (--tab-bar, read in layout.tsx). Hidden while typing, it takes none.
+  const tabBar = useRef<HTMLElement>(null);
+  useEffect(() => {
+    const bar = tabBar.current;
+    if (!bar) return;
+    const room = new ResizeObserver(() => document.body.style.setProperty("--tab-bar", `${bar.offsetHeight}px`));
+    room.observe(bar);
+    return () => {
+      room.disconnect();
+      document.body.style.removeProperty("--tab-bar");
+    };
+  }, [menu]);
+
   // side: the wide-screen bar on the left, one link per row; otherwise the phone tab bar, icon over label.
   const items = (side: boolean) =>
     links.map(({ href, label, icon: Icon }) => {
@@ -80,11 +94,13 @@ export function AppNav({ home, brand, homeLabel, links, current, menu = true }: 
             </div>
           </aside>
           {/* Phones and tablets: the nav sits at the bottom, within thumb reach. globals.css hides it while the keyboard
-              is open (data-mobile-nav), so it never covers the field. */}
+              is open (data-mobile-nav), so it never covers the field. It wraps, so the largest text still shows every
+              link on the screen. */}
           <nav
+            ref={tabBar}
             aria-label="Main"
             data-mobile-nav
-            className="fixed inset-x-0 bottom-0 z-10 flex border-t border-white/10 bg-sky px-2 pb-[env(safe-area-inset-bottom)] text-white lg:hidden"
+            className="fixed inset-x-0 bottom-0 z-10 flex flex-wrap border-t border-white/10 bg-sky px-2 pb-[env(safe-area-inset-bottom)] text-white lg:hidden"
           >
             {items(false)}
           </nav>
