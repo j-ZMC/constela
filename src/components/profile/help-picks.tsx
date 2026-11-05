@@ -5,7 +5,7 @@ import { BookOpen, CalendarClock, ChevronRight, Ear, Footprints, ListOrdered, Mo
 import { optionRow } from "@/components/profile/question-step";
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
-import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, applyHelp, describeVisual, type NeuroType } from "@/lib/help-picks";
+import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, applyHelp, describeVisual, removeHelp, type NeuroType } from "@/lib/help-picks";
 import { applyPrefs, loadPrefs } from "@/lib/personalization";
 
 // OpenDyslexic is a class on <html> (the Settings panel switches it the same way).
@@ -31,11 +31,13 @@ export function HelpPicks({
   initial,
   onDone,
   onBack,
+  onSkip,
   required = false,
 }: {
   initial: readonly string[];
   onDone: (picks: string[], types: NeuroType[]) => void;
   onBack?: () => void;
+  onSkip?: () => void; // "Decide later": leaves what is saved as it is
   required?: boolean;
 }) {
   const [picks, setPicks] = useState<string[]>([...initial]);
@@ -48,10 +50,13 @@ export function HelpPicks({
   const wasDyslexic = useRef(document.documentElement.classList.contains("dyslexic"));
   const kept = useRef(false);
   useEffect(() => {
-    const preview = applyHelp(picks, {}, loadPrefs(), types).prefs;
+    // Saved picks that are now unticked come off the preview too.
+    const base = removeHelp(initial.filter((id) => !picks.includes(id)), {}, loadPrefs()).prefs;
+    const preview = applyHelp(picks, {}, base, types).prefs;
     applyPrefs(preview);
-    setDyslexic(wasDyslexic.current || preview.font === "dyslexic");
-  }, [picks, types]);
+    // The class can also be on from the Reading panel, without the font in the saved settings; that stays.
+    setDyslexic(preview.font === "dyslexic" || (wasDyslexic.current && loadPrefs().font !== "dyslexic"));
+  }, [initial, picks, types]);
   useEffect(
     () => () => {
       if (kept.current) return;
@@ -62,6 +67,8 @@ export function HelpPicks({
     [],
   );
   const previewing = picks.length > 0 || types.length > 0;
+  // In the Profile, unticking everything that was saved is a real answer: no help.
+  const turningOff = !previewing && initial.length > 0;
 
   return (
     <section aria-labelledby="help-picks-heading" className="flex flex-col gap-6">
@@ -69,10 +76,6 @@ export function HelpPicks({
         <h2 id="help-picks-heading" className="text-2xl font-semibold text-balance">
           What would help you adapt?
         </h2>
-        <p className="text-pretty text-muted-foreground">
-          These often come with ADHD, autism, dyslexia and other kinds of neurodivergence, and with no diagnosis at all.
-          Choose any. Each one turns on help in Constela, and you can change it anytime in Profile and Settings.
-        </p>
         <p role="status" className={previewing ? "rounded-lg bg-secondary px-3 py-2 text-sm" : "sr-only"}>
           {previewing ? "You are seeing a preview of the page with this help. Press Turn on this help to keep it." : ""}
         </p>
@@ -91,9 +94,6 @@ export function HelpPicks({
                 <span className="font-medium">{h.hard}</span>
                 <span className="text-sm text-muted-foreground">
                   <span className="font-medium">What it does:</span> {h.help}
-                </span>
-                <span className="text-sm font-medium text-primary">
-                  Often helpful with: {h.often.map((t) => NEURO_TYPES[t].label).join(", ")}
                 </span>
               </span>
             </label>
@@ -129,16 +129,16 @@ export function HelpPicks({
       <div className="flex flex-wrap gap-3">
         <Button
           className={action}
-          disabled={!previewing}
+          disabled={!previewing && !turningOff}
           onClick={() => {
             kept.current = true;
             onDone(picks, types);
           }}
         >
-          Turn on this help
+          {turningOff ? "Turn off all help" : "Turn on this help"}
         </Button>
-        {!required && (
-          <Button className={action} variant="outline" onClick={() => onDone([], [])}>
+        {onSkip && (
+          <Button className={action} variant="outline" onClick={onSkip}>
             {onBack ? "Skip" : "Decide later"}
           </Button>
         )}

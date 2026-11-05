@@ -13,6 +13,7 @@ import {
   DEFAULT_PREFS, DEFAULT_ROLES, PRESETS, ROLE_LABELS, applyPrefs, checkContrast, loadPrefs, savePrefs, starCheck,
   type Prefs, type Roles,
 } from "@/lib/personalization";
+import { keepScreenDark, loadHelpPicks } from "@/lib/help-picks";
 import { setReadingOption } from "@/lib/reading";
 
 const TABS = [
@@ -52,9 +53,10 @@ export function PersonalizationPanel({ onSky = false }: { onSky?: boolean }) {
   const [name, setName] = useState("");
   const [confirm, setConfirm] = useState("");
   const [rm, setRm] = useState(false);
+  const [screenDark, setScreenDark] = useState(false);
 
   function update(next: Partial<Prefs>) {
-    const n = { ...p, ...next };
+    const n = keepScreenDark({ ...p, ...next }, screenDark ? ["screen"] : []);
     setP(n);
     applyPrefs(n);
     savePrefs(n);
@@ -83,6 +85,7 @@ export function PersonalizationPanel({ onSky = false }: { onSky?: boolean }) {
     <Dialog onOpenChange={(open) => {
       if (!open) return;
       setRm(document.documentElement.classList.contains("reduce-motion"));
+      setScreenDark(loadHelpPicks()?.includes("screen") ?? false);
       const l = loadPrefs();
       // The "Reading" panel can also toggle OpenDyslexic, so trust <html>
       const dys = document.documentElement.classList.contains("dyslexic");
@@ -109,6 +112,12 @@ export function PersonalizationPanel({ onSky = false }: { onSky?: boolean }) {
         <div role="tabpanel" className="flex flex-col gap-4">
           {tab === "colors" && (
             <>
+              {screenDark && (
+                <p className="rounded-lg bg-secondary px-3 py-2 text-sm">
+                  &quot;Bright or busy screens&quot; is on in Profile, Adaptability, so the screen stays dark. Turn it off there
+                  to use a light palette.
+                </p>
+              )}
               <div className="flex flex-wrap gap-2">
                 {[...PRESETS, ...p.saved].map((s) => (
                   <Button key={s.id} type="button" className={tap} variant={p.preset === s.id ? "default" : "outline"} aria-pressed={p.preset === s.id} onClick={() => choosePreset(s.id, s.colors)}>

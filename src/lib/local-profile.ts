@@ -1,3 +1,4 @@
+import { useSyncExternalStore } from "react";
 import { parseResumeProfile, type ResumeProfile } from "@/lib/resume";
 
 export type LocalAccount = { name: string; email: string };
@@ -44,6 +45,7 @@ export function saveResumeProfile(profile: ResumeProfile): void {
   } catch {
     // Storage is optional for the local demo.
   }
+  window.dispatchEvent(new Event(RESUME_CHANGE));
 }
 
 export function clearResumeProfile(): void {
@@ -52,4 +54,25 @@ export function clearResumeProfile(): void {
   } catch {
     // Storage is optional for the local demo.
   }
+  window.dispatchEvent(new Event(RESUME_CHANGE));
 }
+
+// Visited pages stay mounted (cacheComponents), so Jobs listens for a CV added or removed in the Profile.
+const RESUME_CHANGE = "resume-profile-change";
+function subscribe(onChange: () => void) {
+  window.addEventListener(RESUME_CHANGE, onChange);
+  window.addEventListener("storage", onChange); // another tab
+  return () => {
+    window.removeEventListener(RESUME_CHANGE, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+const snapshot = () => {
+  try {
+    return localStorage.getItem(RESUME_KEY);
+  } catch {
+    return null;
+  }
+};
+// The saved CV as stored text: changes whenever the CV does.
+export const useResumeSnapshot = () => useSyncExternalStore(subscribe, snapshot, () => null);

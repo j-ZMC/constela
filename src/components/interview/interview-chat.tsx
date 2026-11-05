@@ -621,7 +621,7 @@ export function InterviewChat() {
     const parts = group ? GROUPS[group].parts : [];
     return (
       <div className="flex flex-col gap-8">
-        <section aria-labelledby="choose-activity" className="flex flex-col gap-3">
+        <section data-tour="prep-choose" aria-labelledby="choose-activity" className="flex flex-col gap-3">
           <h2 id="choose-activity" className="flex items-center gap-2 text-lg font-semibold">
             <Target aria-hidden className="size-6 shrink-0 text-primary" />
             What do you want to work on?

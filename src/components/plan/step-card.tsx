@@ -107,7 +107,7 @@ export function CurrentStep({
           </Button>
         )}
         {!selfDone && (
-          <Button variant={breakdownFirst ? "default" : "ghost"} className={action} onClick={onBreakdown}>
+          <Button data-tour="breakdown" variant={breakdownFirst ? "default" : "ghost"} className={action} onClick={onBreakdown}>
             Break it down for me
           </Button>
         )}
@@ -127,7 +127,7 @@ export function CurrentStep({
           {headsUp}
         </p>
       )}
-      {footer && <div className="border-t pt-4">{footer}</div>}
+      {footer && <div data-tour="easier" className="border-t pt-4">{footer}</div>}
     </article>
   );
 }

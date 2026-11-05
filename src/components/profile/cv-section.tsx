@@ -7,13 +7,16 @@ import { Button, buttonVariants } from "@/components/ui/button";
 import { clearResumeProfile, loadResumeProfile, saveResumeProfile } from "@/lib/local-profile";
 import { parseResumeProfile, type ResumeProfile } from "@/lib/resume";
 import { useSingleFlight } from "@/lib/use-single-flight";
+import { onboarding } from "@/components/tour";
 
 // A message written for people, safe to show as it is.
 class ReadError extends Error {}
 
 const action = "h-11 px-5 text-base";
 
-export function CvSection() {
+// onNext: the setup's next part (Contact details). Until the first tour, the CV leads there; after, to My plan or Jobs.
+export function CvSection({ onNext }: { onNext: () => void }) {
+  const [setup] = useState(onboarding);
   const [profile, setProfile] = useState<ResumeProfile | null>(() => loadResumeProfile());
   const [loading, setLoading] = useState(false);
   const once = useSingleFlight();
@@ -97,12 +100,18 @@ export function CvSection() {
           </dl>
         </div>
       )}
-      <div className="flex flex-wrap gap-3">
-        {profile && <Link href="/jobs" className={buttonVariants({ className: action })}>See jobs for you</Link>}
-        <Link href="/plan" className={buttonVariants({ variant: "outline", className: action })}>
-          {profile ? "Go to my plan" : "Skip for now"}
-        </Link>
-      </div>
+      {setup ? (
+        <Button type="button" variant={profile ? "default" : "outline"} className={`${action} w-fit`} onClick={onNext}>
+          {profile ? "Continue" : "Skip for now"}
+        </Button>
+      ) : (
+        <div className="flex flex-wrap gap-3">
+          {profile && <Link href="/jobs" className={buttonVariants({ className: action })}>See jobs for you</Link>}
+          <Link href="/plan" className={buttonVariants({ variant: "outline", className: action })}>
+            {profile ? "Go to my plan" : "Skip for now"}
+          </Link>
+        </div>
+      )}
     </section>
   );
 }

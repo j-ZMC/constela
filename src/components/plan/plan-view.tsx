@@ -4,7 +4,6 @@ import { useRef, useState } from "react";
 import Link from "next/link";
 import { CircleHelp } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { AddStep } from "@/components/plan/add-step";
 import { PlanMap } from "@/components/plan/plan-map";
 import { AskConstela } from "@/components/plan/ask-constela";
 import { BreakdownDialog } from "@/components/plan/breakdown-dialog";
@@ -44,10 +43,13 @@ import { PageSky, onSky } from "@/components/page-sky";
 
 // The first-visit tour of My plan, one part at a time. Parts not on screen right now are skipped.
 const PLAN_TOUR: TourStep[] = [
-  { target: "step", title: "Your step for now", text: "Do one thing at a time. When you finish, press Done. If it feels big, press Break it down for me." },
-  { target: "stars", title: "Your map", text: "You are the star in the middle. Each branch is a part of the job search, and each star is a step. Done steps light up. Tap a star to see that step." },
-  { target: "ask", title: "Hey Constela", text: "Have a question about your plan? Press Hey Constela and ask. You can also turn on listening and say Hey Constela out loud." },
-  { target: "path", title: "All branches", text: "Work on the branches in any order. See them all here, and choose which one to work on next." },
+  { target: "step", title: "Your step for now", text: "This is the one thing to do now. Its button takes you where you do it, and the time shows about how long it takes. When you finish, press Done and its star lights up." },
+  { target: "breakdown", title: "Break it down for me", text: "If a step feels too big, press this. The AI on this computer splits it into small steps of a few minutes. You see them first, and nothing is added until you say so." },
+  { target: "easier", title: "An easier day", text: "Low on energy? Ask for an easier step today. Your plan gives you smaller steps until tomorrow, and nothing is lost." },
+  { target: "stars", title: "Your map", text: "The star in the middle is you. Each branch is a part of the job search: your profile, finding jobs, applying, interviews, documents, learning and experience. Each star is a step, and done steps light up in gold. Tap any star to see its step." },
+  { target: "path", title: "All branches", text: "Work on the branches in any order. Here you see how far you are in each one, and choose which to work on next. Or let Constela choose for you." },
+  { target: "ask", title: "Hey Constela", text: "Have a question about your plan? Press Hey Constela and ask out loud, or choose Type instead. You can also turn on listening and just say Hey Constela." },
+  { target: "help", title: "See this again", text: "Press How this works anytime to see this tour again." },
 ];
 
 // Every change goes through the path: add the branches' steps, light steps for what happened, add a due habit, set the week's goal.
@@ -89,7 +91,6 @@ function View() {
   const [touring, setTouring] = useState(() => !tourSeen("plan"));
   const [announcement, setAnnouncement] = useState("");
   const [paused, setPaused] = useState(false);
-  const [newTask, setNewTask] = useState("");
   // stepId: break down an existing step (it is replaced); otherwise the typed task is broken down.
   const [request, setRequest] = useState<{ id: string; task: string; stepId?: string } | null>(null);
   const [checkedIn, setCheckedIn] = useState(false);
@@ -191,16 +192,9 @@ function View() {
       update(removeStep({ ...added, steps: renamed }, parent.id));
     } else {
       update(addSteps(plan, steps, source));
-      setNewTask("");
     }
     setRequest(null);
     setAnnouncement(`Added ${steps.length} ${steps.length === 1 ? "step" : "steps"}.`);
-  }
-
-  function addOne(title: string) {
-    update(addSteps(plan, [{ title, minutes: 5 }], "user"));
-    setNewTask("");
-    setAnnouncement(`Added: ${title}`);
   }
 
   return (
@@ -212,7 +206,7 @@ function View() {
           <div className="flex flex-wrap items-center justify-between gap-x-3">
             <h1 id="plan-title" className="text-3xl font-bold tracking-tight sm:text-4xl">Today</h1>
             <div className="flex items-center">
-              <Button variant="ghost" className={`h-11 px-3 text-base ${onSky}`} onClick={() => setTouring(true)} aria-label="How this works">
+              <Button variant="ghost" className={`h-11 px-3 text-base ${onSky}`} onClick={() => setTouring(true)} aria-label="How this works" data-tour="help">
                 <CircleHelp aria-hidden className="size-5" />
                 <span className="max-sm:hidden">How this works</span>
               </Button>
@@ -228,6 +222,15 @@ function View() {
                 ? `Working on: ${branchName(working)}`
                 : "Every step is done"}
           </p>
+          {!profile && (
+            <p className="text-sm text-white/80">
+              These are the standard settings.{" "}
+              <Link href="/profile" className="font-medium text-white underline underline-offset-4">
+                Set up your profile
+              </Link>{" "}
+              to fit the plan to you.
+            </p>
+          )}
         </div>
 
         <p aria-live="polite" className="sr-only">
@@ -293,30 +296,13 @@ function View() {
         </div>
       </section>
 
-      <div className="mx-auto flex w-full max-w-xl flex-col gap-8 px-4 py-10">
-      {!profile && (
-        <p className="text-sm text-muted-foreground">
-          These are the standard settings.{" "}
-          <Link href="/profile" className="font-medium text-foreground underline underline-offset-4">
-            Set up your profile
-          </Link>{" "}
-          to fit the plan to you.
-        </p>
+      {/* Nothing sits under the sky, so the page ends with it; only dialogs, and room for the tour, come after. */}
+      {touring && (
+        <Tour name="plan" steps={PLAN_TOUR} onClose={() => setTouring(false)} next={tourSeen("jobs") ? undefined : { label: "Next: Jobs", href: "/jobs" }} />
       )}
-
-      {!resting && !stageDone && (
-      <AddStep
-        breakdownFirst={adaptations.offerBreakdownFirst}
-        value={newTask}
-        onChange={setNewTask}
-        onAdd={addOne}
-        onBreakdown={(task) => setRequest({ id: crypto.randomUUID(), task })}
-      />
-      )}
-
-      {touring && <Tour name="plan" steps={PLAN_TOUR} onClose={() => setTouring(false)} />}
-      {/* Room under the last parts, so the tour can bring them above its panel. */}
-      {touring && <div aria-hidden className="h-[50vh]" />}
+      {/* Room under the last parts, so the tour can bring them above its panel. Phones only: on a computer the whole
+          plan fits on the screen, and extra room would only push the sky up. */}
+      {touring && <div aria-hidden className="h-[50vh] lg:hidden" />}
 
       {pathOpen && <PathDialog plan={plan} onChoose={choose} onClose={() => setPathOpen(false)} />}
 
@@ -351,7 +337,6 @@ function View() {
           onClose={() => setRequest(null)}
         />
       )}
-      </div>
     </>
   );
 }

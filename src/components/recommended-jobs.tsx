@@ -9,14 +9,16 @@ import { loadBarrierPreferences, loadCustomBlockers } from "@/lib/barrier-prefer
 import { loadProfile } from "@/lib/profile";
 import { JobSearchError, searchJobs, type JobSearchRequest, type JobSearchResponse } from "@/lib/jobs";
 import { buildRecommendedJobsRequest } from "@/lib/recommendations";
-import { loadResumeProfile } from "@/lib/local-profile";
+import { loadResumeProfile, useResumeSnapshot } from "@/lib/local-profile";
 import { loadRecommendedCache, saveRecommendedCache } from "@/lib/recommended-cache";
 import { useHydrated } from "@/lib/use-hydrated";
 import { Loading } from "@/components/loading";
 
 
+// Starts again when the CV is added, changed or removed.
 export function RecommendedJobs() {
-  return useHydrated() ? <RecommendedJobsContent /> : <Loading />;
+  const cv = useResumeSnapshot();
+  return useHydrated() ? <RecommendedJobsContent key={cv ?? ""} /> : <Loading />;
 }
 
 function RecommendedJobsContent() {
@@ -64,7 +66,7 @@ function RecommendedJobsContent() {
 
   if (!profile) {
     return (
-      <section className="rounded-xl border bg-card p-6" aria-labelledby="recommended-empty-heading">
+      <section data-tour="for-you" className="rounded-xl border bg-card p-6" aria-labelledby="recommended-empty-heading">
         <h2 id="recommended-empty-heading" className="flex items-center gap-2 text-xl font-semibold"><FileText aria-hidden className="size-6 shrink-0 text-primary" />Add your CV to get recommendations</h2>
         <p className="mt-2 text-muted-foreground">We pick jobs from your skills and experience. You can also search above without a CV.</p>
         <Link href="/profile" className={buttonVariants({ className: "mt-5 h-11 px-5 text-base" })}>Go to Profile</Link>
@@ -73,7 +75,7 @@ function RecommendedJobsContent() {
   }
 
   return (
-    <section className="flex flex-col gap-6" aria-labelledby="for-you-heading">
+    <section data-tour="for-you" className="flex flex-col gap-6" aria-labelledby="for-you-heading">
       <div className="flex flex-wrap items-center justify-between gap-4">
         <h2 id="for-you-heading" className="text-xl font-semibold">Jobs for you</h2>
         <Button type="button" variant="outline" onClick={refresh} disabled={loading} className="h-11 px-5 text-base">{loading ? "Loading…" : "Refresh"}</Button>

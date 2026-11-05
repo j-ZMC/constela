@@ -164,8 +164,9 @@ The first time, this sets everything up before starting (about 2 GB, once; 5 to 
 
 ### 5. Open the app
 
-Go to http://localhost:3000. The first time, "What would help you adapt?" comes first and cannot be skipped: choose at
-least one option and press "Turn on this help". You can change it later in Profile, Adaptability.
+Go to http://localhost:3000. The first time (and after "Delete my data"), the home page says "Welcome to Constela".
+"Start" leads through the Profile: Adaptability, Job conditions, CV (it can be skipped) and Contact details. Then a
+tour shows My plan, goes on to Jobs, and ends in Preparation. "How this works" in My plan shows its tour again.
 
 ### If something does not work
 

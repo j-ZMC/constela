@@ -1,5 +1,5 @@
 import { afterEach, describe, expect, it, vi } from "vitest";
-import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, applyHelp, describeVisual, loadHelpPicks, mergePrefs, saveHelpPicks } from "@/lib/help-picks";
+import { HELP, NEURO_TYPES, NEURO_TYPE_IDS, applyHelp, describeVisual, keepScreenDark, loadHelpPicks, mergePrefs, removeHelp, saveHelpPicks } from "@/lib/help-picks";
 import { DEFAULT_PREFS, PRESETS, cleanPrefs } from "@/lib/personalization";
 import { toAdaptations } from "@/lib/profile";
 
@@ -38,15 +38,31 @@ describe("adaptability: help picks", () => {
     expect(describeVisual(NEURO_TYPES.dyslexia.prefs)).toBe("An easier-to-read font, bigger text, more space, shorter lines");
   });
 
-  it("turns the screen dark for light sensitivity, but never over colors the person chose", () => {
+  it("turns the screen dark for light sensitivity, even after the person chose a light palette", () => {
+    const dark = PRESETS.find((p) => p.id === "dark")!.colors!;
     expect(applyHelp(["screen"], {}, DEFAULT_PREFS).prefs).toMatchObject({ preset: "dark", calm: true });
     const cream = PRESETS.find((p) => p.id === "cream")!.colors!;
-    expect(applyHelp(["screen"], {}, { ...DEFAULT_PREFS, preset: "cream", colors: cream }).prefs).toMatchObject({ preset: "cream", colors: cream });
+    expect(applyHelp(["screen"], {}, { ...DEFAULT_PREFS, preset: "cream", colors: cream }).prefs).toMatchObject({ preset: "dark", colors: dark });
+    // A dark palette of the person's own stays.
+    const mine = { ...dark, accent: "#a0d0a0" };
+    expect(applyHelp(["screen"], {}, { ...DEFAULT_PREFS, preset: "custom", colors: mine }).prefs).toMatchObject({ preset: "custom", colors: mine });
   });
 
-  it("says which kinds of neurodivergence each pick often helps with", () => {
-    for (const h of HELP) expect(h.often.length, h.id).toBeGreaterThan(0);
-    expect(HELP.find((h) => h.id === "reading")!.often).toContain("dyslexia");
+  it("turns off what unticked picks turned on, and keeps what the person chose", () => {
+    const on = applyHelp(["reading", "starting", "screen"], { startBlockers: ["none"], changes: "heads-up" }, DEFAULT_PREFS);
+    const off = removeHelp(["reading", "starting", "screen"], on.answers, on.prefs);
+    expect(off.prefs).toMatchObject({ font: "default", size: 100, lh: 0, width: 0, detail: "comfortable", focus: false, calm: false, preset: "astralis", colors: null });
+    expect(off.answers).toEqual({ changes: "heads-up" });
+    // A palette the person chose after the pick is theirs, so it stays.
+    const cream = PRESETS.find((p) => p.id === "cream")!.colors;
+    expect(removeHelp(["screen"], {}, { ...on.prefs, preset: "cream", colors: cream }).prefs.colors).toBe(cream);
+  });
+
+  it("keeps the screen dark over a light palette from Settings while Bright or busy screens is on", () => {
+    const cream = { ...DEFAULT_PREFS, preset: "cream", colors: PRESETS.find((p) => p.id === "cream")!.colors };
+    expect(keepScreenDark(cream, ["screen"]).preset).toBe("dark");
+    expect(keepScreenDark(cream, ["reading"])).toBe(cream);
+    expect(keepScreenDark(cream, null)).toBe(cream);
   });
 
   it("joins settings so the stronger one wins, and adding help never takes any away", () => {
@@ -58,9 +74,12 @@ describe("adaptability: help picks", () => {
   it("remembers the picks, and tells 'not asked yet' from 'decide later'", () => {
     const store = new Map<string, string>();
     vi.stubGlobal("localStorage", { getItem: (k: string) => store.get(k) ?? null, setItem: (k: string, v: string) => store.set(k, v) });
+    vi.stubGlobal("window", { dispatchEvent: vi.fn() });
     expect(loadHelpPicks()).toBeNull();
     saveHelpPicks([]);
     expect(loadHelpPicks()).toEqual([]);
+    // Open pages (Adaptability under the first-start window) hear about it.
+    expect(vi.mocked(window.dispatchEvent).mock.calls[0][0].type).toBe("help-picks-change");
     store.set("help-picks", JSON.stringify(["screen", "made-up"]));
     expect(loadHelpPicks()).toEqual(["screen"]);
   });

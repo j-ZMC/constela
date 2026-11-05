@@ -2,6 +2,8 @@
 
 import { Contact } from "lucide-react";
 import { useState } from "react";
+import { useRouter } from "next/navigation";
+import { onboarding } from "@/components/tour";
 import { Button } from "@/components/ui/button";
 import { loadLocalAccount, saveLocalAccount } from "@/lib/local-profile";
 
@@ -10,11 +12,15 @@ export function AccountSection() {
   const [name, setName] = useState(saved?.name ?? "");
   const [email, setEmail] = useState(saved?.email ?? "");
   const [status, setStatus] = useState("");
+  // The last part of the setup: from here the first-time tour starts in My plan.
+  const [setup] = useState(onboarding);
+  const router = useRouter();
 
   function save(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
     saveLocalAccount({ name: name.trim(), email: email.trim() });
     setStatus("Details saved on this device.");
+    if (setup) router.push("/plan");
   }
 
   return (
@@ -32,7 +38,14 @@ export function AccountSection() {
           Email
           <input type="email" value={email} onChange={(event) => setEmail(event.target.value)} className="h-11 rounded-md border border-input bg-background px-3 text-base outline-none focus-visible:ring-2 focus-visible:ring-ring" />
         </label>
-        <Button type="submit" className="h-11 w-fit px-5 text-base">Save details</Button>
+        <div className="flex flex-wrap gap-3">
+          <Button type="submit" className="h-11 w-fit px-5 text-base">{setup ? "Save and see my plan" : "Save details"}</Button>
+          {setup && (
+            <Button type="button" variant="outline" className="h-11 w-fit px-5 text-base" onClick={() => router.push("/plan")}>
+              Skip for now
+            </Button>
+          )}
+        </div>
         <p role="status" aria-live="polite" className="min-h-5 text-sm text-muted-foreground">{status}</p>
       </form>
     </section>

@@ -25,7 +25,7 @@ export const DELETED_KEYS = [
   "seal-history",
 ];
 
-// restart: after deleting, open the app fresh at the first form ("What would help you adapt?" in the Profile), or at
+// restart: after deleting, open the app fresh at the welcome on the home page, which starts the setup again, or at
 // the employers' Home on their side. A full page load, not a client navigation: pages already visited stay mounted
 // with what they knew about the person.
 export function DeleteMyData({ restart = false }: { restart?: boolean }) {
@@ -57,7 +57,7 @@ export function DeleteMyData({ restart = false }: { restart?: boolean }) {
                 ["data-pz", "data-pz-icons", "data-pz-detail", "data-pz-scheme", "data-pz-calm"].forEach((a) => html.removeAttribute(a));
                 html.classList.remove("dyslexic", "text-large", "calm", "reduce-motion", "focus-strong");
                 // A full load on purpose: router.push keeps visited pages mounted with the old data (cacheComponents).
-                if (restart) return window.location.assign(window.location.pathname.startsWith("/employers") ? "/employers" : "/profile");
+                if (restart) return window.location.assign(window.location.pathname.startsWith("/employers") ? "/employers" : "/");
                 setStep("done");
               } catch {
                 setError(true);

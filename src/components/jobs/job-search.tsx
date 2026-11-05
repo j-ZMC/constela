@@ -74,7 +74,7 @@ export function JobSearch({ internships = false, home }: { internships?: boolean
 
   return (
     <div className="flex flex-col gap-6">
-      <div className="rounded-xl border bg-card p-4">
+      <div data-tour={internships ? undefined : "job-search"} className="rounded-xl border bg-card p-4">
         <form onSubmit={submit} className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <label className="flex flex-1 flex-col gap-2 font-medium">
             {internships ? "What would you like to learn? (optional)" : "What job are you looking for?"}

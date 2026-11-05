@@ -9,7 +9,7 @@ import { ProfileFlow } from "@/components/profile/profile-flow";
 import { Tabs, TabsList, TabsPanel, TabsTrigger } from "@/components/ui/tabs";
 import { loadBarrierPreferences } from "@/lib/barrier-preferences";
 import { loadResumeProfile } from "@/lib/local-profile";
-import { loadHelpPicks } from "@/lib/help-picks";
+import { loadHelpPicks, useHelpPicksSnapshot } from "@/lib/help-picks";
 import { useHydrated } from "@/lib/use-hydrated";
 import { Loading } from "@/components/loading";
 
@@ -34,6 +34,7 @@ export function ProfileHub() {
 }
 
 function Hub() {
+  useHelpPicksSnapshot(); // the "done" tick on Adaptability, when the first-start window saves the picks
   // Open where the person left off, so "Get started" and "Finish your profile" land on the next real task.
   const [section, setSection] = useState<Section>(() => {
     const done = progress();
@@ -55,7 +56,7 @@ function Hub() {
         </TabsList>
         <TabsPanel value="needs"><ProfileFlow onNext={() => setSection("conditions")} /></TabsPanel>
         <TabsPanel value="conditions"><BarrierSurvey onNext={() => setSection("cv")} /></TabsPanel>
-        <TabsPanel value="cv"><CvSection /></TabsPanel>
+        <TabsPanel value="cv"><CvSection onNext={() => setSection("contact")} /></TabsPanel>
         <TabsPanel value="contact"><AccountSection /></TabsPanel>
       </Tabs>
     </section>

@@ -1,8 +1,9 @@
 // "What would help you adapt?": optional picks at the start of the Profile. Each turns on help that already exists:
 // answers to the Profile questions (so toAdaptations() picks them up) and Personalize settings. Nothing here is sent
 // anywhere.
+import { useSyncExternalStore } from "react";
 import { loadProfile, saveProfile, type Answers } from "@/lib/profile";
-import { PRESETS, applyPrefs, loadPrefs, savePrefs, type Prefs } from "@/lib/personalization";
+import { DEFAULT_PREFS, PRESETS, applyPrefs, isDark, loadPrefs, savePrefs, type Prefs } from "@/lib/personalization";
 import { setReadingOption } from "@/lib/reading";
 
 // The visual settings that often help with each kind of neurodivergence. Used two ways:
@@ -19,7 +20,7 @@ export const NEURO_TYPES = {
   dyspraxia: { label: "Dyspraxia (DCD)", prefs: { ctlSize: 52, iconSize: 24, cursor: "large" } },
   tourette: { label: "Tourette", prefs: { ctlSize: 48, calm: true } },
   ocd: { label: "OCD", prefs: { calm: true, detail: "reduced" } },
-  // Light sensitivity: the dark palette (only when the person has not chosen colors), and no movement or glow.
+  // Light sensitivity: the dark palette (unless the one in use is already dark), and no movement or glow.
   sensory: { label: "Sensory processing differences", prefs: { calm: true, preset: "dark" } },
   auditory: { label: "Auditory processing differences", prefs: { slowVoice: true, size: 105 } },
 } as const satisfies Record<string, { label: string; prefs: Partial<Prefs> }>;
@@ -32,7 +33,6 @@ export type HelpPick = {
   help: string; // what turns on
   answers?: Answers;
   visual?: NeuroType; // whose screen settings this pick turns on
-  often: readonly NeuroType[]; // shown as "Often helpful with", so each pick says which neurodivergence it relates to
 };
 
 export const HELP: readonly HelpPick[] = [
@@ -42,21 +42,19 @@ export const HELP: readonly HelpPick[] = [
     help: "Short summaries, a Listen button, and an easier font with more space.",
     answers: { reading: "listen", longText: "tiring" },
     visual: "dyslexia",
-    often: ["dyslexia", "adhd"],
   },
-  { id: "unclear", hard: "Instructions that are not clear", help: "Instructions as numbered steps with an example.", answers: { unclear: "stuck" }, often: ["autism", "adhd"] },
+  { id: "unclear", hard: "Instructions that are not clear", help: "Instructions as numbered steps with an example.", answers: { unclear: "stuck" } },
   {
     id: "starting",
     hard: "Getting started, or too many things at once",
     help: "One step at a time, big tasks broken down, and less on screen.",
     answers: { startBlockers: ["too-many-options", "big-tasks"] },
     visual: "adhd",
-    often: ["adhd"],
   },
-  { id: "changes", hard: "Sudden changes", help: "We tell you what to expect, on a calm, predictable screen.", answers: { changes: "heads-up" }, visual: "autism", often: ["autism", "ocd"] },
-  { id: "screen", hard: "Bright or busy screens", help: "A dark screen, and Calm mode: no movement or glow.", visual: "sensory", often: ["sensory", "autism"] },
-  { id: "precision", hard: "Small buttons or precise movements", help: "Bigger buttons, icons and cursor.", visual: "dyspraxia", often: ["dyspraxia", "dysgraphia"] },
-  { id: "speech", hard: "Following fast speech", help: "A slower AI voice, with captions while it talks.", visual: "auditory", often: ["auditory", "adhd"] },
+  { id: "changes", hard: "Sudden changes", help: "We tell you what to expect, on a calm, predictable screen.", answers: { changes: "heads-up" }, visual: "autism" },
+  { id: "screen", hard: "Bright or busy screens", help: "A dark screen, and Calm mode: no movement or glow.", visual: "sensory" },
+  { id: "precision", hard: "Small buttons or precise movements", help: "Bigger buttons, icons and cursor.", visual: "dyspraxia" },
+  { id: "speech", hard: "Following fast speech", help: "A slower AI voice, with captions while it talks.", visual: "auditory" },
 ];
 
 // Joins two sets of screen settings: the stronger choice wins, so adding help never takes help away.
@@ -69,13 +67,20 @@ export function mergePrefs(base: Prefs, add: Partial<Prefs>): Prefs {
   if (add.detail === "reduced") next.detail = "reduced";
   if (add.font && (base.font === "default" || add.font === "dyslexic")) next.font = add.font;
   if (add.cursor && CURSOR.indexOf(add.cursor) > CURSOR.indexOf(base.cursor)) next.cursor = add.cursor;
-  // A palette (the dark one for light sensitivity) only replaces the default, never colors the person chose.
+  // A palette (the dark one for light sensitivity) is asked for on purpose, so it replaces a light palette, even one
+  // the person chose; a palette that is already dark stays.
   const palette = add.preset ? PRESETS.find((p) => p.id === add.preset) : undefined;
-  if (palette?.colors && base.colors === null) {
+  if (palette?.colors && !(base.colors && isDark(base.colors))) {
     next.preset = palette.id;
     next.colors = palette.colors;
   }
   return next;
+}
+
+// While "Bright or busy screens" is on, it wins over the palette chosen in Settings, so every page is dark, not only
+// Adaptability. Turning it off there gives the palettes back.
+export function keepScreenDark(prefs: Prefs, picks: readonly string[] | null = loadHelpPicks()): Prefs {
+  return picks?.includes("screen") ? mergePrefs(prefs, { preset: NEURO_TYPES.sensory.prefs.preset }) : prefs;
 }
 
 // What a set of screen settings does, in plain words, for the shortcut list.
@@ -124,6 +129,27 @@ export function applyHelp(
   return { answers: nextAnswers as Answers, prefs: nextPrefs };
 }
 
+// Turns off what unticked picks turned on: their answers go, and their screen settings go back to the defaults.
+// turnOnHelp() applies the picks still ticked after this, so a setting two picks share stays on.
+export function removeHelp(picks: readonly string[], answers: Answers, prefs: Prefs): { answers: Answers; prefs: Prefs } {
+  const nextAnswers: Record<string, unknown> = { ...answers };
+  const nextPrefs: Record<string, unknown> = { ...prefs };
+  for (const pick of HELP.filter((h) => picks.includes(h.id))) {
+    for (const [question, value] of Object.entries(pick.answers ?? {})) {
+      const now = nextAnswers[question];
+      const left = Array.isArray(value) && Array.isArray(now) ? now.filter((v) => !(value as unknown[]).includes(v)) : now === value ? [] : [now];
+      if (left.length === 0) delete nextAnswers[question];
+      else if (Array.isArray(now)) nextAnswers[question] = left;
+    }
+    if (!pick.visual) continue;
+    const { preset, ...rest } = NEURO_TYPES[pick.visual].prefs as Partial<Prefs>;
+    for (const k of Object.keys(rest) as (keyof Prefs)[]) nextPrefs[k] = DEFAULT_PREFS[k];
+    // Only the palette this pick put there; one the person chose since stays.
+    if (preset && prefs.preset === preset) Object.assign(nextPrefs, { preset: DEFAULT_PREFS.preset, colors: null });
+  }
+  return { answers: nextAnswers as Answers, prefs: nextPrefs as Prefs };
+}
+
 // null: not asked yet, so the Profile shows the picks first. [] after "Decide later". Only the picks are kept;
 // shortcuts by type never are.
 export function loadHelpPicks(): string[] | null {
@@ -136,10 +162,14 @@ export function loadHelpPicks(): string[] | null {
 }
 
 // Keeps the chosen help: the answers it sets, the screen settings, and the picks themselves. Browser only.
+// Picks that were saved before and are now unticked are turned off first, so choosing none turns all of it off.
 export function turnOnHelp(picks: readonly string[], types: readonly NeuroType[]): void {
-  const next = applyHelp(picks, loadProfile() ?? {}, loadPrefs(), types);
+  const unticked = (loadHelpPicks() ?? []).filter((id) => !picks.includes(id));
+  const before = removeHelp(unticked, loadProfile() ?? {}, loadPrefs());
+  const next = applyHelp(picks, before.answers, before.prefs, types);
   // OpenDyslexic is switched by the reading class on <html>, the same way the Settings panel does it.
   if (next.prefs.font === "dyslexic") setReadingOption("dyslexic", true);
+  else if (before.prefs.font !== loadPrefs().font) setReadingOption("dyslexic", false); // an unticked pick had it on
   saveProfile(next.answers);
   savePrefs(next.prefs);
   applyPrefs(next.prefs);
@@ -152,4 +182,26 @@ export function saveHelpPicks(picks: readonly string[]): void {
   } catch {
     // Private mode: the help still turns on for this visit.
   }
+  window.dispatchEvent(new Event(CHANGE));
 }
+
+// Visited pages stay mounted (cacheComponents), and the first-start window sits over any page, so Adaptability
+// listens for picks saved elsewhere.
+const CHANGE = "help-picks-change";
+function subscribe(onChange: () => void) {
+  window.addEventListener(CHANGE, onChange);
+  window.addEventListener("storage", onChange); // another tab
+  return () => {
+    window.removeEventListener(CHANGE, onChange);
+    window.removeEventListener("storage", onChange);
+  };
+}
+const snapshot = () => {
+  try {
+    return localStorage.getItem(KEY);
+  } catch {
+    return null;
+  }
+};
+// The saved picks as stored text: changes whenever they are saved.
+export const useHelpPicksSnapshot = () => useSyncExternalStore(subscribe, snapshot, () => null);

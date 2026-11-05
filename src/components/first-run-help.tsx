@@ -1,39 +1,28 @@
 "use client";
 
-import { useState } from "react";
-import { usePathname } from "next/navigation";
-import { HelpPicks } from "@/components/profile/help-picks";
-import { Dialog, DialogContent, DialogTitle } from "@/components/ui/dialog";
-import { loadHelpPicks, turnOnHelp } from "@/lib/help-picks";
-import { useHydrated } from "@/lib/use-hydrated";
+import { useEffect } from "react";
+import { usePathname, useRouter } from "next/navigation";
+import { keepScreenDark, loadHelpPicks } from "@/lib/help-picks";
+import { applyPrefs, loadPrefs, savePrefs } from "@/lib/personalization";
 
-// The first start of the app (or after "Delete my data"): "What would help you adapt?" before anything else, on any page.
-// It cannot be closed (no close button, Escape or click outside); choosing at least one pick or shortcut and pressing
-// "Turn on this help" is the way in. Later it stays in Profile, Adaptability, to change.
+// The first start of the app (or after "Delete my data") begins at the welcome on the home page, which leads through
+// the Profile and then the tour. Opening My plan, Jobs, Learn or Preparation before that goes to the welcome first.
+// The Profile, Privacy, invitations, the employers' side and the seal check open as they are.
+const SETUP_FIRST = /^\/(plan|jobs|learn|interview|recommended)(\/|$)/;
+
 export function FirstRunHelp() {
-  const hydrated = useHydrated();
-  // Employers are not the person looking for a job, and a seal check is one public page anyone can open from a link, so
-  // neither asks "What would help you adapt?" first.
-  const elsewhere = /^\/(employers|seal-check)(\/|$)/.test(usePathname());
-  return hydrated && !elsewhere ? <FirstRun /> : null;
-}
-
-function FirstRun() {
-  const [open, setOpen] = useState(() => loadHelpPicks() === null);
-  if (!open) return null;
-  return (
-    <Dialog open onOpenChange={() => {}} disablePointerDismissal>
-      <DialogContent showCloseButton={false} className="max-h-[90svh] overflow-y-auto sm:max-w-2xl">
-        <DialogTitle className="sr-only">Before you start</DialogTitle>
-        <HelpPicks
-          required
-          initial={[]}
-          onDone={(picks, types) => {
-            turnOnHelp(picks, types);
-            setOpen(false);
-          }}
-        />
-      </DialogContent>
-    </Dialog>
-  );
+  const pathname = usePathname();
+  const router = useRouter();
+  useEffect(() => {
+    if (SETUP_FIRST.test(pathname) && loadHelpPicks() === null) router.replace("/");
+  }, [pathname, router]);
+  // A light palette saved while "Bright or busy screens" was on (before it won over Settings) goes dark on every page.
+  useEffect(() => {
+    const saved = loadPrefs();
+    const next = keepScreenDark(saved);
+    if (next.colors === saved.colors) return;
+    savePrefs(next);
+    applyPrefs(next);
+  }, []);
+  return null;
 }

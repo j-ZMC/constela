@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from "vitest";
-import { loadLocalAccount, loadResumeProfile, saveLocalAccount, saveResumeProfile } from "@/lib/local-profile";
+import { clearResumeProfile, loadLocalAccount, loadResumeProfile, saveLocalAccount, saveResumeProfile } from "@/lib/local-profile";
 
 const resume = {
   name: "Alex",
@@ -21,6 +21,13 @@ describe("local profile storage", () => {
       setItem: (key: string, value: string) => { store[key] = value; },
       removeItem: (key: string) => { delete store[key]; },
     });
+    vi.stubGlobal("window", { dispatchEvent: vi.fn() });
+  });
+
+  it("tells open pages when the CV is saved or removed, so Jobs can start again", () => {
+    saveResumeProfile(resume);
+    clearResumeProfile();
+    expect(vi.mocked(window.dispatchEvent).mock.calls.map(([e]) => e.type)).toEqual(["resume-profile-change", "resume-profile-change"]);
   });
 
   it("round-trips the local account", () => {

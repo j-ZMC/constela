@@ -87,12 +87,12 @@ export function PlanMap({
         ))}
         {rim.map(([x, y], i) => {
           const [nx, ny] = rim[(i + 1) % rim.length];
-          return <line key={`rim-${i}`} x1={x} y1={y} x2={nx} y2={ny} stroke="white" strokeOpacity={0.1} strokeWidth={1} strokeDasharray="1 7" strokeLinecap="round" />;
+          return <line key={`rim-${i}`} x1={x} y1={y} x2={nx} y2={ny} stroke="white" strokeOpacity={0.1} strokeWidth={1.6} strokeDasharray="1 7" strokeLinecap="round" />;
         })}
         {placed.flatMap((b) =>
           satellites(b.slot, b.points, [cx, cy]).map(({ from, at: [x, y], r }, i) => (
             <g key={`sat-${b.branch}-${i}`}>
-              <line x1={from[0]} y1={from[1]} x2={x} y2={y} stroke="white" strokeOpacity={0.16} strokeWidth={0.8} />
+              <line x1={from[0]} y1={from[1]} x2={x} y2={y} stroke="white" strokeOpacity={0.16} strokeWidth={1.4} />
               <circle cx={x} cy={y} r={r} fill={b.status === "done" ? "var(--star)" : "white"} opacity={0.6} />
             </g>
           )),
@@ -103,7 +103,7 @@ export function PlanMap({
           const started = b.nodes.some((n) => n.done);
           return (
             <line key={`root-${b.branch}`} x1={cx} y1={cy} x2={x} y2={y} stroke={started ? "var(--star)" : "white"} strokeOpacity={started ? 0.6 : 0.22}
-              strokeWidth={1.5} strokeDasharray={started ? "4 5" : "2 6"} strokeLinecap="round" />
+              strokeWidth={2.5} strokeDasharray={started ? "4 5" : "2 6"} strokeLinecap="round" />
           );
         })}
         {placed.map((b) => (
@@ -119,7 +119,7 @@ export function PlanMap({
               const walked = (b.nodes[k].done && b.nodes[k + 1].done) || highlight.includes(b.branch);
               return (
                 <line key={k} x1={px} y1={py} x2={x} y2={y} stroke={walked ? "var(--star)" : "white"} strokeOpacity={walked ? 0.85 : 0.3}
-                  strokeWidth={walked ? 2 : 1.5} strokeDasharray={walked ? undefined : "2 4"} strokeLinecap="round" />
+                  strokeWidth={walked ? 3.2 : 2.5} strokeDasharray={walked ? undefined : "2 4"} strokeLinecap="round" />
               );
             })}
             {b.nodes.map((n, k) => {
@@ -147,9 +147,6 @@ export function PlanMap({
         <circle cx={cx} cy={cy} r={4} fill="white" />
       </svg>
       <span aria-hidden style={at(cx, cy)} className="voice-halo pointer-events-none absolute" />
-      <p style={at(cx, cy + 26)} className="pointer-events-none absolute -translate-x-1/2 text-sm font-semibold text-white sm:text-base" aria-hidden>
-        You
-      </p>
 
       <ol aria-label={`Your plan has ${branches.length} branches`} className="absolute inset-0">
         {placed.map((b) => {

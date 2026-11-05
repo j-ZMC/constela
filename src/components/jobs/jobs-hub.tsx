@@ -45,7 +45,7 @@ function Hub() {
         if (next === "internships") setInternshipsOpened(true);
       }}
     >
-      <TabsList aria-label="Ways to find jobs" className="max-w-md">
+      <TabsList data-tour="job-tabs" aria-label="Ways to find jobs" className="max-w-md">
         <TabsTrigger value="jobs">Jobs</TabsTrigger>
         <TabsTrigger value="internships">Internships</TabsTrigger>
         <TabsTrigger value="saved">Saved{savedCount ? ` (${savedCount})` : ""}</TabsTrigger>
